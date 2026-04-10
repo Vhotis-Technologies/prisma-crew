@@ -1,0 +1,57 @@
+{% extends "base_email.html" %}
+{% block title %}Appointment rescheduled{% endblock %}
+{% block content %}
+<div class="greeting">Hi there,</div>
+
+<div class="intro-text">
+  Your appointment has been rescheduled. Please see the updated details below.
+</div>
+
+<div class="details-card">
+  <div class="details-title">Rescheduled appointment</div>
+  <div class="details-grid">
+    <div class="detail-row">
+      <div class="detail-item detail-label">Booking reference</div>
+      <div class="detail-item detail-value">{{ booking_reference }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">New date</div>
+      <div class="detail-item detail-value">{{ new_appointment_date }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">New time</div>
+      <div class="detail-item detail-value">{{ new_appointment_time }}</div>
+    </div>
+    {% if total_amount %}
+    <div class="detail-row">
+      <div class="detail-item detail-label">Total</div>
+      <div class="detail-item detail-value">{{ total_amount }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="reminders-box">
+  <div class="contact-title">What you need to do</div>
+  <div class="contact-text">
+    Update your calendar with the new time and arrive 5 minutes before the scheduled start. To cancel or make changes, use the app or contact support.
+  </div>
+</div>
+
+<div class="contact-box">
+  <div class="contact-title">Need help?</div>
+  <div class="contact-text">
+    Contact us at <a href="mailto:support@prismavalet.com" class="contact-link">support@prismavalet.com</a>
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    Thank you for your flexibility and continued partnership with Prisma.
+  </div>
+  <div class="signature">
+    Best regards,<br />
+    <span class="signature-name">The Prisma Team</span>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base_email.html" %}
+{% block title %}Booking Confirmation{% endblock %}
+{% block content %}
+<div class="greeting">Hi there,</div>
+
+<div class="intro-text">
+  You've been assigned a new job. Here are the booking details.
+</div>
+
+<div class="details-card">
+  <div class="details-title">Booking details</div>
+  <div class="details-grid">
+    <div class="detail-row">
+      <div class="detail-item detail-label">Booking reference</div>
+      <div class="detail-item detail-value">{{ booking_reference }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Date</div>
+      <div class="detail-item detail-value">{{ appointment_date }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Time</div>
+      <div class="detail-item detail-value">{{ appointment_time }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Location</div>
+      <div class="detail-item detail-value">{{ address }}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Service</div>
+      <div class="detail-item detail-value">{{ service_type_name }}</div>
+    </div>
+    {% endif %}
+    {% if owner_note %}
+    <div class="detail-row">
+      <div class="detail-item detail-label">Special instructions</div>
+      <div class="detail-item detail-value">{{ owner_note }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="contact-box">
+  <div class="contact-title">Questions or need to cancel?</div>
+  <div class="contact-text">
+    Manage this booking in the app. For support, contact <a href="mailto:support@prismavalet.com" class="contact-link">support@prismavalet.com</a>
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    Get ready to deliver great service on your next job. Log in to your account to view full details.
+  </div>
+  <div class="signature">
+    Best regards,<br />
+    <span class="signature-name">The Prisma Team</span>
+  </div>
+</div>
+{% endblock %}

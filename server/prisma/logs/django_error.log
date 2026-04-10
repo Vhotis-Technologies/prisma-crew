@@ -1,0 +1,1680 @@
+ERROR 2026-01-18 19:56:53,611 log 46 134205962970816 Internal Server Error: /api/v1/authentication/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/serializer.py", line 104, in validate
+    'is_verified': detailer.is_verified,
+                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'is_verified'
+ERROR 2026-01-18 19:56:53,619 runserver 46 134206096422592 HTTP POST /api/v1/authentication/login/ 500 [0.20, 172.18.0.12:59434]
+ERROR 2026-01-18 19:57:04,395 log 46 134205962970816 Internal Server Error: /api/v1/authentication/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/serializer.py", line 104, in validate
+    'is_verified': detailer.is_verified,
+                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'is_verified'
+ERROR 2026-01-18 19:57:04,399 runserver 46 134206096422592 HTTP POST /api/v1/authentication/login/ 500 [0.18, 172.18.0.12:52012]
+ERROR 2026-01-21 22:40:47,985 log 7 125496608134848 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,000 log 7 125496125814464 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,001 log 7 125496109029056 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,004 log 7 125496117421760 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,018 log 7 125496616527552 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,047 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.27, 172.18.0.11:55794]
+ERROR 2026-01-21 22:40:48,060 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.37, 172.18.0.11:55760]
+ERROR 2026-01-21 22:40:48,064 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.33, 172.18.0.11:55774]
+ERROR 2026-01-21 22:40:48,070 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.33, 172.18.0.11:55784]
+ERROR 2026-01-21 22:40:48,078 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.34, 172.18.0.11:55790]
+ERROR 2026-01-21 22:40:48,590 log 7 125496125814464 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:40:48,595 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.05, 172.18.0.11:55802]
+ERROR 2026-01-21 22:41:04,120 log 7 125496125814464 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,127 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.07, 172.18.0.11:44918]
+ERROR 2026-01-21 22:41:04,703 log 7 125496109029056 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,733 log 7 125496125814464 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,747 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.61, 172.18.0.11:44920]
+ERROR 2026-01-21 22:41:04,772 log 7 125496117421760 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,787 log 7 125496608134848 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,791 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.62, 172.18.0.11:44930]
+ERROR 2026-01-21 22:41:04,815 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.64, 172.18.0.11:44938]
+ERROR 2026-01-21 22:41:04,821 log 7 125496109029056 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-01-21 22:41:04,824 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.63, 172.18.0.11:44940]
+ERROR 2026-01-21 22:41:04,832 runserver 7 125496781747904 HTTP POST /api/v1/authentication/refresh/ 500 [0.13, 172.18.0.11:44948]
+ERROR 2026-02-04 22:09:59,601 signal 1 133614503758720 Signal handler <bound method DjangoFixup.on_import_modules of <celery.fixups.django.DjangoFixup object at 0x79858b30b650>> raised: IndentationError("expected an indented block after 'if' statement on line 101", ('/app/main/views/appointment.py', 102, 13, '            if not appointment:\n', 102, 15))
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/celery/utils/dispatch/signal.py", line 280, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/celery/fixups/django.py", line 103, in on_import_modules
+    self.worker_fixup.validate_models()
+  File "/usr/local/lib/python3.11/site-packages/celery/fixups/django.py", line 154, in validate_models
+    run_checks()
+  File "/usr/local/lib/python3.11/site-packages/django/core/checks/registry.py", line 89, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/checks/urls.py", line 136, in check_custom_error_handlers
+    handler = resolver.resolve_error_handler(status_code)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/resolvers.py", line 732, in resolve_error_handler
+    callback = getattr(self.urlconf_module, "handler%s" % view_type, None)
+                       ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/resolvers.py", line 711, in urlconf_module
+    return import_module(self.urlconf_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/prisma/urls.py", line 10, in <module>
+    path('api/v1/', include('main.urls')),
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/conf.py", line 39, in include
+    urlconf_module = import_module(urlconf_module)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/main/urls.py", line 9, in <module>
+    from main.views.appointment import AppointmentView
+  File "/app/main/views/appointment.py", line 102
+    if not appointment:
+    ^^
+IndentationError: expected an indented block after 'if' statement on line 101
+ERROR 2026-02-04 22:09:59,613 signal 1 123228525722496 Signal handler <bound method DjangoFixup.on_import_modules of <celery.fixups.django.DjangoFixup object at 0x70135ea57b90>> raised: IndentationError("expected an indented block after 'if' statement on line 101", ('/app/main/views/appointment.py', 102, 13, '            if not appointment:\n', 102, 15))
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/celery/utils/dispatch/signal.py", line 280, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/celery/fixups/django.py", line 103, in on_import_modules
+    self.worker_fixup.validate_models()
+  File "/usr/local/lib/python3.11/site-packages/celery/fixups/django.py", line 154, in validate_models
+    run_checks()
+  File "/usr/local/lib/python3.11/site-packages/django/core/checks/registry.py", line 89, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/checks/urls.py", line 136, in check_custom_error_handlers
+    handler = resolver.resolve_error_handler(status_code)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/resolvers.py", line 732, in resolve_error_handler
+    callback = getattr(self.urlconf_module, "handler%s" % view_type, None)
+                       ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/resolvers.py", line 711, in urlconf_module
+    return import_module(self.urlconf_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/prisma/urls.py", line 10, in <module>
+    path('api/v1/', include('main.urls')),
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/urls/conf.py", line 39, in include
+    urlconf_module = import_module(urlconf_module)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/app/main/urls.py", line 9, in <module>
+    from main.views.appointment import AppointmentView
+  File "/app/main/views/appointment.py", line 102
+    if not appointment:
+    ^^
+IndentationError: expected an indented block after 'if' statement on line 101
+ERROR 2026-02-04 23:11:31,133 log 13 134010063808192 Internal Server Error: /api/v1/availability/get_timeslots/
+ERROR 2026-02-04 23:11:31,139 runserver 13 134010195252928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-02-11&service_duration=120&country=Ireland&city=Dublin&is_express_service=true 500 [0.34, 172.18.0.12:54962]
+ERROR 2026-02-05 01:06:40,644 dashboard 36 126161002682048 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,655 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-05 01:06:40,656 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.04, 172.18.0.12:36306]
+ERROR 2026-02-05 01:06:40,664 dashboard 36 126161019467456 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,670 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-05 01:06:40,671 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.04, 172.18.0.12:36314]
+ERROR 2026-02-05 01:06:40,673 dashboard 36 126160994289344 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,680 dashboard 36 126160994289344 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,682 dashboard 36 126160994289344 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,685 dashboard 36 126160994289344 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,686 dashboard 36 126160994289344 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:06:40,694 dashboard 36 126160994289344 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:11:18,105 dashboard 36 126161002682048 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:11:18,116 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-05 01:11:18,118 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.10, 172.18.0.12:35856]
+ERROR 2026-02-05 01:11:18,119 dashboard 36 126160994289344 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 01:11:18,128 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-05 01:11:18,136 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.07, 172.18.0.12:35868]
+ERROR 2026-02-05 02:04:55,323 dashboard 36 126160994289344 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 02:04:55,328 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-05 02:04:55,329 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.03, 172.18.0.12:37620]
+ERROR 2026-02-05 02:04:55,397 dashboard 36 126160994289344 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, chat_room, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-05 02:04:55,403 log 36 126161011074752 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-05 02:04:55,405 runserver 36 126161145943744 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.03, 172.18.0.12:37632]
+ERROR 2026-02-06 11:43:12,661 dashboard 106 123266534471360 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,666 log 106 123266291197632 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-06 11:43:12,667 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.02, 172.18.0.12:47526]
+ERROR 2026-02-06 11:43:12,696 dashboard 106 123266534471360 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,700 log 106 123266274412224 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-06 11:43:12,701 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.02, 172.18.0.12:47538]
+ERROR 2026-02-06 11:43:12,762 dashboard 106 123266534471360 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,766 dashboard 106 123266534471360 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,768 dashboard 106 123266534471360 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,768 dashboard 106 123266534471360 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,769 dashboard 106 123266534471360 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-06 11:43:12,776 dashboard 106 123266534471360 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,565 dashboard 106 123266526078656 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,592 dashboard 106 123266526078656 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,594 dashboard 106 123266299590336 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,595 dashboard 106 123266526078656 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,597 dashboard 106 123266526078656 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,598 dashboard 106 123266526078656 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,605 log 106 123266291197632 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-10 21:04:06,607 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.06, 172.18.0.12:53434]
+ERROR 2026-02-10 21:04:06,618 dashboard 106 123266526078656 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,704 dashboard 106 123266534471360 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:06,712 log 106 123266266019520 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-10 21:04:06,713 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.03, 172.18.0.12:53454]
+ERROR 2026-02-10 21:04:17,321 dashboard 106 123266517685952 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,323 dashboard 106 123266299590336 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,335 dashboard 106 123266526078656 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,341 log 106 123266282804928 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-10 21:04:17,341 log 106 123266291197632 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-10 21:04:17,344 dashboard 106 123266526078656 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,345 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.10, 172.18.0.12:57044]
+ERROR 2026-02-10 21:04:17,348 dashboard 106 123266526078656 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,350 runserver 106 123266658854592 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.10, 172.18.0.12:57032]
+ERROR 2026-02-10 21:04:17,352 dashboard 106 123266526078656 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,356 dashboard 106 123266526078656 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-10 21:04:17,368 dashboard 106 123266526078656 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-15 23:38:07,969 log 7 132664665302720 Invalid HTTP_HOST header: 'detailer_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-02-15 23:51:24,070 log 9 127109817165504 Invalid HTTP_HOST header: 'detailer_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-02-16 01:02:00,299 dashboard 49 132250247100096 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,300 dashboard 49 132250146428608 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,315 dashboard 49 132250154821312 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,316 dashboard 49 132250247100096 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,317 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:02:00,318 dashboard 49 132250247100096 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,319 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.03, 172.18.0.6:48784]
+ERROR 2026-02-16 01:02:00,320 dashboard 49 132250247100096 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,321 dashboard 49 132250247100096 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:02:00,324 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:02:00,325 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.04, 172.18.0.6:48800]
+ERROR 2026-02-16 01:02:00,330 dashboard 49 132250247100096 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,706 dashboard 49 132250154821312 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,742 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:03:04,756 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.10, 172.18.0.6:44584]
+ERROR 2026-02-16 01:03:04,782 dashboard 49 132250146428608 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,794 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:03:04,800 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.08, 172.18.0.6:44594]
+ERROR 2026-02-16 01:03:04,822 dashboard 49 132250121250496 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,834 dashboard 49 132250121250496 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,836 dashboard 49 132250121250496 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,839 dashboard 49 132250121250496 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,842 dashboard 49 132250121250496 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:04,858 dashboard 49 132250121250496 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,708 dashboard 49 132250121250496 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,750 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:03:07,760 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.10, 172.18.0.6:44602]
+ERROR 2026-02-16 01:03:07,763 dashboard 49 132250146428608 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,780 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:03:07,785 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.09, 172.18.0.6:44618]
+ERROR 2026-02-16 01:03:07,822 dashboard 49 132250247100096 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,834 dashboard 49 132250247100096 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,838 dashboard 49 132250247100096 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,842 dashboard 49 132250247100096 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,845 dashboard 49 132250247100096 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:07,862 dashboard 49 132250247100096 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,020 dashboard 49 132250247100096 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,051 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:03:09,057 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.07, 172.18.0.6:44652]
+ERROR 2026-02-16 01:03:09,111 dashboard 49 132250121250496 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,124 dashboard 49 132250146428608 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,137 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:03:09,142 dashboard 49 132250146428608 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,144 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.11, 172.18.0.6:44674]
+ERROR 2026-02-16 01:03:09,145 dashboard 49 132250146428608 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,150 dashboard 49 132250146428608 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,154 dashboard 49 132250146428608 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:09,172 dashboard 49 132250146428608 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,028 dashboard 49 132250146428608 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,037 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:03:12,040 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.04, 172.18.0.6:39546]
+ERROR 2026-02-16 01:03:12,108 dashboard 49 132250154821312 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,113 dashboard 49 132250146428608 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,120 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:03:12,122 dashboard 49 132250146428608 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,123 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.05, 172.18.0.6:39580]
+ERROR 2026-02-16 01:03:12,126 dashboard 49 132250146428608 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,129 dashboard 49 132250146428608 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,131 dashboard 49 132250146428608 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:12,144 dashboard 49 132250146428608 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,558 dashboard 49 132250146428608 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,573 log 49 132250129643200 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:03:13,582 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.06, 172.18.0.6:39584]
+ERROR 2026-02-16 01:03:13,618 dashboard 49 132250154821312 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,627 log 49 132250138035904 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:03:13,631 runserver 49 132250299717312 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.07, 172.18.0.6:39600]
+ERROR 2026-02-16 01:03:13,668 dashboard 49 132250247100096 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,687 dashboard 49 132250247100096 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,690 dashboard 49 132250247100096 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,692 dashboard 49 132250247100096 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,695 dashboard 49 132250247100096 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:03:13,711 dashboard 49 132250247100096 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,828 dashboard 171 131993153042112 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,829 dashboard 171 131993060763328 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,835 dashboard 171 131993069156032 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,843 dashboard 171 131993069156032 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,845 dashboard 171 131993069156032 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,847 dashboard 171 131993069156032 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,848 log 171 131993043977920 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:16:39,849 log 171 131993035585216 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:16:39,850 dashboard 171 131993069156032 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:16:39,851 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.07, 172.18.0.6:48396]
+ERROR 2026-02-16 01:16:39,854 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.07, 172.18.0.6:48414]
+ERROR 2026-02-16 01:16:39,861 dashboard 171 131993069156032 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,141 dashboard 171 131993060763328 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,149 dashboard 171 131993153042112 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,152 log 171 131993035585216 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:27:27,159 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.07, 172.18.0.6:45428]
+ERROR 2026-02-16 01:27:27,160 dashboard 171 131993052370624 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,165 log 171 131993043977920 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:27:27,169 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.08, 172.18.0.6:45438]
+ERROR 2026-02-16 01:27:27,170 dashboard 171 131993052370624 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,172 dashboard 171 131993052370624 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,175 dashboard 171 131993052370624 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,177 dashboard 171 131993052370624 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:27:27,186 dashboard 171 131993052370624 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,138 dashboard 171 131993060763328 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,142 log 171 131993035585216 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:35:28,143 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.02, 172.18.0.6:39706]
+ERROR 2026-02-16 01:35:28,194 dashboard 171 131993153042112 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,199 log 171 131993043977920 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:35:28,200 dashboard 171 131993052370624 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,202 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.03, 172.18.0.6:39732]
+ERROR 2026-02-16 01:35:28,204 dashboard 171 131993052370624 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,206 dashboard 171 131993052370624 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,207 dashboard 171 131993052370624 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,208 dashboard 171 131993052370624 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:28,214 dashboard 171 131993052370624 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,128 dashboard 171 131993052370624 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,132 dashboard 171 131993052370624 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,132 dashboard 171 131993052370624 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,133 dashboard 171 131993052370624 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,134 dashboard 171 131993052370624 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,137 dashboard 171 131993052370624 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,266 dashboard 171 131993052370624 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,272 log 171 131993035585216 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:35:41,274 dashboard 171 131993060763328 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:35:41,275 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [0.03, 172.18.0.6:55176]
+ERROR 2026-02-16 01:35:41,280 log 171 131993043977920 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:35:41,281 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [0.02, 172.18.0.6:55198]
+ERROR 2026-02-16 01:38:39,811 dashboard 171 131993052370624 Error in _get_recent_jobs: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:39,815 dashboard 171 131993153042112 Error in _get_today_overview: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:40,079 dashboard 171 131993060763328 Error calculating weekly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:40,180 log 171 131993035585216 Internal Server Error: /api/v1/dashboard/get_recent_jobs/
+ERROR 2026-02-16 01:38:40,223 log 171 131993043977920 Internal Server Error: /api/v1/dashboard/get_today_overview/
+ERROR 2026-02-16 01:38:40,345 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_recent_jobs/ 500 [1.09, 172.18.0.6:44520]
+ERROR 2026-02-16 01:38:40,400 runserver 171 131993206384320 HTTP GET /api/v1/dashboard/get_today_overview/ 500 [1.22, 172.18.0.6:44504]
+ERROR 2026-02-16 01:38:40,427 dashboard 171 131993060763328 Error calculating monthly earnings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:40,630 dashboard 171 131993060763328 Error calculating completed jobs this week: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:40,785 dashboard 171 131993060763328 Error calculating completed jobs this month: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:40,869 dashboard 171 131993060763328 Error calculating pending jobs count: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-16 01:38:41,289 dashboard 171 131993060763328 Error calculating ratings: Cannot resolve keyword 'detailer' into field. Choices are: activity_logs, addons, address, appointment_date, appointment_time, booking_reference, city, client_name, client_phone, country, created_at, detailers, duration, earnings, fleet_maintenance, id, images, latitude, longitude, loyalty_benefits, loyalty_tier, owner_note, post_code, primary_detailer, primary_detailer_id, rating, review, service_type, service_type_id, status, total_amount, updated_at, valet_type, vehicle_color, vehicle_make, vehicle_model, vehicle_registration, vehicle_year
+ERROR 2026-02-23 14:45:03,331 log 63 137720231864000 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 14:45:03,336 runserver 63 137720395990720 HTTP PATCH /api/v1/profile/update_location/ 500 [0.34, 172.18.0.10:36472]
+ERROR 2026-02-23 14:54:16,854 log 63 137719736956608 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 14:54:16,855 runserver 63 137720395990720 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:52428]
+ERROR 2026-02-23 15:15:26,727 log 129 123917725333184 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 15:15:26,729 runserver 129 123917860480704 HTTP PATCH /api/v1/profile/update_location/ 500 [0.03, 172.18.0.10:58028]
+ERROR 2026-02-23 15:23:02,808 log 129 123917725333184 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 15:23:02,810 runserver 129 123917860480704 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:40890]
+ERROR 2026-02-23 15:31:46,053 log 129 123917691762368 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 15:31:46,055 runserver 129 123917860480704 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:58554]
+ERROR 2026-02-23 15:45:12,764 log 129 123917725333184 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 15:45:12,766 runserver 129 123917860480704 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:57056]
+ERROR 2026-02-23 15:56:50,172 log 208 124702253115072 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 15:56:50,174 runserver 208 124702387218112 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:49294]
+ERROR 2026-02-23 16:13:29,711 log 282 132279422678720 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:13:29,714 runserver 282 132280080340672 HTTP PATCH /api/v1/profile/update_location/ 500 [0.07, 172.18.0.10:43774]
+ERROR 2026-02-23 16:16:17,636 log 282 132279921784512 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:16:17,637 runserver 282 132280080340672 HTTP PATCH /api/v1/profile/update_location/ 500 [0.04, 172.18.0.10:33824]
+ERROR 2026-02-23 16:21:09,663 log 282 132279913391808 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:21:09,664 runserver 282 132280080340672 HTTP PATCH /api/v1/profile/update_location/ 500 [0.03, 172.18.0.10:57066]
+ERROR 2026-02-23 16:42:13,052 log 427 130717925238464 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:42:13,054 runserver 427 130718060218048 HTTP PATCH /api/v1/profile/update_location/ 500 [0.06, 172.18.0.10:50560]
+ERROR 2026-02-23 16:42:33,919 log 427 130717925238464 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:42:33,921 runserver 427 130718060218048 HTTP PATCH /api/v1/profile/update_location/ 500 [0.06, 172.18.0.10:38770]
+ERROR 2026-02-23 16:52:28,914 log 503 131703427299008 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:52:28,916 runserver 503 131703563560640 HTTP PATCH /api/v1/profile/update_location/ 500 [0.09, 172.18.0.10:53484]
+ERROR 2026-02-23 16:54:10,097 log 503 131703427299008 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 16:54:10,099 runserver 503 131703563560640 HTTP PATCH /api/v1/profile/update_location/ 500 [0.06, 172.18.0.10:50098]
+ERROR 2026-02-23 17:04:11,757 log 531 137800057874112 Internal Server Error: /api/v1/profile/update_location/
+ERROR 2026-02-23 17:04:11,761 runserver 531 137800195192512 HTTP PATCH /api/v1/profile/update_location/ 500 [0.10, 172.18.0.10:37066]
+ERROR 2026-02-24 23:08:53,738 log 769 128958540543680 Internal Server Error: /api/v1/onboard/create_new_user/
+ERROR 2026-02-24 23:08:53,740 runserver 769 128958674220736 HTTP POST /api/v1/onboard/create_new_user/ 500 [0.15, 172.18.0.10:59134]
+ERROR 2026-02-24 23:10:11,607 log 769 128958540543680 Internal Server Error: /api/v1/onboard/create_new_user/
+ERROR 2026-02-24 23:10:11,609 runserver 769 128958674220736 HTTP POST /api/v1/onboard/create_new_user/ 500 [0.15, 172.18.0.10:38338]
+ERROR 2026-02-24 23:11:05,810 log 791 123903777171136 Internal Server Error: /api/v1/onboard/create_new_user/
+ERROR 2026-02-24 23:11:05,812 runserver 791 123903838480064 HTTP POST /api/v1/onboard/create_new_user/ 500 [0.29, 172.18.0.10:50466]
+ERROR 2026-02-24 23:17:42,287 log 809 136937683805888 Internal Server Error: /api/v1/onboard/create_new_user/
+ERROR 2026-02-24 23:17:42,291 runserver 809 136937817962176 HTTP POST /api/v1/onboard/create_new_user/ 500 [0.37, 172.18.0.10:45206]
+ERROR 2026-03-05 19:45:44,863 log 13 131391824058048 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:45:44,867 log 13 131391832450752 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:45:44,868 log 13 131392193148608 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:45:44,857 log 13 131391840843456 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:49,642 log 13 131391840843456 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:49,657 log 13 131392193148608 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:49,688 log 13 131391832450752 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:49,717 log 13 131391832450752 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:53,861 log 13 131392193148608 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:58,510 log 13 131391832450752 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:46:58,549 log 13 131392193148608 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:47:17,093 log 13 131391832450752 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:48:11,872 log 13 131392193148608 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:55:12,833 log 7 131659923973824 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-03-05 19:58:09,858 log 6 129975441159872 Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app'. You may need to add '1155-2a02-8084-c80-ea80-a877-ab69-d3af-f36b.ngrok-free.app' to ALLOWED_HOSTS.
+ERROR 2026-04-08 22:41:33,292 log 7 130272884418240 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 459, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 635, in get
+    raise self.model.DoesNotExist(
+main.models.User.DoesNotExist: User matching query does not exist.
+ERROR 2026-04-08 22:41:33,333 runserver 7 130272911685312 HTTP POST /api/v1/authentication/refresh/ 500 [0.12, 172.18.0.15:57226]
+ERROR 2026-04-08 22:50:14,263 log 7 130272884418240 Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-04-08 22:50:17,526 log 7 130272884418240 Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-04-08 22:55:14,932 log 7 130272884418240 Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-04-08 22:55:16,568 log 7 130272884418240 Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.

@@ -1,0 +1,48 @@
+{% extends "base_email.html" %}
+{% block title %}Welcome to Prisma{% endblock %}
+{% block content %}
+<div class="greeting">Welcome to Prisma! 🎉</div>
+
+<div class="intro-text">
+  Thank you for joining our platform. We're excited to have you on board and look forward to doing business with you.
+</div>
+
+<div class="details-card">
+  <div class="details-title">Getting started</div>
+  <div class="details-grid">
+    <div class="detail-row">
+      <div class="detail-item detail-label">Your account</div>
+      <div class="detail-item detail-value">Ready to use</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Platform access</div>
+      <div class="detail-item detail-value">Full access granted</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Support</div>
+      <div class="detail-item detail-value">24/7 available</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item detail-label">Next steps</div>
+      <div class="detail-item detail-value">Explore jobs in the app</div>
+    </div>
+  </div>
+</div>
+
+<div class="contact-box">
+  <div class="contact-title">Need help getting started?</div>
+  <div class="contact-text">
+    Our support team is here to assist you. Reach out at <a href="mailto:support@prismavalet.com" class="contact-link">support@prismavalet.com</a>
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    We're thrilled to have you as part of the Prisma community. Get ready to deliver great service and grow with us. Log in to your account and start working.
+  </div>
+  <div class="signature">
+    Best regards,<br />
+    <span class="signature-name">The Prisma Team</span>
+  </div>
+</div>
+{% endblock %}
