@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.giftezra.ifeanyi.prisma_detailer'
+    namespace 'com.prismavalet.crew'
     defaultConfig {
-        applicationId 'com.giftezra.ifeanyi.prisma_detailer'
+        applicationId 'com.prismavalet.crew'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
