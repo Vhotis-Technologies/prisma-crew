@@ -2,16 +2,17 @@ name: Deploy Detailer App
 
 on:
   push:
-    branches: [master]
+    branches: [main, master, staging]
 
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-  EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID}}
+  EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+  DO_PROD_PATH: /${{ secrets.DO_USERNAME }}/prismaprod/detailer
+  DO_STAGING_PATH: /${{ secrets.DO_USERNAME }}/prismastaging/detailer
 
 jobs:
-  # Job 1: Deploy Detailer Mobile App (OTA Updates)
   deploy-mobile-app:
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,11 +41,8 @@ jobs:
       - name: Check for mobile app changes
         id: check-changes
         run: |
-          # Check if there are any mobile app changes
           if git diff --name-only HEAD~1 HEAD | grep -E '^prisma_detailer/' > /dev/null; then
             echo "has_mobile_changes=true" >> $GITHUB_OUTPUT
-            
-            # Check if there are native changes that require a new build
             if git diff --name-only HEAD~1 HEAD | grep -E '^prisma_detailer/(package\.json|app\.json|eas\.json|app\.config\.js|app\.config\.ts|android/|ios/)' > /dev/null; then
               echo "needs_native_build=true" >> $GITHUB_OUTPUT
             else
@@ -58,16 +56,11 @@ jobs:
       - name: Determine update type and branch
         id: update-info
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "branch=production" >> $GITHUB_OUTPUT
             echo "message=🚀 Production update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
             echo "channel=production" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            echo "branch=development" >> $GITHUB_OUTPUT
-            echo "message=🔧 Development update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
-            echo "channel=development" >> $GITHUB_OUTPUT
-            echo "environment=development" >> $GITHUB_OUTPUT
           else
             echo "branch=staging" >> $GITHUB_OUTPUT
             echo "message=🧪 Staging update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
@@ -106,66 +99,76 @@ jobs:
           echo "📱 Channel: ${{ steps.update-info.outputs.channel }}"
           echo "🌍 Environment: ${{ steps.update-info.outputs.environment }}"
 
-  # Job 2: Deploy Detailer Backend Server
-  deploy-backend-server:
-    if: github.ref == 'refs/heads/master'
+  deploy-backend-production:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Digital Ocean
+      - name: Deploy production stack (DigitalOcean)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /${{ secrets.DO_USERNAME }}/prismaprod/detailer
+            cd ${{ env.DO_PROD_PATH }}
             git stash
-            git pull origin master
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
             docker compose down --remove-orphans || true
             docker container prune -f || true
 
             sleep 10
             docker compose build --no-cache
             docker compose up -d
-            docker compose exec detailer_server python manage.py makemigrations
-            docker compose exec detailer_server python manage.py migrate
+            docker compose exec -T detailer_server python manage.py makemigrations
+            docker compose exec -T detailer_server python manage.py migrate
             docker system prune -f
 
-      - name: Health Check
+      - name: Health Check (production)
         run: |
           echo "Waiting for server to start..."
           sleep 30
-          echo "Checking server health..."
           curl -f --connect-timeout 10 --max-time 30 http://${{ secrets.DO_HOST }}:8001/ || \
           echo "Server may still be starting, but deployment completed successfully"
 
-  # # Job 3: Run Tests Optional
-  # test:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./prisma_detailer
+  deploy-backend-staging:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "18"
-  #         cache: "npm"
-  #         cache-dependency-path: "./prisma_detailer/package-lock.json"
+      - name: Deploy staging stack (DigitalOcean)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd ${{ env.DO_STAGING_PATH }}
+            git stash
+            git fetch origin
+            git checkout staging
+            git pull origin staging
+            docker compose -f docker-compose-staging.yml down --remove-orphans || true
+            docker container prune -f || true
 
-  #     - name: Install dependencies
-  #       run: npm ci
+            sleep 10
+            docker compose -f docker-compose-staging.yml build --no-cache
+            docker compose -f docker-compose-staging.yml up -d
+            docker compose -f docker-compose-staging.yml exec -T detailer_staging_server python manage.py makemigrations
+            docker compose -f docker-compose-staging.yml exec -T detailer_staging_server python manage.py migrate
+            docker system prune -f
 
-  #     - name: Run linting
-  #       run: npm run lint
-
-  #     - name: Type check
-  #       run: npx tsc --noEmit
+      - name: Health Check (staging)
+        run: |
+          echo "Waiting for staging server..."
+          sleep 30
+          curl -f --connect-timeout 10 --max-time 30 http://${{ secrets.DO_HOST }}:8200/ || \
+          echo "Staging server may still be starting, but deployment completed successfully"

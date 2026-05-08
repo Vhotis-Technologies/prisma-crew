@@ -21,14 +21,14 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 # Production: detailer.prismavalet.com on droplet. Override via env for local/dev.
-_DETAILER_ORIGIN = os.getenv('DETAILER_ORIGIN', 'https://c620-2a02-8084-c80-ea80-3d81-12aa-43f9-717.ngrok-free.app')  
+_DETAILER_ORIGIN = os.getenv('DETAILER_ORIGIN', 'https://450e-2a02-8084-c81-a480-c018-9c4e-4107-9d95.ngrok-free.app')   
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [_DETAILER_ORIGIN]
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]
 CORS_ALLOW_CREDENTIALS = True
 DEBUG = os.getenv('DEBUG') == 'True'
 # Allow production host and ngrok tunnels (Django accepts leading dot for subdomains)
-_default_hosts = ['detailer.prismavalet.com', 'c620-2a02-8084-c80-ea80-3d81-12aa-43f9-717.ngrok-free.app']
+_default_hosts = ['detailer.prismavalet.com', '450e-2a02-8084-c81-a480-c018-9c4e-4107-9d95.ngrok-free.app']
 _allowed_hosts_env = os.getenv('ALLOWED_HOSTS')
 if _allowed_hosts_env:
     ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]

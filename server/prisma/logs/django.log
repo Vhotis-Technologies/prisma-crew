@@ -9611,3 +9611,151 @@ INFO 2026-04-10 17:28:55,527 runserver 7 136983167891136 HTTP POST /api/v1/booki
 INFO 2026-04-10 17:29:45,215 runserver 7 136983167891136 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-04-11&workload_minutes=300&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.04, 172.18.0.15:54492]
 INFO 2026-04-10 17:30:08,468 runserver 7 136983167891136 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-04-12&workload_minutes=300&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.04, 172.18.0.15:56430]
 INFO 2026-04-10 17:30:26,856 runserver 7 136983167891136 HTTP POST /api/v1/booking/create_bulk_booking/ 201 [0.08, 172.18.0.15:36424]
+INFO 2026-04-30 00:22:19,968 autoreload 7 125351562302208 Watching for file changes with StatReloader
+INFO 2026-04-30 00:22:21,653 server 7 125351450638016 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-04-30 00:22:21,654 server 7 125351450638016 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-04-30 00:22:21,657 server 7 125351450638016 Listening on TCP address 0.0.0.0:8000
+INFO 2026-04-30 01:02:25,947 autoreload 7 134029713085184 Watching for file changes with StatReloader
+INFO 2026-04-30 01:02:27,692 server 7 134029600880320 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-04-30 01:02:27,694 server 7 134029600880320 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-04-30 01:02:27,698 server 7 134029600880320 Listening on TCP address 0.0.0.0:8000
+INFO 2026-04-30 01:34:39,611 autoreload 7 130900289434368 Watching for file changes with StatReloader
+INFO 2026-04-30 01:34:40,444 server 7 130900177188544 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-04-30 01:34:40,445 server 7 130900177188544 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-04-30 01:34:40,446 server 7 130900177188544 Listening on TCP address 0.0.0.0:8000
+INFO 2026-04-30 20:19:55,489 autoreload 7 124508142228224 Watching for file changes with StatReloader
+INFO 2026-04-30 20:19:56,186 server 7 124508030629568 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-04-30 20:19:56,186 server 7 124508030629568 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-04-30 20:19:56,188 server 7 124508030629568 Listening on TCP address 0.0.0.0:8000
+ERROR 2026-04-30 20:51:00,106 log 7 124507935205056 Invalid HTTP_HOST header: '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app'. You may need to add '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app'. You may need to add '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app' to ALLOWED_HOSTS.
+WARNING 2026-04-30 20:51:00,161 runserver 7 124508030629568 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-04-30&now=2026-04-30T19%3A50%3A59.136Z&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 400 [0.35, 172.18.0.15:60684]
+INFO 2026-04-30 20:53:01,231 autoreload 7 135894228267776 Watching for file changes with StatReloader
+INFO 2026-04-30 20:53:02,124 server 7 135894115808960 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-04-30 20:53:02,125 server 7 135894115808960 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-04-30 20:53:02,126 server 7 135894115808960 Listening on TCP address 0.0.0.0:8000
+INFO 2026-04-30 20:54:56,687 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-04-30&now=2026-04-30T19%3A54%3A56.184Z&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.02, 172.18.0.15:34186]
+INFO 2026-04-30 20:59:56,331 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.09, 172.18.0.15:57550]
+INFO 2026-04-30 21:03:09,545 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.04, 172.18.0.15:53780]
+INFO 2026-04-30 21:04:28,953 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.06, 172.18.0.15:53230]
+INFO 2026-04-30 21:05:12,311 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.04, 172.18.0.15:41800]
+INFO 2026-04-30 21:05:23,660 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.05, 172.18.0.15:33636]
+INFO 2026-04-30 21:07:35,835 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.06, 172.18.0.15:45592]
+INFO 2026-04-30 21:07:38,276 runserver 7 135894115808960 HTTP GET /api/v1/availability/check_bulk_capacity/?date=2026-05-01&workload_minutes=600&service_duration=60&country=Ireland&city=Ballentree+Village 200 [0.06, 172.18.0.15:45600]
+INFO 2026-05-01 01:44:00,760 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=false&latitude=53.3097737&longitude=-6.4072469 200 [0.48, 172.18.0.15:55974]
+INFO 2026-05-01 02:08:00,412 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-01&service_duration=60&country=Ireland&city=Dublin&is_express_service=false&latitude=53.3097737&longitude=-6.4072469 200 [0.24, 172.18.0.15:52266]
+WARNING 2026-05-01 02:08:46,658 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:08:46,660 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.26, 172.18.0.15:40486]
+WARNING 2026-05-01 02:08:52,246 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:08:52,249 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.03, 172.18.0.15:57578]
+WARNING 2026-05-01 02:08:59,077 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:08:59,078 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.03, 172.18.0.15:57582]
+INFO 2026-05-01 02:10:20,490 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-01&service_duration=60&country=Ireland&city=Dublin&is_express_service=false&latitude=53.3097737&longitude=-6.4072469 200 [0.11, 172.18.0.15:33316]
+WARNING 2026-05-01 02:10:30,055 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:10:30,056 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.02, 172.18.0.15:33324]
+WARNING 2026-05-01 02:11:08,111 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:11:08,113 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.04, 172.18.0.15:41548]
+INFO 2026-05-01 02:12:47,573 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-01&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.08, 172.18.0.15:41678]
+WARNING 2026-05-01 02:13:26,706 log 7 135894088541888 Bad Request: /api/v1/booking/create_booking/
+WARNING 2026-05-01 02:13:26,708 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 400 [0.03, 172.18.0.15:36938]
+INFO 2026-05-01 02:14:37,370 runserver 7 135894115808960 HTTP GET /detailer-admin 301 [0.12, 172.18.0.15:43366]
+INFO 2026-05-01 02:14:37,669 runserver 7 135894115808960 HTTP GET /detailer-admin/ 302 [0.20, 172.18.0.15:43372]
+INFO 2026-05-01 02:14:38,018 runserver 7 135894115808960 HTTP GET /detailer-admin/login/?next=/detailer-admin/ 200 [0.25, 172.18.0.15:43386]
+INFO 2026-05-01 02:14:44,865 runserver 7 135894115808960 HTTP POST /detailer-admin/login/?next=/detailer-admin/ 302 [0.44, 172.18.0.15:38104]
+INFO 2026-05-01 02:14:45,087 runserver 7 135894115808960 HTTP GET /detailer-admin/ 200 [0.12, 172.18.0.15:38110]
+INFO 2026-05-01 02:14:48,219 runserver 7 135894115808960 HTTP GET /detailer-admin/main/servicetype/ 200 [0.22, 172.18.0.15:38118]
+INFO 2026-05-01 02:14:48,426 runserver 7 135894115808960 HTTP GET /detailer-admin/jsi18n/ 200 [0.07, 172.18.0.15:38122]
+INFO 2026-05-01 02:14:50,481 runserver 7 135894115808960 HTTP GET /detailer-admin/main/servicetype/7d49b659-7ff5-4676-a537-26b4b4d02a94/change/ 200 [0.11, 172.18.0.15:60370]
+INFO 2026-05-01 02:14:50,665 runserver 7 135894115808960 HTTP GET /detailer-admin/jsi18n/ 200 [0.03, 172.18.0.15:60380]
+INFO 2026-05-01 02:15:00,457 runserver 7 135894115808960 HTTP POST /detailer-admin/main/servicetype/7d49b659-7ff5-4676-a537-26b4b4d02a94/change/ 302 [0.11, 172.18.0.15:40218]
+INFO 2026-05-01 02:15:00,618 runserver 7 135894115808960 HTTP GET /detailer-admin/main/servicetype/ 200 [0.06, 172.18.0.15:40232]
+INFO 2026-05-01 02:15:00,799 runserver 7 135894115808960 HTTP GET /detailer-admin/jsi18n/ 200 [0.03, 172.18.0.15:40236]
+INFO 2026-05-01 02:15:08,732 runserver 7 135894115808960 HTTP POST /api/v1/booking/create_booking/ 201 [1.97, 172.18.0.15:40242]
+INFO 2026-05-01 02:15:39,478 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-01&service_duration=210&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.08, 172.18.0.15:33320]
+INFO 2026-05-01 02:23:13,723 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.07, 172.18.0.15:37620]
+INFO 2026-05-01 02:23:51,636 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=210&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.05, 172.18.0.15:50276]
+INFO 2026-05-01 02:24:19,913 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=210&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.05, 172.18.0.15:48906]
+INFO 2026-05-01 02:24:27,906 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.07, 172.18.0.15:49814]
+INFO 2026-05-01 02:25:46,064 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.06, 172.18.0.15:33072]
+INFO 2026-05-01 02:43:49,396 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.18, 172.18.0.15:47574]
+INFO 2026-05-01 02:43:50,762 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-03&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.06, 172.18.0.15:47582]
+INFO 2026-05-01 02:50:05,459 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.11, 172.18.0.15:37034]
+INFO 2026-05-01 03:02:10,467 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.10, 172.18.0.15:37592]
+INFO 2026-05-01 03:03:28,542 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.05, 172.18.0.15:40188]
+INFO 2026-05-01 03:05:23,003 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.05, 172.18.0.15:51406]
+INFO 2026-05-01 03:05:24,503 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.03, 172.18.0.15:51414]
+INFO 2026-05-01 03:06:43,764 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-02&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.04, 172.18.0.15:49986]
+INFO 2026-05-01 03:06:50,839 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-21&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.03, 172.18.0.15:49988]
+INFO 2026-05-01 03:14:20,744 runserver 7 135894115808960 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-21&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.04, 172.18.0.15:43546]
+INFO 2026-05-02 01:13:53,099 autoreload 7 125319986942720 Watching for file changes with StatReloader
+INFO 2026-05-02 01:13:53,884 server 7 125319874868928 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-02 01:13:53,885 server 7 125319874868928 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-02 01:13:53,887 server 7 125319874868928 Listening on TCP address 0.0.0.0:8000
+INFO 2026-05-03 23:42:12,395 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-07&service_duration=60&country=Ireland&city=Dublin&latitude=53.3097737&longitude=-6.4072469 200 [1.38, 172.18.0.15:53016]
+INFO 2026-05-03 23:42:19,322 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-07&service_duration=60&country=Ireland&city=Dublin&latitude=53.30977370&longitude=-6.40724690 200 [0.06, 172.18.0.15:36134]
+INFO 2026-05-03 23:42:22,778 authority 1 131146227139328 Initializing with Entra authority: https://login.microsoftonline.com/1b3fc943-5177-4fbc-ab7e-0e0423d1f18f
+INFO 2026-05-04 00:13:52,150 authority 1 131146227139328 Initializing with Entra authority: https://login.microsoftonline.com/1b3fc943-5177-4fbc-ab7e-0e0423d1f18f
+INFO 2026-05-04 01:08:43,043 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-05&service_duration=60&country=Ireland&city=Dublin&is_express_service=false&latitude=53.3097737&longitude=-6.4072469 200 [0.34, 172.18.0.15:50280]
+INFO 2026-05-04 01:12:22,477 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-05&service_duration=60&country=Ireland&city=Dublin&is_express_service=true&latitude=53.3097737&longitude=-6.4072469 200 [0.18, 172.18.0.15:53140]
+INFO 2026-05-04 01:14:16,435 runserver 7 125319874868928 HTTP POST /api/v1/booking/create_booking/ 201 [1.04, 172.18.0.15:39886]
+INFO 2026-05-04 01:23:36,469 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-05&service_duration=60&country=Ireland&city=Dublin&latitude=53.3097737&longitude=-6.4072469 200 [0.15, 172.18.0.15:52866]
+INFO 2026-05-04 01:24:30,523 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-05&service_duration=60&country=Ireland&city=Dublin&latitude=53.3097737&longitude=-6.4072469 200 [0.12, 172.18.0.15:54534]
+INFO 2026-05-04 01:24:40,538 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-05&service_duration=60&country=Ireland&city=Dublin&latitude=53.3097737&longitude=-6.4072469 200 [0.09, 172.18.0.15:39350]
+INFO 2026-05-04 01:24:47,047 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-06&service_duration=60&country=Ireland&city=Dublin&latitude=53.3097737&longitude=-6.4072469 200 [0.07, 172.18.0.15:39356]
+INFO 2026-05-04 01:24:58,554 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-06&service_duration=60&country=Ireland&city=Dublin&latitude=53.30977370&longitude=-6.40724690 200 [0.06, 172.18.0.15:54946]
+INFO 2026-05-04 01:25:12,435 runserver 7 125319874868928 HTTP GET /api/v1/availability/get_timeslots/?date=2026-05-06&service_duration=60&country=Ireland&city=Dublin&latitude=53.30977370&longitude=-6.40724690 200 [0.06, 172.18.0.15:45472]
+INFO 2026-05-04 01:25:13,790 authority 1 124161842635520 Initializing with Entra authority: https://login.microsoftonline.com/1b3fc943-5177-4fbc-ab7e-0e0423d1f18f
+INFO 2026-05-04 01:38:04,966 authority 1 124161842635520 Initializing with Entra authority: https://login.microsoftonline.com/1b3fc943-5177-4fbc-ab7e-0e0423d1f18f
+INFO 2026-05-04 01:47:00,575 runserver 7 125319874868928 HTTP GET /detailer-admin/ 302 [0.26, 172.18.0.15:41362]
+INFO 2026-05-04 01:47:00,915 runserver 7 125319874868928 HTTP GET /detailer-admin/login/?next=/detailer-admin/ 200 [0.25, 172.18.0.15:41374]
+INFO 2026-05-04 01:47:08,039 runserver 7 125319874868928 HTTP POST /detailer-admin/login/?next=/detailer-admin/ 302 [0.28, 172.18.0.15:41448]
+INFO 2026-05-04 01:47:08,202 runserver 7 125319874868928 HTTP GET /detailer-admin/ 200 [0.08, 172.18.0.15:41454]
+INFO 2026-05-04 01:47:11,288 runserver 7 125319874868928 HTTP GET /detailer-admin/main/detailer/ 200 [0.13, 172.18.0.15:41460]
+INFO 2026-05-04 01:47:11,478 runserver 7 125319874868928 HTTP GET /detailer-admin/jsi18n/ 200 [0.05, 172.18.0.15:41472]
+INFO 2026-05-06 01:21:02,301 autoreload 7 135854093959936 Watching for file changes with StatReloader
+INFO 2026-05-06 01:21:04,100 server 7 135853981562560 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-06 01:21:04,101 server 7 135853981562560 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-06 01:21:04,104 server 7 135853981562560 Listening on TCP address 0.0.0.0:8000
+INFO 2026-05-06 02:01:00,300 autoreload 7 135854093959936 /app/prisma/settings.py changed, reloading.
+INFO 2026-05-06 02:01:02,878 autoreload 9 137898938479360 Watching for file changes with StatReloader
+INFO 2026-05-06 02:01:03,462 server 9 137898826397376 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-06 02:01:03,463 server 9 137898826397376 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-06 02:01:03,464 server 9 137898826397376 Listening on TCP address 0.0.0.0:8000
+INFO 2026-05-06 02:01:13,837 autoreload 9 137898938479360 /app/prisma/settings.py changed, reloading.
+INFO 2026-05-06 02:01:15,370 autoreload 11 130192199123712 Watching for file changes with StatReloader
+INFO 2026-05-06 02:01:15,907 server 11 130192087447232 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-06 02:01:15,908 server 11 130192087447232 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-06 02:01:15,909 server 11 130192087447232 Listening on TCP address 0.0.0.0:8000
+INFO 2026-05-06 02:01:17,531 autoreload 11 130192199123712 /app/prisma/settings.py changed, reloading.
+INFO 2026-05-06 02:01:19,629 autoreload 13 138015625564928 Watching for file changes with StatReloader
+INFO 2026-05-06 02:01:20,509 server 13 138015512983232 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-06 02:01:20,511 server 13 138015512983232 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-06 02:01:20,513 server 13 138015512983232 Listening on TCP address 0.0.0.0:8000
+INFO 2026-05-06 02:01:23,683 autoreload 13 138015625564928 /app/prisma/settings.py changed, reloading.
+INFO 2026-05-06 02:01:25,430 autoreload 15 128762814034688 Watching for file changes with StatReloader
+INFO 2026-05-06 02:01:25,960 server 15 128762702198464 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-05-06 02:01:25,961 server 15 128762702198464 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-05-06 02:01:25,963 server 15 128762702198464 Listening on TCP address 0.0.0.0:8000

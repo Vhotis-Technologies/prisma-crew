@@ -1678,3 +1678,28 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
     raise DisallowedHost(msg)
 django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'detailer_staging_server:8000'. The domain name provided is not valid according to RFC 1034/1035.
+ERROR 2026-04-30 20:51:00,106 log 7 124507935205056 Invalid HTTP_HOST header: '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app'. You may need to add '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 557, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 506, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 561, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 203, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app'. You may need to add '4c69-2a02-8084-c80-ea80-446e-e1c4-d0b9-f5d7.ngrok-free.app' to ALLOWED_HOSTS.
