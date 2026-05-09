@@ -123,11 +123,22 @@ DATABASES = {
 
 # Staging: local media. Production: Google Cloud Storage.
 if IS_STAGING:
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+    GS_CREDENTIALS_PATH_STAGING = os.path.join(BASE_DIR, 'prisma-6fc48-642e49c334e8.json')
+    GS_BUCKET_NAME_STAGING = os.getenv('GS_BUCKET_NAME_STAGING', 'prisma_staging_bucket')
+    GS_LOCATION_STAGING = os.getenv('GS_LOCATION_STAGING', 'main-app')
+    GS_CREDENTIALS_STAGING = service_account.Credentials.from_service_account_file(
+        GS_CREDENTIALS_PATH_STAGING,
+        scopes=['https://www.googleapis.com/auth/cloud-platform'],
+    )
     STORAGES = {
         'default': {
-            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
+            'OPTIONS': {
+                'bucket_name': GS_BUCKET_NAME_STAGING,
+                'location': GS_LOCATION_STAGING,
+                'credentials': GS_CREDENTIALS_STAGING,
+                'default_acl': None,
+            },
         },
         'staticfiles': {
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
