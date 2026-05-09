@@ -59,6 +59,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -301,12 +302,20 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_DEFAULT_QUEUE = 'detailer_queue'
 CELERY_TASK_DEFAULT_QUEUE = 'detailer_queue'
 
+# Auth model for the detailer database
 AUTH_USER_MODEL = 'main.User'
+
+# Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Whitenoise configuration
+WHITENOISE_USE_FINDERS = DEBUG
+
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
