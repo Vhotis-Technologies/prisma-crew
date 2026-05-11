@@ -395,10 +395,18 @@ class AppointmentView(APIView):
             if image_count == 0:
                 return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
             
-            return Response({
+            resp = Response({
                 "message": f"{image_count} before {segment} image(s) uploaded successfully",
                 "images": uploaded_images
             }, status=status.HTTP_201_CREATED)
+            # Republish job_started so the client stack receives before_images after DB + storage exist.
+            # skip_client_notification avoids duplicate "appointment started" push/in-app notification.
+            if job.status == 'in_progress' and image_count > 0:
+                publish_job_started.delay(
+                    job.booking_reference,
+                    skip_client_notification=True,
+                )
+            return resp
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -472,10 +480,18 @@ class AppointmentView(APIView):
             if image_count == 0:
                 return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
             
-            return Response({
+            resp = Response({
                 "message": f"{image_count} after {segment} image(s) uploaded successfully",
                 "images": uploaded_images
             }, status=status.HTTP_201_CREATED)
+            # Republish job_completed payload so client receives after_images once DB + storage exist.
+            # skip_client_notification avoids marking booking completed / duplicate completion notifications.
+            if job.status == 'in_progress' and image_count > 0:
+                publish_job_completed.delay(
+                    job.booking_reference,
+                    skip_client_notification=True,
+                )
+            return resp
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

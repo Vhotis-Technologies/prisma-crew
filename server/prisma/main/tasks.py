@@ -105,7 +105,14 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
 
 
 @shared_task
-def publish_job_started(booking_reference):
+def publish_job_started(booking_reference, skip_client_notification=False):
+    """
+    Publish job_started to Redis with current before images from the detailer Job.
+
+    skip_client_notification: when True (e.g. republish after uploading before photos),
+    the client consumer should only sync BookedAppointmentImage rows and must not send
+    a second "appointment started" push/notification.
+    """
     try:
         from main.models import Job
         from main.util.media_helper import get_full_media_url
@@ -114,11 +121,16 @@ def publish_job_started(booking_reference):
         try:
             job = Job.objects.get(booking_reference=booking_reference)
             
-            # Collect ONLY before images with segment
+            # Collect ONLY before images with segment; omit rows with no usable URL
             before_images = []
             for img in job.images.filter(image_type='before'):
+                if not img.image:
+                    continue
+                image_url = get_full_media_url(img.image.url)
+                if not image_url or not str(image_url).strip():
+                    continue
                 before_images.append({
-                    'image_url': get_full_media_url(img.image.url),
+                    'image_url': str(image_url).strip(),
                     'uploaded_at': img.uploaded_at.isoformat(),
                     'segment': img.segment
                 })
@@ -126,15 +138,19 @@ def publish_job_started(booking_reference):
             # Structure the message with booking reference and before images
             message_data = {
                 'booking_reference': booking_reference,
-                'before_images': before_images
+                'before_images': before_images,
             }
+            if skip_client_notification:
+                message_data['skip_client_notification'] = True
             
         except Job.DoesNotExist:
             # If job not found, send just the booking reference (backwards compatible)
             message_data = {
                 'booking_reference': booking_reference,
-                'before_images': []
+                'before_images': [],
             }
+            if skip_client_notification:
+                message_data['skip_client_notification'] = True
         payload = json.dumps(message_data)
         msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_started', 'payload': payload})
         return f"Job started published to stream: {msg_id}"
@@ -143,7 +159,14 @@ def publish_job_started(booking_reference):
 
 
 @shared_task
-def publish_job_completed(booking_reference):
+def publish_job_completed(booking_reference, skip_client_notification=False):
+    """
+    Publish job_completed to Redis with current after images (and optional fleet data).
+
+    skip_client_notification: when True (e.g. republish after uploading after photos while
+    the job is still in progress), the client should only sync BookedAppointmentImage rows and
+    must not mark the booking completed or send completion push/notification / fleet merge.
+    """
     try:
         from main.models import Job
         from main.util.media_helper import get_full_media_url
@@ -152,35 +175,42 @@ def publish_job_completed(booking_reference):
         try:
             job = Job.objects.get(booking_reference=booking_reference)
             
-            # Collect ONLY after images with segment
+            # Collect ONLY after images with segment; omit rows with no usable URL
             after_images = []
             for img in job.images.filter(image_type='after'):
+                if not img.image:
+                    continue
+                image_url = get_full_media_url(img.image.url)
+                if not image_url or not str(image_url).strip():
+                    continue
                 after_images.append({
-                    'image_url': get_full_media_url(img.image.url),
+                    'image_url': str(image_url).strip(),
                     'uploaded_at': img.uploaded_at.isoformat(),
                     'segment': img.segment
                 })
             
-            # Get fleet maintenance data if exists
+            # Fleet maintenance only on real completion (avoid partial updates on image sync)
             fleet_maintenance_data = None
-            if hasattr(job, 'fleet_maintenance') and job.fleet_maintenance:
+            if not skip_client_notification and hasattr(job, 'fleet_maintenance') and job.fleet_maintenance:
                 from main.serializer import JobFleetMaintenanceSerializer
                 fleet_maintenance_data = JobFleetMaintenanceSerializer(job.fleet_maintenance).data
             
-            # Structure the message with booking reference, after images, and fleet maintenance
             message_data = {
                 'booking_reference': booking_reference,
                 'after_images': after_images,
                 'fleet_maintenance': fleet_maintenance_data
             }
+            if skip_client_notification:
+                message_data['skip_client_notification'] = True
             
         except Job.DoesNotExist:
-            # If job not found, send just the booking reference (backwards compatible)
             message_data = {
                 'booking_reference': booking_reference,
                 'after_images': [],
                 'fleet_maintenance': None
             }
+            if skip_client_notification:
+                message_data['skip_client_notification'] = True
         payload = _json_dumps_safe(message_data)
         msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_completed', 'payload': payload})
         return f"Job completed published to stream: {msg_id}"
