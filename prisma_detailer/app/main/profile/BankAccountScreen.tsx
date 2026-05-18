@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
@@ -13,9 +12,15 @@ import { Ionicons } from "@expo/vector-icons";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import { useBankAccount } from "@/app/app-hooks/useBankAccount";
-import { BankAccountProps } from "@/app/interfaces/BankingInterface";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "@/app/components/helpers/StyledText";
+
+function maskIban(iban?: string): string {
+  if (!iban) return "";
+  const cleaned = iban.replace(/\s/g, "");
+  if (cleaned.length <= 4) return cleaned;
+  return `****${cleaned.slice(-4)}`;
+}
 
 const BankAccountScreen: React.FC = () => {
   const {
@@ -76,28 +81,11 @@ const BankAccountScreen: React.FC = () => {
           <View style={styles.form}>
             <StyledTextInput
               label="Account Holder Name"
-              value={getUserFullName()}
-              editable={false}
-              info="This is your registered name"
-            />
-
-            <StyledTextInput
-              label="Bank Name *"
-              value={newBankAccount?.bank_name}
+              value={newBankAccount?.account_name ?? getUserFullName()}
               onChangeText={(value) =>
-                collectBankAccountInformation("bank_name", value)
+                collectBankAccountInformation("account_name", value)
               }
-              placeholder="Enter bank name"
-            />
-
-            <StyledTextInput
-              label="Account Number *"
-              value={newBankAccount?.account_number}
-              onChangeText={(value) =>
-                collectBankAccountInformation("account_number", value)
-              }
-              placeholder="Enter account number"
-              keyboardType="numeric"
+              info="The name on the bank account that will receive payouts."
             />
 
             <StyledTextInput
@@ -108,25 +96,7 @@ const BankAccountScreen: React.FC = () => {
               }
               placeholder="Enter IBAN"
               autoCapitalize="characters"
-            />
-
-            <StyledTextInput
-              label="BIC/SWIFT Code"
-              value={newBankAccount?.bic}
-              onChangeText={(value) =>
-                collectBankAccountInformation("bic", value)
-              }
-              placeholder="Enter BIC/SWIFT code"
-              autoCapitalize="characters"
-            />
-
-            <StyledTextInput
-              label="Sort Code"
-              value={newBankAccount?.sort_code}
-              onChangeText={(value) =>
-                collectBankAccountInformation("sort_code", value)
-              }
-              placeholder="Enter sort code (e.g., 12-34-56)"
+              info="Only your IBAN is required to receive payouts."
             />
 
             <View style={styles.formActions}>
@@ -181,13 +151,10 @@ const BankAccountScreen: React.FC = () => {
                 <View style={styles.accountHeader}>
                   <View style={styles.accountInfo}>
                     <StyledText variant="titleMedium">
-                      {account.bank_name}
+                      {account.account_name}
                     </StyledText>
                     <StyledText variant="bodyMedium">
-                      ****{account.account_number.slice(-4)}
-                    </StyledText>
-                    <StyledText variant="bodySmall">
-                      {account.account_name}
+                      {maskIban(account.iban)}
                     </StyledText>
                   </View>
 
@@ -218,22 +185,6 @@ const BankAccountScreen: React.FC = () => {
                     <StyledText variant="bodySmall">IBAN:</StyledText>
                     <StyledText variant="bodySmall">{account.iban}</StyledText>
                   </View>
-
-                  {account.bic && (
-                    <View style={styles.detailRow}>
-                      <StyledText variant="bodySmall">BIC/SWIFT:</StyledText>
-                      <StyledText variant="bodySmall">{account.bic}</StyledText>
-                    </View>
-                  )}
-
-                  {account.sort_code && (
-                    <View style={styles.detailRow}>
-                      <StyledText variant="bodySmall">Sort Code:</StyledText>
-                      <StyledText variant="bodySmall">
-                        {account.sort_code}
-                      </StyledText>
-                    </View>
-                  )}
                 </View>
 
                 {!account.is_default && (

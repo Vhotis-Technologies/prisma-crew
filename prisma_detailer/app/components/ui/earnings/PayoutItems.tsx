@@ -32,7 +32,7 @@ const PayoutCardItem = ({ payout, onPress }: PayoutCardItemProps) => {
   };
 
   /**
-   * Get bank account display name
+   * Get bank account display name (IBAN-masked, last 4 chars).
    */
   const getBankDisplayName = (bankAccount: any) => {
     try {
@@ -40,12 +40,14 @@ const PayoutCardItem = ({ payout, onPress }: PayoutCardItemProps) => {
         return "Unknown Bank Account";
       }
 
-      if (!bankAccount.account_number || !bankAccount.bank_name) {
+      const iban: string | undefined = bankAccount.iban;
+      if (!iban) {
         return "Incomplete Bank Info";
       }
 
-      const lastFour = bankAccount.account_number.toString().slice(-4);
-      return `${bankAccount.bank_name} •••• ${lastFour}`;
+      const cleaned = iban.toString().replace(/\s/g, "");
+      const lastFour = cleaned.slice(-4);
+      return `IBAN •••• ${lastFour}`;
     } catch (error) {
       console.error("Error in getBankDisplayName:", error);
       return "Bank Account Error";

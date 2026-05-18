@@ -64,17 +64,9 @@ export const useBankAccount = () => {
   /* Validate the  */
 
   const handleAddBankAccount = useCallback(async () => {
-    // Validate required fields
-    if (
-      !newBankAccount.account_number ||
-      !newBankAccount.bank_name ||
-      !newBankAccount.account_name ||
-      !newBankAccount.iban ||
-      !newBankAccount.bic ||
-      !newBankAccount.sort_code
-    ) {
+    if (!newBankAccount?.account_name || !newBankAccount?.iban) {
       showSnackbarWithConfig({
-        message: "Please fill in all the details",
+        message: "Account name and IBAN are required",
         type: "error",
         duration: 3000,
       });
@@ -301,86 +293,27 @@ export const useBankAccount = () => {
     return `${user.first_name} ${user.last_name}`.trim();
   }, [user]);
 
-  const cleanSwiftCode = useCallback((swiftCode: string): string => {
-    if (!swiftCode) return "";
-
-    // Remove spaces and special characters, convert to uppercase
-    const cleaned = swiftCode.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-
-    // Limit to 11 characters (max SWIFT code length)
-    return cleaned.substring(0, 11);
-  }, []);
-
-  const cleanSortCode = useCallback((sortCode: string): string => {
-    if (!sortCode) return "";
-
-    // Remove all non-digit characters
-    const cleaned = sortCode.replace(/[^0-9]/g, "");
-
-    // Limit to 6 digits (UK sort code standard)
-    return cleaned.substring(0, 6);
-  }, []);
-
   const cleanIban = useCallback((iban: string): string => {
     if (!iban) return "";
 
-    // Remove spaces and special characters, convert to uppercase
     const cleaned = iban.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-
-    // Limit to 34 characters (max IBAN length)
     return cleaned.substring(0, 34);
-  }, []);
-
-  const cleanAccountNumber = useCallback((accountNumber: string): string => {
-    if (!accountNumber) return "";
-
-    // Remove all non-digit characters
-    const cleaned = accountNumber.replace(/[^0-9]/g, "");
-
-    // Limit to 10 digits (standard account number length)
-    return cleaned.substring(0, 10);
   }, []);
 
   const collectBankAccountInformation = (
     fields: keyof BankAccountProps,
     values: string
   ) => {
-    // Initialize with default values if no existing data
     const currentData = newBankAccount || {
       account_name: getUserFullName(),
-      bank_name: "",
-      account_number: "",
       iban: "",
-      bic: "",
-      sort_code: "",
     };
 
-    // Clean and format the value based on the field type
-    let cleanedValue = values;
-    switch (fields) {
-      case "account_number":
-        cleanedValue = cleanAccountNumber(values);
-        break;
-      case "iban":
-        cleanedValue = cleanIban(values);
-        break;
-      case "bic":
-        cleanedValue = cleanSwiftCode(values);
-        break;
-      case "sort_code":
-        cleanedValue = cleanSortCode(values);
-        break;
-      default:
-        cleanedValue = values;
-    }
-
-    // Update Redux state with new field value
+    const cleanedValue = fields === "iban" ? cleanIban(values) : values;
     dispatch(setNewBankAccount({ ...currentData, [fields]: cleanedValue }));
   };
 
-  // Return hook interface
   return {
-    // State
     bankAccounts,
     isLoadingBankAccounts,
     isLoadingAddBankAccount,
@@ -388,7 +321,6 @@ export const useBankAccount = () => {
     isLoadingSetDefaultBankAccount,
     newBankAccount,
 
-    // Methods
     handleAddBankAccount,
     handleRemoveBankAccount,
     handleSetDefaultBankAccount,
@@ -396,10 +328,6 @@ export const useBankAccount = () => {
     collectBankAccountInformation,
     refetchBankAccounts,
 
-    // Cleaning and formatting methods
-    cleanSwiftCode,
-    cleanSortCode,
     cleanIban,
-    cleanAccountNumber,
   };
 };

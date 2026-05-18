@@ -1,12 +1,8 @@
 // Bank Account Management
 export interface BankAccountProps {
   id?: string;
-  account_number: string;
   account_name: string;
-  bank_name: string;
   iban: string;
-  bic: string;
-  sort_code: string;
   is_primary?: boolean;
   is_verified?: boolean;
   created_at?: string;

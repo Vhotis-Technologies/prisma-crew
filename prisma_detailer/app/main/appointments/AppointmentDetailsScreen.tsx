@@ -26,6 +26,9 @@ import { FleetMaintenanceProps } from "@/app/interfaces/AppointmentInterface";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 
+/** Max before/after photos per segment (interior or exterior), uploaded plus captured. */
+const MAX_SEGMENT_JOB_IMAGES = 4;
+
 /**
  * AppointmentDetailsScreen Component
  *
@@ -146,7 +149,28 @@ const AppointmentDetailsScreen = () => {
    */
   const handleBeforeImageCapture = async (segment: "interior" | "exterior") => {
     try {
-      const images = await captureMultipleCameraImages(5, imageAlertHelpers);
+      const uploadedInterior =
+        appointmentDetails?.before_images_interior?.length || 0;
+      const uploadedExterior =
+        appointmentDetails?.before_images_exterior?.length || 0;
+      const uploaded =
+        segment === "interior" ? uploadedInterior : uploadedExterior;
+      const captured =
+        segment === "interior"
+          ? capturedBeforeImagesInterior.length
+          : capturedBeforeImagesExterior.length;
+      const remaining = MAX_SEGMENT_JOB_IMAGES - uploaded - captured;
+      if (remaining <= 0) {
+        imageAlertHelpers.showAlert(
+          "Photo limit reached",
+          `You can have at most ${MAX_SEGMENT_JOB_IMAGES} ${segment} before photos. Remove one to add more.`
+        );
+        return;
+      }
+      const images = await captureMultipleCameraImages(
+        remaining,
+        imageAlertHelpers
+      );
       if (images && images.length > 0) {
         if (segment === "interior") {
           setCapturedBeforeImagesInterior((prev) => [...prev, ...images]);
@@ -164,7 +188,28 @@ const AppointmentDetailsScreen = () => {
    */
   const handleAfterImageCapture = async (segment: "interior" | "exterior") => {
     try {
-      const images = await captureMultipleCameraImages(5, imageAlertHelpers);
+      const uploadedInterior =
+        appointmentDetails?.after_images_interior?.length || 0;
+      const uploadedExterior =
+        appointmentDetails?.after_images_exterior?.length || 0;
+      const uploaded =
+        segment === "interior" ? uploadedInterior : uploadedExterior;
+      const captured =
+        segment === "interior"
+          ? capturedAfterImagesInterior.length
+          : capturedAfterImagesExterior.length;
+      const remaining = MAX_SEGMENT_JOB_IMAGES - uploaded - captured;
+      if (remaining <= 0) {
+        imageAlertHelpers.showAlert(
+          "Photo limit reached",
+          `You can have at most ${MAX_SEGMENT_JOB_IMAGES} ${segment} after photos. Remove one to add more.`
+        );
+        return;
+      }
+      const images = await captureMultipleCameraImages(
+        remaining,
+        imageAlertHelpers
+      );
       if (images && images.length > 0) {
         if (segment === "interior") {
           setCapturedAfterImagesInterior((prev) => [...prev, ...images]);
@@ -478,7 +523,8 @@ const AppointmentDetailsScreen = () => {
         const beforeExteriorTotal =
           beforeExteriorUploaded + capturedBeforeImagesExterior.length;
         const canStartJob =
-          beforeInteriorTotal >= 4 && beforeExteriorTotal >= 4;
+          beforeInteriorTotal >= MAX_SEGMENT_JOB_IMAGES &&
+          beforeExteriorTotal >= MAX_SEGMENT_JOB_IMAGES;
 
         return (
           <View style={styles.buttonContainer}>
@@ -507,8 +553,8 @@ const AppointmentDetailsScreen = () => {
         const afterExteriorTotal =
           afterExteriorUploaded + capturedAfterImagesExterior.length;
         const canCompleteJob =
-          afterInteriorTotal >= 4 &&
-          afterExteriorTotal >= 4 &&
+          afterInteriorTotal >= MAX_SEGMENT_JOB_IMAGES &&
+          afterExteriorTotal >= MAX_SEGMENT_JOB_IMAGES &&
           fleetMaintenanceSubmitted;
 
         return (
@@ -892,12 +938,12 @@ const AppointmentDetailsScreen = () => {
                   Captured: {capturedBeforeImagesInterior.length} (
                   {(appointmentDetails?.before_images_interior?.length || 0) +
                     capturedBeforeImagesInterior.length >=
-                  4
+                  MAX_SEGMENT_JOB_IMAGES
                     ? "✓"
                     : `${
                         (appointmentDetails?.before_images_interior?.length ||
                           0) + capturedBeforeImagesInterior.length
-                      }/4`}
+                      }/${MAX_SEGMENT_JOB_IMAGES}`}
                   )
                 </StyledText>
               </View>
@@ -940,7 +986,20 @@ const AppointmentDetailsScreen = () => {
 
                 {/* Capture button */}
                 <TouchableOpacity
-                  style={[styles.uploadButton, { borderColor }]}
+                  style={[
+                    styles.uploadButton,
+                    { borderColor },
+                    (appointmentDetails?.before_images_interior?.length || 0) +
+                      capturedBeforeImagesInterior.length >=
+                    MAX_SEGMENT_JOB_IMAGES
+                      ? { opacity: 0.45 }
+                      : null,
+                  ]}
+                  disabled={
+                    (appointmentDetails?.before_images_interior?.length || 0) +
+                      capturedBeforeImagesInterior.length >=
+                    MAX_SEGMENT_JOB_IMAGES
+                  }
                   onPress={() => handleBeforeImageCapture("interior")}
                 >
                   <Ionicons name="camera" size={24} color={tintColor} />
@@ -963,12 +1022,12 @@ const AppointmentDetailsScreen = () => {
                   Captured: {capturedBeforeImagesExterior.length} (
                   {(appointmentDetails?.before_images_exterior?.length || 0) +
                     capturedBeforeImagesExterior.length >=
-                  4
+                  MAX_SEGMENT_JOB_IMAGES
                     ? "✓"
                     : `${
                         (appointmentDetails?.before_images_exterior?.length ||
                           0) + capturedBeforeImagesExterior.length
-                      }/4`}
+                      }/${MAX_SEGMENT_JOB_IMAGES}`}
                   )
                 </StyledText>
               </View>
@@ -1011,7 +1070,20 @@ const AppointmentDetailsScreen = () => {
 
                 {/* Capture button */}
                 <TouchableOpacity
-                  style={[styles.uploadButton, { borderColor }]}
+                  style={[
+                    styles.uploadButton,
+                    { borderColor },
+                    (appointmentDetails?.before_images_exterior?.length || 0) +
+                      capturedBeforeImagesExterior.length >=
+                    MAX_SEGMENT_JOB_IMAGES
+                      ? { opacity: 0.45 }
+                      : null,
+                  ]}
+                  disabled={
+                    (appointmentDetails?.before_images_exterior?.length || 0) +
+                      capturedBeforeImagesExterior.length >=
+                    MAX_SEGMENT_JOB_IMAGES
+                  }
                   onPress={() => handleBeforeImageCapture("exterior")}
                 >
                   <Ionicons name="camera" size={24} color={tintColor} />
@@ -1047,12 +1119,12 @@ const AppointmentDetailsScreen = () => {
                     Captured: {capturedAfterImagesInterior.length} (
                     {(appointmentDetails?.after_images_interior?.length || 0) +
                       capturedAfterImagesInterior.length >=
-                    4
+                    MAX_SEGMENT_JOB_IMAGES
                       ? "✓"
                       : `${
                           (appointmentDetails?.after_images_interior?.length ||
                             0) + capturedAfterImagesInterior.length
-                        }/4`}
+                        }/${MAX_SEGMENT_JOB_IMAGES}`}
                     )
                   </StyledText>
                 </View>
@@ -1099,7 +1171,20 @@ const AppointmentDetailsScreen = () => {
 
                   {/* Capture button */}
                   <TouchableOpacity
-                    style={[styles.uploadButton, { borderColor }]}
+                    style={[
+                      styles.uploadButton,
+                      { borderColor },
+                      (appointmentDetails?.after_images_interior?.length || 0) +
+                        capturedAfterImagesInterior.length >=
+                      MAX_SEGMENT_JOB_IMAGES
+                        ? { opacity: 0.45 }
+                        : null,
+                    ]}
+                    disabled={
+                      (appointmentDetails?.after_images_interior?.length || 0) +
+                        capturedAfterImagesInterior.length >=
+                      MAX_SEGMENT_JOB_IMAGES
+                    }
                     onPress={() => handleAfterImageCapture("interior")}
                   >
                     <Ionicons name="camera" size={24} color={tintColor} />
@@ -1122,12 +1207,12 @@ const AppointmentDetailsScreen = () => {
                     Captured: {capturedAfterImagesExterior.length} (
                     {(appointmentDetails?.after_images_exterior?.length || 0) +
                       capturedAfterImagesExterior.length >=
-                    4
+                    MAX_SEGMENT_JOB_IMAGES
                       ? "✓"
                       : `${
                           (appointmentDetails?.after_images_exterior?.length ||
                             0) + capturedAfterImagesExterior.length
-                        }/4`}
+                        }/${MAX_SEGMENT_JOB_IMAGES}`}
                     )
                   </StyledText>
                 </View>
@@ -1174,7 +1259,20 @@ const AppointmentDetailsScreen = () => {
 
                   {/* Capture button */}
                   <TouchableOpacity
-                    style={[styles.uploadButton, { borderColor }]}
+                    style={[
+                      styles.uploadButton,
+                      { borderColor },
+                      (appointmentDetails?.after_images_exterior?.length || 0) +
+                        capturedAfterImagesExterior.length >=
+                      MAX_SEGMENT_JOB_IMAGES
+                        ? { opacity: 0.45 }
+                        : null,
+                    ]}
+                    disabled={
+                      (appointmentDetails?.after_images_exterior?.length || 0) +
+                        capturedAfterImagesExterior.length >=
+                      MAX_SEGMENT_JOB_IMAGES
+                    }
                     onPress={() => handleAfterImageCapture("exterior")}
                   >
                     <Ionicons name="camera" size={24} color={tintColor} />

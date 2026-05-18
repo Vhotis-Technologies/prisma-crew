@@ -1,83 +1,134 @@
-import { useEffect, useState } from "react";
+/**
+ * Expo OTA update monitor.
+ *
+ * - Reactively tracks update state via `Updates.useUpdates()`.
+ * - Checks on mount and whenever the app returns to the foreground
+ *   (throttled to avoid hammering the EAS Update server).
+ * - Auto-downloads any available update in the background so the user-facing
+ *   reload prompt is instantaneous.
+ * - Handles rollback-to-embedded directives.
+ * - Surfaces user-visible prompts through the app-wide `AlertContext`.
+ * - No-ops in development, in Expo Go, or when `expo-updates` is disabled.
+ */
+import { useCallback, useEffect, useRef } from "react";
 import * as Updates from "expo-updates";
-import Constants from "expo-constants";
+import { AppState, type AppStateStatus } from "react-native";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 
+const MIN_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
 export const useUpdateMonitor = () => {
-  const [isCheckingForUpdate, setIsCheckingForUpdate] = useState(false);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
   const { setAlertConfig } = useAlertContext();
 
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      // Skip update checks in development
-      if (__DEV__) {
-        return;
-      }
+  const {
+    currentlyRunning,
+    availableUpdate,
+    isUpdateAvailable,
+    isUpdatePending,
+    isChecking,
+    isDownloading,
+    checkError,
+    downloadError,
+  } = Updates.useUpdates();
 
-      // Check if updates are enabled
-      if (!Updates.isEnabled) {
-        return;
-      }
+  const lastCheckRef = useRef(0);
+  const fetchedForRef = useRef<string | null>(null);
+  const promptedForRef = useRef<string | null>(null);
 
-      try {
-        setIsCheckingForUpdate(true);
-        const update = await Updates.checkForUpdateAsync();
-
-        if (update.isAvailable) {
-          setUpdateAvailable(true);
-
-          setAlertConfig({
-            isVisible: true,
-            title: "Update Available",
-            message:
-              "A new version of the app is available. Would you like to download and install it now?",
-            type: "warning",
-            onClose: () => {},
-            onConfirm: async () => {
-              try {
-                await Updates.fetchUpdateAsync();
-                await Updates.reloadAsync();
-              } catch (error) {
-                setAlertConfig({
-                  isVisible: true,
-                  title: "Update Failed",
-                  message:
-                    "Failed to install update. Please try again later.",
-                  type: "error",
-                  onConfirm: () => {},
-                });
-              }
-            },
-          });
-        }
-      } catch (error: any) {
-        if (__DEV__) {
-          setAlertConfig({
-            isVisible: true,
-            title: "Update Check Failed",
-            message: error.message,
-            type: "error",
-            onConfirm: () => {},
-          });
-        }
-      } finally {
-        setIsCheckingForUpdate(false);
-      }
-    };
-
-    // Check for updates on app start
-    checkForUpdates();
-
-    // Set up periodic checks (every 5 minutes) - only in production
-    if (!__DEV__) {
-      const interval = setInterval(checkForUpdates, 300000);
-      return () => clearInterval(interval);
+  const checkForUpdates = useCallback(async (force = false) => {
+    if (__DEV__ || !Updates.isEnabled) return;
+    const now = Date.now();
+    if (!force && now - lastCheckRef.current < MIN_CHECK_INTERVAL_MS) return;
+    lastCheckRef.current = now;
+    try {
+      await Updates.checkForUpdateAsync();
+    } catch {
+      // useUpdates() exposes the error reactively via `checkError`.
     }
   }, []);
 
+  useEffect(() => {
+    void checkForUpdates(true);
+    const sub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") void checkForUpdates();
+    });
+    return () => sub.remove();
+  }, [checkForUpdates]);
+
+  useEffect(() => {
+    if (__DEV__ || !Updates.isEnabled) return;
+    if (!isUpdateAvailable || isDownloading || isUpdatePending) return;
+
+    const id = availableUpdate?.updateId ?? "rollback-to-embedded";
+    if (fetchedForRef.current === id) return;
+    fetchedForRef.current = id;
+
+    Updates.fetchUpdateAsync().catch(() => {
+      fetchedForRef.current = null;
+    });
+  }, [isUpdateAvailable, isDownloading, isUpdatePending, availableUpdate]);
+
+  useEffect(() => {
+    if (!isUpdatePending) return;
+
+    const id = availableUpdate?.updateId ?? "rollback-to-embedded";
+    if (promptedForRef.current === id) return;
+    promptedForRef.current = id;
+
+    setAlertConfig({
+      isVisible: true,
+      title: "Update Ready",
+      message:
+        "A new version of the app has been downloaded. Reload now to apply it?",
+      type: "warning",
+      onClose: () => {},
+      onConfirm: () => {
+        Updates.reloadAsync().catch((err: unknown) => {
+          setAlertConfig({
+            isVisible: true,
+            title: "Reload Failed",
+            message:
+              err instanceof Error
+                ? err.message
+                : "Please close and reopen the app to apply the update.",
+            type: "error",
+            onConfirm: () => {},
+          });
+        });
+      },
+    });
+  }, [isUpdatePending, availableUpdate, setAlertConfig]);
+
+  useEffect(() => {
+    if (!__DEV__) return;
+    if (checkError) {
+      setAlertConfig({
+        isVisible: true,
+        title: "Update Check Failed",
+        message: checkError.message,
+        type: "error",
+        onConfirm: () => {},
+      });
+    }
+    if (downloadError) {
+      setAlertConfig({
+        isVisible: true,
+        title: "Update Download Failed",
+        message: downloadError.message,
+        type: "error",
+        onConfirm: () => {},
+      });
+    }
+  }, [checkError, downloadError, setAlertConfig]);
+
   return {
-    isCheckingForUpdate,
-    updateAvailable,
+    currentlyRunning,
+    isCheckingForUpdate: isChecking,
+    isDownloading,
+    isUpdateAvailable,
+    isUpdatePending,
+    checkError,
+    downloadError,
+    checkForUpdates,
   };
 };

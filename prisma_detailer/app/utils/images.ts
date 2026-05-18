@@ -182,7 +182,7 @@ export const captureCameraOnlyImage = async (
  * Captures multiple images using ONLY the camera (no gallery access).
  * Allows capturing up to a specified number of images in sequence.
  *
- * @param maxImages - Maximum number of images to capture (default: 5)
+ * @param maxImages - Maximum number of images to capture in this session
  * @param alertHelpers - Alert helpers for "Capture another?" confirm and errors
  * @returns Array of captured images
  */
@@ -198,7 +198,7 @@ export const captureMultipleCameraImages = async (
         ? true
         : await alertHelpers.showConfirm(
             "Capture Another Image?",
-            `You have captured ${i} image${i > 1 ? "s" : ""}. Would you like to capture another?`
+            `You have captured ${i} image${i > 1 ? "s" : ""}. Please capture another image.`
           );
 
     if (!shouldContinue) break;
