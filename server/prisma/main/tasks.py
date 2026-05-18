@@ -105,6 +105,37 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
 
 
 @shared_task
+def publish_job_reassigned(booking_reference, old_detailer_ids, new_detailers_payload, is_bulk=False):
+    """Publish job_reassigned to Redis so the client app can swap assigned detailers silently.
+
+    The client consumer applies ``new_detailers_payload`` via ``assign_detailers_to_booking``
+    without sending a customer-facing email or push (assignment-only update).
+    """
+    try:
+        message_data = {
+            'booking_reference': booking_reference,
+            'old_detailer_ids': [str(d) for d in (old_detailer_ids or []) if d],
+            'detailers': [
+                {
+                    'id': d.get('id'),
+                    'name': (d.get('name') or '').strip(),
+                    'phone': (d.get('phone') or '').strip(),
+                    'rating': float(d.get('rating', 0) or 0),
+                    'image': d.get('image'),
+                }
+                for d in (new_detailers_payload or [])
+                if isinstance(d, dict)
+            ],
+            'is_bulk': bool(is_bulk),
+        }
+        payload = json.dumps(message_data)
+        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_reassigned', 'payload': payload})
+        return f"Job reassigned event published to stream: {msg_id}"
+    except Exception as e:
+        return f"Failed to publish job reassigned event: {str(e)}"
+
+
+@shared_task
 def publish_job_started(booking_reference, skip_client_notification=False):
     """
     Publish job_started to Redis with current before images from the detailer Job.

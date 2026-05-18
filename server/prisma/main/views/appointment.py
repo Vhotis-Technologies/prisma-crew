@@ -12,6 +12,9 @@ from main.tasks import publish_job_started, publish_job_completed
 # from asgiref.sync import async_to_sync
 # from main.task import send_job_accepted_email
 
+# Required count per segment for start/complete matches max allowed per segment.
+MAX_SEGMENT_JOB_IMAGES = 4
+
 
 class AppointmentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -241,27 +244,27 @@ class AppointmentView(APIView):
                     f"Appointment must be in progress before completing (current status: {appointment.status})"
                 )
 
-            # Validate that all required images are uploaded (4 interior + 4 exterior for both before and after)
+            # Validate that all required images are uploaded (per-segment min = max)
             before_interior_count = appointment.images.filter(image_type='before', segment='interior').count()
             before_exterior_count = appointment.images.filter(image_type='before', segment='exterior').count()
             after_interior_count = appointment.images.filter(image_type='after', segment='interior').count()
             after_exterior_count = appointment.images.filter(image_type='after', segment='exterior').count()
 
-            if before_interior_count < 4:
+            if before_interior_count < MAX_SEGMENT_JOB_IMAGES:
                 return _bad_request(
-                    f"Minimum 4 before interior images required. Current: {before_interior_count}"
+                    f"Minimum {MAX_SEGMENT_JOB_IMAGES} before interior images required. Current: {before_interior_count}"
                 )
-            if before_exterior_count < 4:
+            if before_exterior_count < MAX_SEGMENT_JOB_IMAGES:
                 return _bad_request(
-                    f"Minimum 4 before exterior images required. Current: {before_exterior_count}"
+                    f"Minimum {MAX_SEGMENT_JOB_IMAGES} before exterior images required. Current: {before_exterior_count}"
                 )
-            if after_interior_count < 4:
+            if after_interior_count < MAX_SEGMENT_JOB_IMAGES:
                 return _bad_request(
-                    f"Minimum 4 after interior images required. Current: {after_interior_count}"
+                    f"Minimum {MAX_SEGMENT_JOB_IMAGES} after interior images required. Current: {after_interior_count}"
                 )
-            if after_exterior_count < 4:
+            if after_exterior_count < MAX_SEGMENT_JOB_IMAGES:
                 return _bad_request(
-                    f"Minimum 4 after exterior images required. Current: {after_exterior_count}"
+                    f"Minimum {MAX_SEGMENT_JOB_IMAGES} after exterior images required. Current: {after_exterior_count}"
                 )
 
             appointment.status = 'completed'
@@ -366,34 +369,44 @@ class AppointmentView(APIView):
                     "error": "Can only upload before images for accepted or in-progress jobs"
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Get all image files from request.FILES
-            # Handle multiple images with keys like 'image_0', 'image_1', etc.
+            image_keys = [k for k in request.FILES if k.startswith('image')]
+            if not image_keys:
+                return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+            existing_before = JobImage.objects.filter(
+                job=job, image_type='before', segment=segment
+            ).count()
+            if existing_before + len(image_keys) > MAX_SEGMENT_JOB_IMAGES:
+                return Response(
+                    {
+                        "error": (
+                            f"At most {MAX_SEGMENT_JOB_IMAGES} before {segment} images per job "
+                            f"(have {existing_before}, cannot add {len(image_keys)})."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             uploaded_images = []
             image_count = 0
-            
-            for key in request.FILES:
-                if key.startswith('image'):
-                    image_file = request.FILES[key]
-                    
-                    # Create JobImage instance with segment
-                    job_image = JobImage.objects.create(
-                        job=job,
-                        image_type='before',
-                        segment=segment,
-                        image=image_file,
-                        uploaded_by=request.user
-                    )
-                    
-                    uploaded_images.append({
-                        'id': job_image.id,
-                        'image_url': get_full_media_url(job_image.image.url),
-                        'uploaded_at': job_image.uploaded_at.isoformat(),
-                        'segment': job_image.segment
-                    })
-                    image_count += 1
-            
-            if image_count == 0:
-                return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+            for key in image_keys:
+                image_file = request.FILES[key]
+                job_image = JobImage.objects.create(
+                    job=job,
+                    image_type='before',
+                    segment=segment,
+                    image=image_file,
+                    uploaded_by=request.user,
+                )
+                uploaded_images.append(
+                    {
+                        "id": job_image.id,
+                        "image_url": get_full_media_url(job_image.image.url),
+                        "uploaded_at": job_image.uploaded_at.isoformat(),
+                        "segment": job_image.segment,
+                    }
+                )
+                image_count += 1
             
             resp = Response({
                 "message": f"{image_count} before {segment} image(s) uploaded successfully",
@@ -451,34 +464,44 @@ class AppointmentView(APIView):
                     "error": "Can only upload after images for in-progress jobs"
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Get all image files from request.FILES
-            # Handle multiple images with keys like 'image_0', 'image_1', etc.
+            image_keys = [k for k in request.FILES if k.startswith('image')]
+            if not image_keys:
+                return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+            existing_after = JobImage.objects.filter(
+                job=job, image_type='after', segment=segment
+            ).count()
+            if existing_after + len(image_keys) > MAX_SEGMENT_JOB_IMAGES:
+                return Response(
+                    {
+                        "error": (
+                            f"At most {MAX_SEGMENT_JOB_IMAGES} after {segment} images per job "
+                            f"(have {existing_after}, cannot add {len(image_keys)})."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             uploaded_images = []
             image_count = 0
-            
-            for key in request.FILES:
-                if key.startswith('image'):
-                    image_file = request.FILES[key]
-                    
-                    # Create JobImage instance with segment
-                    job_image = JobImage.objects.create(
-                        job=job,
-                        image_type='after',
-                        segment=segment,
-                        image=image_file,
-                        uploaded_by=request.user
-                    )
-                    
-                    uploaded_images.append({
-                        'id': job_image.id,
-                        'image_url': get_full_media_url(job_image.image.url),
-                        'uploaded_at': job_image.uploaded_at.isoformat(),
-                        'segment': job_image.segment
-                    })
-                    image_count += 1
-            
-            if image_count == 0:
-                return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+            for key in image_keys:
+                image_file = request.FILES[key]
+                job_image = JobImage.objects.create(
+                    job=job,
+                    image_type='after',
+                    segment=segment,
+                    image=image_file,
+                    uploaded_by=request.user,
+                )
+                uploaded_images.append(
+                    {
+                        "id": job_image.id,
+                        "image_url": get_full_media_url(job_image.image.url),
+                        "uploaded_at": job_image.uploaded_at.isoformat(),
+                        "segment": job_image.segment,
+                    }
+                )
+                image_count += 1
             
             resp = Response({
                 "message": f"{image_count} after {segment} image(s) uploaded successfully",

@@ -128,7 +128,8 @@ jobs:
             sleep 10
             docker compose build
             docker compose up -d
-            docker compose exec -T detailer_server python manage.py makemigrations
+
+            echo "Running Django migrations..."
             docker compose exec -T detailer_server python manage.py migrate
             docker system prune -f
 
@@ -168,7 +169,8 @@ jobs:
             sleep 10
             docker compose -f docker-compose-staging.yml build
             docker compose -f docker-compose-staging.yml up -d
-            docker compose -f docker-compose-staging.yml exec -T detailer_staging_server python manage.py makemigrations
+
+            echo "Running Django migrations (staging)..."
             docker compose -f docker-compose-staging.yml exec -T detailer_staging_server python manage.py migrate
             docker system prune -f
 

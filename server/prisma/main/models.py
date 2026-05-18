@@ -526,23 +526,24 @@ class Earning(models.Model):
         self.save()
 
 
-""" Defines the account neccessary where the users earnings will be paid into """
+""" Defines the account neccessary where the users earnings will be paid into.
+
+Only ``account_name`` and ``iban`` are stored — every other field
+(bank name, sort code, BIC/SWIFT, raw account number) is unused for payouts and
+was removed.
+"""
 class BankAccount(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
-    account_number = models.CharField(max_length=20)
     account_name = models.CharField(max_length=100)
-    bank_name = models.CharField(max_length=100)
     iban = models.CharField(max_length=55)
-    bic = models.CharField(max_length=55)
-    sort_code = models.CharField(max_length=55)
     is_primary = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.account_name} - {self.account_number}'
+        return f'{self.account_name} - {self.iban}'
 
 # -------------------------------
 # Review
@@ -599,7 +600,7 @@ class PayoutHistory(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE, related_name="payout_history")
-    bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.SET_NULL, null=True, blank=True)
     payout_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payout_reference = models.CharField(max_length=100, unique=True, blank=True, null=True)
     status = models.CharField(max_length=20, choices=PAYOUT_STATUS_CHOICES, default="pending")
@@ -713,3 +714,46 @@ class PasswordResetToken(models.Model):
     
     def __str__(self):
         return f"Password reset token for {self.user.email}"
+
+
+# -------------------------------
+# Job Reassignment Audit
+# -------------------------------
+class JobReassignmentAudit(models.Model):
+    """Permanent record of every support-driven crew reassignment.
+
+    Captures who triggered it, why, the previous and new assignees, and a
+    snapshot of job status at the time so disputes can be reviewed later.
+    """
+
+    REASON_CHOICES = [
+        ('illness', 'Crew illness'),
+        ('emergency', 'Personal emergency'),
+        ('vehicle_issue', 'Vehicle / equipment issue'),
+        ('no_show', 'Crew no-show'),
+        ('schedule_conflict', 'Schedule conflict'),
+        ('other', 'Other'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking_reference = models.CharField(max_length=120, db_index=True)
+    is_bulk = models.BooleanField(default=False)
+    is_express = models.BooleanField(default=False)
+    job_count = models.PositiveIntegerField(default=1)
+    old_detailer_ids = models.JSONField(default=list, blank=True)
+    new_detailer_ids = models.JSONField(default=list, blank=True)
+    reason_code = models.CharField(max_length=32, choices=REASON_CHOICES, default='other')
+    reason_notes = models.TextField(blank=True, default='')
+    support_user_id = models.CharField(max_length=120, blank=True, default='')
+    support_user_email = models.CharField(max_length=255, blank=True, default='')
+    previous_status = models.CharField(max_length=20, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['booking_reference', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Reassignment {self.booking_reference} ({self.reason_code})"

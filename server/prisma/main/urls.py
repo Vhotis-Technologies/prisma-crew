@@ -14,6 +14,8 @@ from main.views.notifications import NotificationsView
 from main.views.terms import TermsView
 from .views.password_reset import RequestPasswordResetView, ResetPasswordView, ValidateResetTokenView, WebResetPasswordView
 from main.views.support.support_crew import CrewView
+from main.views.support.support_jobs import SupportJobsView
+from main.views.support.support_payouts import SupportPayoutsView
 
 app_name = 'main'
 urlpatterns = [
@@ -37,6 +39,8 @@ urlpatterns = [
 
     # The following endpoints are for the support team
     path('support/crew/<str:action>/', CrewView.as_view(), name='crew'),
+    path('support/jobs/<str:action>/', SupportJobsView.as_view(), name='support_jobs'),
+    path('support/payouts/<str:action>/', SupportPayoutsView.as_view(), name='support_payouts'),
 ]
 
 if settings.DEBUG:

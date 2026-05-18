@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from .models import ServiceType, Job, Earning, BankAccount, Review, TrainingRecord, Detailer, User, TimeSlot, Availability, Notification, TermsAndConditions, JobFleetMaintenance, JobImage, JobActivityLog
+from .models import ServiceType, Job, Earning, BankAccount, Review, TrainingRecord, Detailer, User, TimeSlot, Availability, Notification, TermsAndConditions, JobFleetMaintenance, JobImage, JobActivityLog, PayoutHistory
 
 admin.site.site_header = "Prisma Valet Detailer Admin"
 admin.site.site_title = "Prisma Valet Detailer  Admin"
@@ -108,11 +108,17 @@ class EarningAdmin(admin.ModelAdmin):
     search_fields = ('detailer__user__first_name', 'detailer__user__last_name', 'job__booking_reference', 'job__client_name', 'job__vehicle_registration')
     list_filter = ('payment_status', 'payout_date')
 
+@admin.register(PayoutHistory)
+class PayoutHistoryAdmin(admin.ModelAdmin):
+    list_display = ('detailer', 'payout_amount', 'status', 'payment_type', 'initiated_at', 'processed_at', 'completed_at')
+    search_fields = ('detailer__user__first_name', 'detailer__user__last_name', 'payout_reference')
+    list_filter = ('status', 'payment_type', 'initiated_at', 'processed_at', 'completed_at')
+
 @admin.register(BankAccount)
 class BankAccountAdmin(admin.ModelAdmin):
-    list_display = ('detailer', 'account_name', 'account_number', 'sort_code', 'bank_name')
-    search_fields = ('detailer__user__first_name', 'detailer__user__last_name', 'account_name', 'account_number')
-    list_filter = ('bank_name',)
+    list_display = ('detailer', 'account_name', 'iban', 'is_primary', 'is_verified')
+    search_fields = ('detailer__user__first_name', 'detailer__user__last_name', 'account_name', 'iban')
+    list_filter = ('is_primary', 'is_verified')
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):

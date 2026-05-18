@@ -49,19 +49,13 @@ class BankingView(APIView):
             """ TODO: Only get bank accounts that are verified """
             bank_accounts = BankAccount.objects.filter(detailer__user=request.user)
             bank_account_data = []
-            # Loop through the bank accounts and add the data to the list
             for bank_account in bank_accounts:
                 bank_account_data.append({
                     'id': bank_account.id,
-                    'account_number': bank_account.account_number,
                     'account_name': bank_account.account_name,
-                    'bank_name': bank_account.bank_name,
                     'iban': bank_account.iban,
-                    'bic': bank_account.bic,
-                    'sort_code': bank_account.sort_code,
                     'is_default': bank_account.is_primary,
                 })
-            # Check if the bank accounts are empty then return an empty list
             if not bank_account_data:
                 return Response([], status=status.HTTP_200_OK)
             return Response(bank_account_data, status=status.HTTP_200_OK)
@@ -85,53 +79,51 @@ class BankingView(APIView):
         
         try:
             bank_account_data = request.data.get('bankAccountData')
-            
-            # Validate that bankAccountData exists
+
             if not bank_account_data:
                 return Response({"error": "Bank account data is required"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Validate required fields
-            required_fields = ['account_number', 'account_name', 'bank_name', 'iban', 'bic', 'sort_code']
-            missing_fields = [field for field in required_fields if not bank_account_data.get(field)]
-            
+
+            account_name = (bank_account_data.get('account_name') or '').strip()
+            iban_raw = (bank_account_data.get('iban') or '').strip()
+            iban_clean = iban_raw.replace(' ', '').upper()
+
+            missing_fields = []
+            if not account_name:
+                missing_fields.append('account_name')
+            if not iban_clean:
+                missing_fields.append('iban')
             if missing_fields:
-                return Response({
-                    "error": f"Missing required fields: {', '.join(missing_fields)}"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Create the bank account
+                return Response(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             bank_account = BankAccount.objects.create(
                 detailer=detailer,
-                account_number=bank_account_data.get('account_number'),
-                account_name=bank_account_data.get('account_name'),
-                bank_name=bank_account_data.get('bank_name'),
-                iban=bank_account_data.get('iban'),
-                bic=bank_account_data.get('bic'),
-                sort_code=bank_account_data.get('sort_code'),
+                account_name=account_name,
+                iban=iban_clean,
             )
-            
-            # Check if this is the first bank account then set it as the primary bank account
+
             if BankAccount.objects.filter(detailer=detailer).count() == 1:
                 bank_account.is_primary = True
                 bank_account.save()
 
-            # Send the user a push notification
+            iban_masked = '****' + iban_clean[-4:] if len(iban_clean) >= 4 else '****'
             send_push_notification.delay(
                 request.user.id,
                 "Security Alert",
-                f"A new bank account has been added to your account with account number {bank_account.account_number}",
+                f"A new bank account ({iban_masked}) has been added to your account.",
                 "bank_account"
             )
-                
+
             return Response({
                 "message": f'{bank_account.account_name} created successfully',
                 "account_name": bank_account.account_name
             }, status=status.HTTP_201_CREATED)
-            
+
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            pass
             return Response({"error": f"Failed to create bank account: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
@@ -176,11 +168,15 @@ class BankingView(APIView):
             bank_account.is_primary = True
             bank_account.save()
             
-            # Send the user a push notification
+            iban_masked = (
+                '****' + bank_account.iban[-4:]
+                if bank_account.iban and len(bank_account.iban) >= 4
+                else '****'
+            )
             send_push_notification.delay(
                 request.user.id,
                 "Security Alert",
-                f"{bank_account.account_name} You just set this bank account number {bank_account.account_number} as your primary bank account",
+                f"{bank_account.account_name} ({iban_masked}) is now your primary bank account.",
                 "bank_account"
             )
             return Response({"message": f"{bank_account.account_name} set as primary successfully"}, status=status.HTTP_200_OK)

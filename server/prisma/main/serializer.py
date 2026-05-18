@@ -58,6 +58,7 @@ class JobSerializer(serializers.ModelSerializer):
     primary_detailer_name = serializers.SerializerMethodField()
     activity_logs = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
+    review_comment = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
@@ -69,6 +70,12 @@ class JobSerializer(serializers.ModelSerializer):
         if review is not None:
             return float(review.rating)
         return getattr(obj, 'rating', None) if hasattr(obj, 'rating') else None
+
+    def get_review_comment(self, obj):
+        review = Review.objects.filter(job=obj).first()
+        if review is None or not (review.comment or "").strip():
+            return None
+        return review.comment.strip()
 
     def get_detailers(self, obj):
         """Return array of detailers assigned to the job"""

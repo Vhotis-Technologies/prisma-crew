@@ -23,6 +23,7 @@ from main.utils.reschedule_helper import get_detailer_for_reschedule
 
 DETAILER_GROUP = "detailer_group"
 CONSUMER_NAME = "appointment_subscriber"
+MAX_REVIEW_COMMENT_LEN = 1000
 
 
 class Command(BaseCommand):
@@ -80,16 +81,26 @@ class Command(BaseCommand):
                     rating = int(data.get("rating", 0))
                 except (TypeError, ValueError):
                     rating = 0
+                cr = data.get("comment")
+                if cr is None or not str(cr).strip():
+                    review_comment = None
+                else:
+                    review_comment = str(cr).strip()[:MAX_REVIEW_COMMENT_LEN]
             else:
                 booking_reference = str(data).strip().strip('"').strip("'")
                 new_appointment_date = new_appointment_time = ""
                 total_amount = rating = 0
+                review_comment = None
         except Exception:
             booking_reference = str(raw).strip().strip('"').strip("'")
             new_appointment_date = new_appointment_time = ""
             total_amount = rating = 0
+            review_comment = None
 
-        self.stdout.write(f"Received {event}: {booking_reference}" + (f" (rating={rating})" if event == "review_received" else ""))
+        self.stdout.write(
+            f"Received {event}: {booking_reference}"
+            + (f" (rating={rating})" if event == "review_received" else "")
+        )
 
         try:
             job = Job.objects.select_related("primary_detailer", "service_type").prefetch_related("detailers").get(booking_reference=booking_reference)
@@ -190,10 +201,17 @@ class Command(BaseCommand):
                     return
                 Review.objects.update_or_create(
                     job=job,
-                    defaults={"detailer": primary, "rating": rating, "comment": None},
+                    defaults={
+                        "detailer": primary,
+                        "rating": rating,
+                        "comment": review_comment,
+                    },
                 )
                 self.stdout.write(self.style.SUCCESS(f"Review saved for job {booking_reference} (rating={rating})"))
                 notification_message = f"You have received a {rating} star review"
+                if review_comment:
+                    snippet = review_comment[:120] + ("…" if len(review_comment) > 120 else "")
+                    notification_message = f'{notification_message}. "{snippet}"'
                 self.create_notification(
                     primary.user,
                     "Review Received",

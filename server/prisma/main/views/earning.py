@@ -308,6 +308,18 @@ class EarningView(APIView):
                 period_start = earnings.first().created_at.date() if earnings.exists() else payout.created_at.date()
                 period_end = earnings.last().created_at.date() if earnings.exists() else payout.created_at.date()
                 
+                bank_account_payload = None
+                if payout.bank_account_id and payout.bank_account:
+                    bank_account_payload = {
+                        'id': str(payout.bank_account.id),
+                        'account_name': payout.bank_account.account_name,
+                        'iban': payout.bank_account.iban,
+                        'is_primary': payout.bank_account.is_primary,
+                        'is_verified': payout.bank_account.is_verified,
+                        'created_at': payout.bank_account.created_at.isoformat(),
+                        'updated_at': payout.bank_account.updated_at.isoformat()
+                    }
+
                 payout_item = {
                     'id': str(payout.id),
                     'amount': float(payout.payout_amount),
@@ -315,19 +327,7 @@ class EarningView(APIView):
                     'period_start': period_start.isoformat(),
                     'period_end': period_end.isoformat(),
                     'payout_date': payout.completed_at.date().isoformat() if payout.completed_at else payout.initiated_at.date().isoformat(),
-                    'bank_account': {
-                        'id': str(payout.bank_account.id),
-                        'account_number': payout.bank_account.account_number,
-                        'account_name': payout.bank_account.account_name,
-                        'bank_name': payout.bank_account.bank_name,
-                        'iban': payout.bank_account.iban,
-                        'bic': payout.bank_account.bic,
-                        'sort_code': payout.bank_account.sort_code,
-                        'is_primary': payout.bank_account.is_primary,
-                        'is_verified': payout.bank_account.is_verified,
-                        'created_at': payout.bank_account.created_at.isoformat(),
-                        'updated_at': payout.bank_account.updated_at.isoformat()
-                    },
+                    'bank_account': bank_account_payload,
                     'earnings_count': payout.earnings.count(),
                     'notes': payout.failure_reason if payout.status == 'failed' else None,
                     'transaction_id': payout.external_transaction_id
@@ -353,12 +353,8 @@ class EarningView(APIView):
             bank_accounts_data = [
                 {
                     'id': str(account.id),
-                    'account_number': account.account_number,
                     'account_name': account.account_name,
-                    'bank_name': account.bank_name,
                     'iban': account.iban,
-                    'bic': account.bic,
-                    'sort_code': account.sort_code,
                     'is_primary': account.is_primary,
                     'is_verified': account.is_verified,
                     'created_at': account.created_at.isoformat(),
