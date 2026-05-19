@@ -11,6 +11,7 @@ marks the linked earnings as paid.
 from __future__ import annotations
 
 import logging
+from datetime import date, datetime
 from decimal import Decimal
 
 from django.db import transaction
@@ -29,6 +30,9 @@ logger = logging.getLogger(__name__)
 def _fmt_display_date(dt) -> str:
     if not dt:
         return ""
+    # Period bounds are datetime.date; is_aware() calls utcoffset() and crashes on date.
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        return dt.strftime("%d %b %Y")
     if timezone.is_aware(dt):
         dt = timezone.localtime(dt)
     return dt.strftime("%d %b %Y")
@@ -166,11 +170,17 @@ class SupportPayoutsView(APIView):
 
     def _get_payout_queue(self, request, **kwargs):
         status_filter = (request.query_params.get("status") or "").strip().lower()
-        qs = PayoutHistory.objects.select_related("detailer", "detailer__user").order_by("-initiated_at")
+        qs = PayoutHistory.objects.select_related(
+            "detailer", "detailer__user"
+        ).prefetch_related("earnings")
         if status_filter in ("pending", "processing", "completed", "failed", "cancelled"):
             qs = qs.filter(status=status_filter)
+            if status_filter == "completed":
+                qs = qs.order_by("-completed_at", "-initiated_at")
+            else:
+                qs = qs.order_by("-initiated_at")
         else:
-            qs = qs.filter(status__in=["pending", "processing"])
+            qs = qs.filter(status__in=["pending", "processing"]).order_by("-initiated_at")
         rows = [_serialize_crew_payout(p) for p in qs[:100]]
         return Response({"data": {"payout_requests": rows}}, status=status.HTTP_200_OK)
 
@@ -179,7 +189,11 @@ class SupportPayoutsView(APIView):
         if not payout_id:
             return Response({"error": "payout_id required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            payout = PayoutHistory.objects.select_related("detailer", "detailer__user").get(pk=payout_id)
+            payout = (
+                PayoutHistory.objects.select_related("detailer", "detailer__user")
+                .prefetch_related("earnings")
+                .get(pk=payout_id)
+            )
         except PayoutHistory.DoesNotExist:
             return Response({"error": "Payout not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response({"data": {"payout": _serialize_crew_payout(payout)}}, status=status.HTTP_200_OK)
