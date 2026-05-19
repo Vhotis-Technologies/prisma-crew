@@ -526,11 +526,9 @@ class Earning(models.Model):
         self.save()
 
 
-""" Defines the account neccessary where the users earnings will be paid into.
+"""Bank account used for crew payout transfers.
 
-Only ``account_name`` and ``iban`` are stored — every other field
-(bank name, sort code, BIC/SWIFT, raw account number) is unused for payouts and
-was removed.
+Only ``account_name`` (holder) and ``iban`` are collected.
 """
 class BankAccount(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -694,6 +692,17 @@ class TermsAndConditions(models.Model):
 
     def __str__(self):
         return f"Terms and Conditions - {self.version}"
+
+
+class PrivacyPolicy(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    version = models.CharField(max_length=20, unique=True)
+    content = models.TextField()
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Privacy Policy - {self.version}"
+
 
 class PasswordResetToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

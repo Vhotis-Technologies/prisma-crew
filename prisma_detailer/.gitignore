@@ -5,7 +5,6 @@
 expo-env.d.ts
 # @end expo-cli
 
-google-services.json
 prisma-6fc48-firebase-adminsdk-fbsvc-7235a4228a.json
 prisma-6fc48-642e49c334e8.json
 app.json

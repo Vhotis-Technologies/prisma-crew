@@ -315,9 +315,6 @@ class EarningView(APIView):
                         'account_name': payout.bank_account.account_name,
                         'iban': payout.bank_account.iban,
                         'is_primary': payout.bank_account.is_primary,
-                        'is_verified': payout.bank_account.is_verified,
-                        'created_at': payout.bank_account.created_at.isoformat(),
-                        'updated_at': payout.bank_account.updated_at.isoformat()
                     }
 
                 payout_item = {
@@ -356,9 +353,6 @@ class EarningView(APIView):
                     'account_name': account.account_name,
                     'iban': account.iban,
                     'is_primary': account.is_primary,
-                    'is_verified': account.is_verified,
-                    'created_at': account.created_at.isoformat(),
-                    'updated_at': account.updated_at.isoformat()
                 }
                 for account in bank_accounts
             ]

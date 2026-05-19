@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Platform, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import StyledText from "@/app/components/helpers/StyledText";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
@@ -16,14 +16,9 @@ const LocationComponent = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
-        <View style={styles.scrollContent}>
-          {/* Main Content */}
-          <View style={styles.content}>
+      <View style={styles.scrollContent}>
+        {/* Main Content */}
+        <View style={styles.content}>
             {/* Form Section */}
             <View style={styles.formSection}>
               {/* Street Address Input */}
@@ -107,7 +102,6 @@ const LocationComponent = () => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </View>
   );
 };

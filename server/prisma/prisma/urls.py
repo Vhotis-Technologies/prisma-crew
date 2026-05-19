@@ -2,12 +2,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from main.views.legal_pages import LegalPrivacyView, LegalTermsView
 
 # from .routing import websocket_urlpatterns
 
 urlpatterns = [
     path('detailer-admin/', admin.site.urls),
     path('api/v1/', include('main.urls')),
+    path('legal/privacy/', LegalPrivacyView.as_view(), name='legal_privacy'),
+    path('legal/terms/', LegalTermsView.as_view(), name='legal_terms'),
 ]
 
 # Dev-only static (WHITENOISE serves collected files when DEBUG=False).

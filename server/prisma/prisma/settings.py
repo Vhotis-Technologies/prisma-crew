@@ -20,8 +20,13 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 BASE_URL = os.getenv('BASE_URL')
 
+_DEFAULT_DETAILER_ORIGIN = (
+    'https://staging.detailer.prismavalet.com' if IS_STAGING else 'https://detailer.prismavalet.com'
+)
 # Production: detailer.prismavalet.com on droplet. Override via env for local/dev.
-_DETAILER_ORIGIN = os.getenv('DETAILER_ORIGIN', 'https://450e-2a02-8084-c81-a480-c018-9c4e-4107-9d95.ngrok-free.app')   
+_DETAILER_ORIGIN = os.getenv('DETAILER_ORIGIN', _DEFAULT_DETAILER_ORIGIN)
+# Base URL for email footers and public legal pages (/legal/privacy/, /legal/terms/).
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', _DETAILER_ORIGIN).rstrip('/')   
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [_DETAILER_ORIGIN]
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]

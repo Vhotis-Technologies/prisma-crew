@@ -2,11 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   StyleSheet,
-  ScrollView,
-  Platform,
   Dimensions,
-  TouchableOpacity,
-  KeyboardAvoidingView,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -80,14 +76,9 @@ const PersonalInfoComponent = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
-        <View style={styles.scrollContent}>
-          {/* Main Content */}
-          <View style={styles.content}>
+      <View style={styles.scrollContent}>
+        {/* Main Content */}
+        <View style={styles.content}>
             {/* Form Section */}
             <View style={styles.formSection}>
               {/* First Name Input */}
@@ -156,7 +147,6 @@ const PersonalInfoComponent = () => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </View>
   );
 };

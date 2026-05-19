@@ -64,9 +64,9 @@ export const useBankAccount = () => {
   /* Validate the  */
 
   const handleAddBankAccount = useCallback(async () => {
-    if (!newBankAccount?.account_name || !newBankAccount?.iban) {
+    if (!newBankAccount?.account_name?.trim() || !newBankAccount?.iban?.trim()) {
       showSnackbarWithConfig({
-        message: "Account name and IBAN are required",
+        message: "Account holder name and IBAN are required",
         type: "error",
         duration: 3000,
       });

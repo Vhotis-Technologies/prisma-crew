@@ -46,6 +46,8 @@ const BankAccountScreen: React.FC = () => {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor }]}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       refreshControl={
         <RefreshControl
           refreshing={false}
@@ -80,7 +82,7 @@ const BankAccountScreen: React.FC = () => {
         {isFormVisible && (
           <View style={styles.form}>
             <StyledTextInput
-              label="Account Holder Name"
+              label="Account Holder Name *"
               value={newBankAccount?.account_name ?? getUserFullName()}
               onChangeText={(value) =>
                 collectBankAccountInformation("account_name", value)
@@ -90,13 +92,12 @@ const BankAccountScreen: React.FC = () => {
 
             <StyledTextInput
               label="IBAN *"
-              value={newBankAccount?.iban}
+              value={newBankAccount?.iban ?? ""}
               onChangeText={(value) =>
                 collectBankAccountInformation("iban", value)
               }
               placeholder="Enter IBAN"
               autoCapitalize="characters"
-              info="Only your IBAN is required to receive payouts."
             />
 
             <View style={styles.formActions}>
@@ -288,16 +289,6 @@ const styles = StyleSheet.create({
   },
   accountInfo: {
     flex: 1,
-  },
-  bankName: {
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  accountNumber: {
-    marginBottom: 2,
-  },
-  accountName: {
-    opacity: 0.7,
   },
   accountActions: {
     flexDirection: "row",

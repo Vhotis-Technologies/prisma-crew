@@ -14,7 +14,7 @@ import logging
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -71,6 +71,44 @@ def _serialize_crew_payout(payout: PayoutHistory) -> dict:
     }
 
 
+def _resolve_bank_account_for_detailer(detailer: Detailer) -> BankAccount | None:
+    """Resolve the bank account support should use for payouts.
+
+    The crew app lists accounts by user (``detailer__user``), while unpaid earnings
+    are keyed by ``detailer_id``. When those differ, only searching the earning's
+    detailer row misses accounts the crew member already added.
+    """
+    if not detailer:
+        return None
+
+    qs = BankAccount.objects.filter(detailer=detailer)
+    user_id = getattr(detailer, "user_id", None)
+    if user_id:
+        qs = BankAccount.objects.filter(Q(detailer=detailer) | Q(detailer__user_id=user_id))
+
+    # Prefer primary accounts with a usable IBAN, then any account with IBAN.
+    with_iban = qs.exclude(iban="").order_by("-is_primary", "-created_at")
+    return with_iban.first() or qs.order_by("-is_primary", "-created_at").first()
+
+
+def _serialize_bank_account(detailer: Detailer) -> dict:
+    bank_account = _resolve_bank_account_for_detailer(detailer)
+    if not bank_account:
+        return {
+            "has_bank_account": False,
+            "account_name": "",
+            "iban": "",
+        }
+    iban = (bank_account.iban or "").strip()
+    return {
+        "has_bank_account": True,
+        "account_name": bank_account.account_name or "",
+        "iban": iban,
+        "is_primary": bank_account.is_primary,
+        "is_verified": bank_account.is_verified,
+    }
+
+
 def _serialize_unpaid_earning(earning: Earning) -> dict:
     job = earning.job
     return {
@@ -100,6 +138,7 @@ class SupportPayoutsView(APIView):
     post_action_handler = {
         "mark_payout_paid": "_post_mark_payout_paid",
         "create_crew_payout": "_post_create_crew_payout",
+        "record_crew_payment_made": "_post_record_crew_payment_made",
     }
 
     def get(self, request, *args, **kwargs):
@@ -236,12 +275,12 @@ class SupportPayoutsView(APIView):
         crew_id = (request.query_params.get("crew_member_id") or "").strip()
         if not crew_id:
             return Response(
-                {"error": "crew_member_id required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "crew member id required"}, status=status.HTTP_400_BAD_REQUEST
             )
         try:
             detailer = Detailer.objects.select_related("user").get(pk=crew_id)
         except (Detailer.DoesNotExist, ValueError):
-            return Response({"error": "Crew member not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Crew member not found or invalid"}, status=status.HTTP_404_NOT_FOUND)
 
         in_flight_earning_ids = set(
             PayoutHistory.objects.filter(
@@ -252,7 +291,7 @@ class SupportPayoutsView(APIView):
 
         earnings_qs = (
             Earning.objects.select_related("job", "job__service_type")
-            .filter(detailer=detailer, payment_status="pending")
+            .filter(detailer=detailer, payment_status__in=["pending"])
             .order_by("-created_at")
         )
         if in_flight_earning_ids:
@@ -271,10 +310,57 @@ class SupportPayoutsView(APIView):
                     "unpaid_amount": float(unpaid_total),
                     "unpaid_job_count": len(items),
                     "earnings": items,
+                    "bank_account": _serialize_bank_account(detailer),
                 }
             },
             status=status.HTTP_200_OK,
         )
+
+    def _bundle_unpaid_earnings_for_payout(
+        self,
+        detailer: Detailer,
+        raw_earning_ids: list,
+    ) -> tuple[list[Earning], Decimal] | tuple[None, Response]:
+        """Select pending earnings eligible for a new payout (not already in-flight)."""
+        in_flight_earning_ids = set(
+            PayoutHistory.objects.filter(
+                detailer=detailer, status__in=["pending", "processing"]
+            ).values_list("earnings__id", flat=True)
+        )
+        in_flight_earning_ids.discard(None)
+
+        base_qs = Earning.objects.select_for_update().filter(
+            detailer=detailer, payment_status="pending"
+        )
+        if in_flight_earning_ids:
+            base_qs = base_qs.exclude(id__in=in_flight_earning_ids)
+
+        if raw_earning_ids:
+            earnings = list(base_qs.filter(id__in=raw_earning_ids))
+            if len(earnings) != len({str(e) for e in raw_earning_ids}):
+                return None, Response(
+                    {
+                        "error": "Some earnings are not eligible for payout. "
+                        "They may already be paid or part of another in-flight payout."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            earnings = list(base_qs)
+
+        if not earnings:
+            return None, Response(
+                {"error": "This crew member has no unpaid earnings."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        total = sum((e.net_amount or Decimal("0")) for e in earnings)
+        if total <= 0:
+            return None, Response(
+                {"error": "Total payable amount must be greater than zero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return earnings, total
 
     def _post_create_crew_payout(self, request, **kwargs):
         """Support creates a payout for a crew member from their unpaid earnings.
@@ -307,49 +393,14 @@ class SupportPayoutsView(APIView):
             return Response({"error": "Crew member not found"}, status=status.HTTP_404_NOT_FOUND)
 
         with transaction.atomic():
-            in_flight_earning_ids = set(
-                PayoutHistory.objects.filter(
-                    detailer=detailer, status__in=["pending", "processing"]
-                ).values_list("earnings__id", flat=True)
+            earnings, total_or_resp = self._bundle_unpaid_earnings_for_payout(
+                detailer, raw_earning_ids
             )
-            in_flight_earning_ids.discard(None)
+            if earnings is None:
+                return total_or_resp  # type: ignore[return-value]
+            total = total_or_resp  # type: ignore[assignment]
 
-            base_qs = Earning.objects.select_for_update().filter(
-                detailer=detailer, payment_status="pending"
-            )
-            if in_flight_earning_ids:
-                base_qs = base_qs.exclude(id__in=in_flight_earning_ids)
-
-            if raw_earning_ids:
-                earnings = list(base_qs.filter(id__in=raw_earning_ids))
-                if len(earnings) != len({str(e) for e in raw_earning_ids}):
-                    return Response(
-                        {
-                            "error": "Some earnings are not eligible for payout. "
-                            "They may already be paid or part of another in-flight payout."
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                earnings = list(base_qs)
-
-            if not earnings:
-                return Response(
-                    {"error": "This crew member has no unpaid earnings."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            total = sum((e.net_amount or Decimal("0")) for e in earnings)
-            if total <= 0:
-                return Response(
-                    {"error": "Total payable amount must be greater than zero."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            bank_account = (
-                BankAccount.objects.filter(detailer=detailer, is_primary=True).first()
-                or BankAccount.objects.filter(detailer=detailer).first()
-            )
+            bank_account = _resolve_bank_account_for_detailer(detailer)
 
             payout = PayoutHistory.objects.create(
                 detailer=detailer,
@@ -376,4 +427,75 @@ class SupportPayoutsView(APIView):
                 }
             },
             status=status.HTTP_201_CREATED,
+        )
+
+    def _post_record_crew_payment_made(self, request, **kwargs):
+        """Create a payout from unpaid earnings and mark it completed in one step.
+
+        Used when support has already sent the bank transfer. This writes completed
+        payout history visible in the crew app without leaving a duplicate pending row.
+        """
+        data = request.data if hasattr(request.data, "get") else {}
+        crew_id = (data.get("crew_member_id") or "").strip()
+        admin_notes = (data.get("admin_notes") or "").strip()
+        payment_reference = (data.get("payment_reference") or "").strip()
+        raw_earning_ids = data.get("earning_ids") or []
+        if not isinstance(raw_earning_ids, list):
+            raw_earning_ids = []
+
+        if not crew_id:
+            return Response(
+                {"error": "crew_member_id required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            detailer = Detailer.objects.select_related("user").get(pk=crew_id)
+        except (Detailer.DoesNotExist, ValueError):
+            return Response({"error": "Crew member not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        with transaction.atomic():
+            earnings, total_or_resp = self._bundle_unpaid_earnings_for_payout(
+                detailer, raw_earning_ids
+            )
+            if earnings is None:
+                return total_or_resp  # type: ignore[return-value]
+            total = total_or_resp  # type: ignore[assignment]
+
+            bank_account = _resolve_bank_account_for_detailer(detailer)
+
+            payout = PayoutHistory.objects.create(
+                detailer=detailer,
+                bank_account=bank_account,
+                payout_amount=total,
+                status="pending",
+                payment_type="scheduled",
+                failure_reason=admin_notes or None,
+            )
+            payout.earnings.set(earnings)
+
+            if payment_reference:
+                payout.payout_reference = payment_reference
+            external_id = payment_reference
+            if admin_notes and payment_reference:
+                external_id = f"{payment_reference} | {admin_notes}"[:100]
+            elif admin_notes:
+                external_id = admin_notes[:100]
+            payout.mark_as_completed(external_transaction_id=external_id or None)
+
+        logger.info(
+            "Support recorded crew payment: id=%s crew=%s amount=%s earnings=%s",
+            payout.id,
+            detailer.id,
+            total,
+            len(earnings),
+        )
+        return Response(
+            {
+                "data": {
+                    "message": "Payment recorded. Payout history updated in the crew app.",
+                    "payout": _serialize_crew_payout(payout),
+                    "earnings_marked_paid": len(earnings),
+                }
+            },
+            status=status.HTTP_200_OK,
         )

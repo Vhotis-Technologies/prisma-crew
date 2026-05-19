@@ -20,8 +20,8 @@ const OnboardingLayout = () => {
       <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="SignUpScreen" options={{ headerShown: false }} />

@@ -1,13 +1,6 @@
-// Bank Account Management
-export interface BankAccountProps {
-  id?: string;
-  account_name: string;
-  iban: string;
-  is_primary?: boolean;
-  is_verified?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
+// Bank Account Management (holder name and IBAN only)
+export type { BankAccountProps } from "@/app/interfaces/BankingInterface";
+import type { BankAccountProps } from "@/app/interfaces/BankingInterface";
 
 // Individual Earning Item - Detailer sees their hourly earnings
 export interface EarningItemProps {

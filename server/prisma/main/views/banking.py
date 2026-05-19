@@ -89,7 +89,7 @@ class BankingView(APIView):
 
             missing_fields = []
             if not account_name:
-                missing_fields.append('account_name')
+                missing_fields.append('account holder name')
             if not iban_clean:
                 missing_fields.append('iban')
             if missing_fields:

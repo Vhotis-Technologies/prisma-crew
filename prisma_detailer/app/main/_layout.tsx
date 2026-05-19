@@ -1,11 +1,4 @@
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  Platform,
-  KeyboardAvoidingView,
-  StatusBar,
-} from "react-native";
+import { StyleSheet, View, Pressable, StatusBar } from "react-native";
 import React from "react";
 import {
   SafeAreaView,
@@ -98,12 +91,7 @@ export default function MainLayout() {
     : "Hi there";
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <SafeAreaView style={[styles.mainContainer, { backgroundColor }]}>
+    <SafeAreaView style={[styles.mainContainer, { backgroundColor }]}>
         <StatusBar
           barStyle={
             currentTheme === "dark" ? "light-content" : "dark-content"
@@ -203,8 +191,7 @@ export default function MainLayout() {
             </Pressable>
           </LinearGradientComponent>
         </BlurView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

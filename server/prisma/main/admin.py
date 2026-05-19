@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from .models import ServiceType, Job, Earning, BankAccount, Review, TrainingRecord, Detailer, User, TimeSlot, Availability, Notification, TermsAndConditions, JobFleetMaintenance, JobImage, JobActivityLog, PayoutHistory
+from .models import ServiceType, Job, Earning, BankAccount, Review, TrainingRecord, Detailer, User, TimeSlot, Availability, Notification, TermsAndConditions, PrivacyPolicy, JobFleetMaintenance, JobImage, JobActivityLog, PayoutHistory
 
 admin.site.site_header = "Prisma Valet Detailer Admin"
 admin.site.site_title = "Prisma Valet Detailer  Admin"
@@ -178,5 +178,11 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(TermsAndConditions)
 class TermsAndConditionsAdmin(admin.ModelAdmin):
+    list_display = ('version', 'last_updated')
+    ordering = ('-last_updated',)
+
+
+@admin.register(PrivacyPolicy)
+class PrivacyPolicyAdmin(admin.ModelAdmin):
     list_display = ('version', 'last_updated')
     ordering = ('-last_updated',)

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from main.models import TermsAndConditions
+from main.models import TermsAndConditions, PrivacyPolicy
 
 class TermsView(APIView):
     permission_classes = [AllowAny]
@@ -95,7 +95,6 @@ class TermsView(APIView):
             </body>
             </html>
             """
-            pass
             return Response({
                 'version': terms.version,
                 'content': styled_html,
@@ -108,7 +107,7 @@ class TermsView(APIView):
 
     def get_privacy_policy(self, request):
         try:
-            privacy_policy = TermsAndConditions.objects.latest('last_updated')
+            privacy_policy = PrivacyPolicy.objects.latest('last_updated')
 
             # Simple HTML structure that matches the mobile design
             styled_html = f"""
@@ -198,5 +197,5 @@ class TermsView(APIView):
                 'content': styled_html,
                 'last_updated': privacy_policy.last_updated,
             })
-        except TermsAndConditions.DoesNotExist:
+        except PrivacyPolicy.DoesNotExist:
             return Response({'error': 'Privacy Policy not found'}, status=status.HTTP_404_NOT_FOUND)
