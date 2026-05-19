@@ -42,12 +42,23 @@ def _iso(dt) -> str:
     return str(dt)
 
 
+def _earning_period_bounds(payout: PayoutHistory) -> tuple:
+    """Return (period_start, period_end) dates for a payout, with safe fallbacks."""
+    earnings = payout.earnings.all().order_by("created_at")
+    fallback = payout.created_at.date() if payout.created_at else None
+    if not earnings.exists():
+        return fallback, fallback
+    first = earnings.first()
+    last = earnings.last()
+    start = first.created_at.date() if first and first.created_at else fallback
+    end = last.created_at.date() if last and last.created_at else fallback
+    return start, end
+
+
 def _serialize_crew_payout(payout: PayoutHistory) -> dict:
     detailer = payout.detailer
     user = detailer.user if detailer else None
-    earnings = payout.earnings.all().order_by("created_at")
-    period_start = earnings.first().created_at.date() if earnings.exists() else payout.created_at.date()
-    period_end = earnings.last().created_at.date() if earnings.exists() else payout.created_at.date()
+    period_start, period_end = _earning_period_bounds(payout)
     pay_label = "Scheduled" if payout.payment_type == "scheduled" else "Request"
     return {
         "id": str(payout.id),
@@ -482,12 +493,20 @@ class SupportPayoutsView(APIView):
                 external_id = admin_notes[:100]
             payout.mark_as_completed(external_transaction_id=external_id or None)
 
+        payout_id = payout.id
+
         logger.info(
             "Support recorded crew payment: id=%s crew=%s amount=%s earnings=%s",
-            payout.id,
+            payout_id,
             detailer.id,
             total,
             len(earnings),
+        )
+
+        payout = (
+            PayoutHistory.objects.select_related("detailer", "detailer__user")
+            .prefetch_related("earnings")
+            .get(pk=payout_id)
         )
         return Response(
             {
