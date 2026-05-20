@@ -1,3 +1,6 @@
+/**
+ * Auth context: login, logout, session restore, permissions, and location on login.
+ */
 import React, { createContext, useContext } from "react";
 // import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "./AlertContext";
@@ -22,9 +25,6 @@ import {
   clearPushTokenFromStorage,
 } from "../utils/storage";
 
-/**
- * Create an auth context to manage the user's authentication state.
- */
 interface AuthContextType {
   handleLogin: (
     email: string,
@@ -39,6 +39,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Wraps the app with login/logout handlers and session restore on mount. */
 const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const { setIsVisible, setAlertConfig } = useAlertContext();
@@ -50,11 +51,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   /* Get permission service for first-time setup */
   const { requestAllPermissions } = usePermissions();
 
-  /**
-   * Reauthenticate a user when the page mounts by checking the secure store for the user data
-   * If the data is correct, set data to the redux store and navigate to the dashboard page.
-   * Also checks if user has a stored push token to avoid re-registration.
-   */
+  /** Restore session from SecureStore on mount and navigate to dashboard if valid. */
   React.useEffect(() => {
     const reauthenticateUser = async () => {
       const user = await SecureStore.getItemAsync("user");
@@ -82,7 +79,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
     reauthenticateUser();
   }, []);
 
-  /* Handle the users logout functionality */
+  /** Confirm logout, clear SecureStore and Redux, then navigate to sign-in. */
   const handleLogout = () => {
     setAlertConfig({
       title: "Logout",
@@ -108,12 +105,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  /**
-   * Login a new user using their email and password.
-   * @param {email:string, password:string} credentials - The credentials of the user to login.
-   * These will be sent to the server side to validate the user and when the user is properly validated,
-   * the user will be redirected to the dashboard page
-   */
+  /** Login with email/password; persist session if rememberMe; request permissions and report location. */
   const handleLogin = async (
     email: string,
     password: string,
@@ -286,6 +278,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+/** Access login/logout and auth mutation state; requires `AuthContextProvider`. */
 export const useAuthContext = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

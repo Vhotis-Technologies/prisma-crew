@@ -1,9 +1,9 @@
+/**
+ * Loads app font families via Expo Font; used by ThemeProvider before rendering children.
+ */
 import { useFonts } from "expo-font";
 
-/**
- * Custom hook to load the fonts for the application
- * @returns boolean
- */
+/** Returns true when all bundled fonts have finished loading. */
 export const useLoadedFonts = () => {
   const [fontsLoaded] = useFonts({
     SpaceMonoRegular: require("@/assets/fonts/SpaceMono-Regular.ttf"),

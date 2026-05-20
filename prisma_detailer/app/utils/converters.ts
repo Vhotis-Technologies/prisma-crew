@@ -1,13 +1,9 @@
+/**
+ * Display helpers: currency, date, and time formatting for the detailer app.
+ */
 import { RootState, useAppSelector } from "../store/my_store";
 
-/**
- * Format the currency based on the users country.
- * The method uses the users stored address in the state to determine what country they are in.
- * If the country is not supported, the method will default to EUR.
- *
- * @param amount
- * @returns
- */
+/** Format amount as GBP or EUR based on country name; defaults to EUR. */
 export const formatCurrency = (amount: number, country?: string) => {
   if (country && country.toLocaleUpperCase() === "united kingdom") {
     return amount.toLocaleString("en-GB", {
@@ -27,6 +23,7 @@ export const formatCurrency = (amount: number, country?: string) => {
   }
 };
 
+/** Format an ISO date string as `DD Mon YYYY` (en-IE). */
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-IE", {
@@ -36,6 +33,7 @@ export const formatDate = (dateString: string) => {
   });
 };
 
+/** Format a `HH:mm` time string as 12-hour locale time. */
 export const formatTime = (time: string) => {
   return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
     hour: "numeric",

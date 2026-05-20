@@ -1,3 +1,6 @@
+/**
+ * Dashboard API: quick stats, recent jobs, today overview, start/complete job.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "./baseQuery";
 import {
@@ -10,19 +13,7 @@ const dashboardApi = createApi({
   reducerPath: "dashboardApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /**
-     * Get the users quick stats.
-     * ARGs: void
-     * RESPONSE: QuickStatsProps{
-     *  weeklyEarnings: number;
-     *  monthlyEarnings: number;
-     *  completedJobsThisWeek: number;
-     *  completedJobsThisMonth: number;
-     *  pendingJobsCount: number;
-     *  averageRating: number;
-     *  totalReviews: number;
-     * }
-     */
+    /** Fetch weekly/monthly earnings, job counts, and rating summary. */
     getQuickStats: builder.query<QuickStatsProps, void>({
       query: () => ({
         url: "/api/v1/dashboard/get_quick_stats/",
@@ -31,11 +22,7 @@ const dashboardApi = createApi({
       transformResponse: (response: QuickStatsProps) => response,
     }),
 
-    /**
-     * Get all the users recent jobs in the last 7 days.
-     * ARGs: void
-     * RESPONSE: RecentJobProps[]
-     */
+    /** List recent jobs from the last 7 days. */
     getRecentJobs: builder.query<RecentJobProps[], void>({
       query: () => ({
         url: "/api/v1/dashboard/get_recent_jobs/",
@@ -45,17 +32,7 @@ const dashboardApi = createApi({
         response.recentJobs,
     }),
 
-    /**
-     * Get the users today overview.
-     * ARGs: void
-     * RESPONSE: TodayOverviewProps{
-     *  totalAppointments: number;
-     *  completedJobs: number;
-     *  pendingJobs: number;
-     *  nextAppointment?: NextAppointmentProps;
-     *  currentJob?: CurrentJobProps;
-     * }
-     */
+    /** Fetch today's appointment counts and current/next job. */
     getTodayOverview: builder.query<TodayOverviewProps, void>({
       query: () => ({
         url: "/api/v1/dashboard/get_today_overview/",
@@ -64,11 +41,7 @@ const dashboardApi = createApi({
       transformResponse: (response: TodayOverviewProps) => response,
     }),
 
-    /**
-     * Start the current job.
-     * ARGs: {id: string}
-     * RESPONSE: void
-     */
+    /** Mark the dashboard current job as started. */
     startCurrentJob: builder.mutation<{message:string}, { id: string }>({
       query: ({ id }) => ({
         url: `/api/v1/dashboard/start_current_job/`,
@@ -77,11 +50,7 @@ const dashboardApi = createApi({
       }),
     }),
 
-    /**
-     * Complete the current job.
-     * ARGs: {id: string}
-     * RESPONSE: void
-     */
+    /** Mark the dashboard current job as completed. */
     completeCurrentJob: builder.mutation<{message:string}, { id: string }>({
       query: ({ id }) => ({
         url: `/api/v1/dashboard/complete_current_job/`,

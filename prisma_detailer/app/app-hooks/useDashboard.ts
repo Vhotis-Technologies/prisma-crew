@@ -1,24 +1,6 @@
 /**
- * Dashboard Hook - useDashboard
- *
- * This custom hook manages all dashboard-related data and interactions for the detailer application.
- * It provides a centralized way to access dashboard data, handle user interactions, and manage
- * the state of various dashboard components.
- *
- * The hook integrates with RTK Query for API calls and provides fallback data to ensure
- * the UI always has data to display, even when API calls are loading or fail.
- *
- * Key Features:
- * - Fetches today's overview, quick stats, and recent jobs data
- * - Provides fallback data for consistent UI experience
- * - Handles dashboard interactions (view appointments, start jobs, etc.)
- * - Manages quick actions for navigation
- * - Provides data refetching capabilities
- *
- * @author Detailer App Team
- * @version 1.0.0
+ * Dashboard hook: today's overview, quick stats, recent jobs, and quick actions.
  */
-
 import { useState, useEffect, useCallback } from "react";
 import {
   QuickStatsProps,
@@ -44,29 +26,8 @@ import {
 } from "../utils/storage";
 
 /**
- * Custom hook for managing dashboard data and state
- *
- * This hook serves as the main data layer for the dashboard screen, providing:
- * - Real-time data from the API
- * - Fallback data for consistent UI experience
- * - Action handlers for user interactions
- * - Data refetching capabilities
- *
- * The hook uses RTK Query for efficient API calls with caching and automatic
- * background updates. It also provides mock data structures for development
- * and fallback scenarios.
- *
- * @returns {Object} Dashboard data and action handlers
- * @returns {Function} viewNextAppointment - Handler for viewing next appointment
- * @returns {Function} startCurrentJob - Handler for starting/continuing current job
- * @returns {QuickActionProps[]} handleQuickActions - Array of quick action buttons
- * @returns {QuickStatsProps} quickStats - Quick statistics data with fallbacks
- * @returns {RecentJobProps[]} recentJobs - Recent jobs data with fallbacks
- * @returns {boolean} isLoadingQuickStats - Loading state for quick stats
- * @returns {boolean} isLoadingRecentJobs - Loading state for recent jobs
- * @returns {boolean} isLoadingTodayOverview - Loading state for today's overview
- * @returns {TodayOverviewProps} todayOverview - Today's overview data with fallbacks
- * @returns {Function} refetchAllData - Function to refetch all dashboard data
+ * Fetches dashboard data via RTK Query and exposes navigation/action handlers.
+ * @returns Dashboard metrics, loading flags, quick actions, and refetch helpers
  */
 export const useDashboard = () => {
   /*
@@ -105,9 +66,7 @@ export const useDashboard = () => {
   const { requestNotificationPermission, permissionStatus } = usePermissions();
 
   /**
-   * Initialize notifications when the dashboard loads
-   * Check that the notification permission has been initialized before and the
-   * expo push token has been sent to the server, and that the notification service has been initialized
+   * Request push permission and register token on first dashboard load when needed.
    */
   useEffect(() => {
     const initializeNotifications = async () => {
@@ -193,13 +152,7 @@ export const useDashboard = () => {
   ];
 
   /**
-   * Refetch All Dashboard Data
-   *
-   * This function triggers a refresh of all dashboard data by calling
-   * the refetch function for each API endpoint. It's used for manual
-   * data refresh scenarios like pull-to-refresh.
-   *
-   * @returns {Promise<void>} Promise that resolves when all refetch operations complete
+   * Refetch all dashboard queries and notification list.
    */
   const refetchAllData = useCallback(async () => {
     refetchQuickStats();
@@ -213,6 +166,10 @@ export const useDashboard = () => {
     refreshNotifications,
   ]);
 
+  /**
+   * Refresh dashboard data after a booking update event.
+   * @param data - Booking update payload from realtime/event source
+   */
   const handleBookingUpdate = useCallback(
     (data: any) => {
       // Trigger dashboard refresh
@@ -235,9 +192,8 @@ export const useDashboard = () => {
   }, []);
 
   /**
-   * Call the detailer using the phone number. this method will take the user out of the app
-   * and into their dialer
-   * @param phoneNumber - The phone number to call
+   * Open the device dialer for a client phone number after confirmation.
+   * @param phoneNumber - Client phone number to call
    */
   const callClient = useCallback(
     (phoneNumber: string) => {

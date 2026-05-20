@@ -1,3 +1,6 @@
+/**
+ * Notifications list hook: fetch, filter, mark read, delete, and push token sync.
+ */
 import { useState, useEffect } from "react";
 import {
   Notification,
@@ -21,45 +24,8 @@ import {
 import { useAlertContext } from "../contexts/AlertContext";
 
 /**
- * Custom hook for managing notifications in the application.
- *
- * This hook provides a comprehensive interface for:
- * - Fetching and displaying notifications
- * - Filtering notifications by read status and type
- * - Managing notification state (mark as read, delete)
- * - Real-time notification updates
- *
- * @returns {Object} An object containing notification data and management functions
- * @returns {Notification[]} notifications - Filtered notifications based on current filters
- * @returns {Notification[]} allNotifications - All notifications without filtering
- * @returns {NotificationFilters} filters - Current filter settings
- * @returns {number} unreadCount - Number of unread notifications
- * @returns {Function} markAsRead - Function to mark a single notification as read
- * @returns {Function} markAllAsRead - Function to mark all notifications as read
- * @returns {Function} deleteNotification - Function to delete a notification
- * @returns {Function} updateFilters - Function to update notification filters
- * @returns {Function} addNotification - Function to add a new notification (for future use)
- * @returns {Function} refreshNotifications - Function to manually refresh notifications
- * @returns {Function} saveNotificationToken - Function to save push token to server
- * @returns {string} expoPushToken - Current Expo push token
- * @returns {boolean} tokenSaved - Whether the push token has been saved to the server
- * @returns {boolean} isSavingToken - Whether the token is currently being saved
- *
- * @example
- * ```tsx
- * const {
- *   notifications,
- *   unreadCount,
- *   markAsRead,
- *   updateFilters
- * } = useNotification();
- *
- * // Filter to show only unread notifications
- * updateFilters({ showRead: false, showUnread: true });
- *
- * // Mark a notification as read
- * markAsRead(notificationId);
- * ```
+ * Manages in-app notifications and Expo push token persistence.
+ * @returns Filtered notifications, counts, filters, and mutation helpers
  */
 export const useNotification = () => {
   // Fetch notifications from the API
@@ -106,15 +72,8 @@ export const useNotification = () => {
   const [isSavingToken, setIsSavingToken] = useState(false);
 
   /**
-   * Get filtered notifications based on current filter settings.
-   *
-   * Filters notifications by:
-   * - Read status (showRead/showUnread flags)
-   * - Notification type (if types array is specified)
-   *
-   * Results are sorted by timestamp in descending order (newest first).
-   *
-   * @returns {Notification[]} Array of filtered and sorted notifications
+   * Apply read-status and type filters, sorted newest first.
+   * @returns Filtered notification list
    */
   const getFilteredNotifications = (): Notification[] => {
     return processedNotifications
@@ -137,21 +96,15 @@ export const useNotification = () => {
   };
 
   /**
-   * Mark a single notification as read.
-   *
-   * @param {string} notificationId - The ID of the notification to mark as read
+   * Mark one notification as read.
+   * @param notificationId - Notification ID to update
    */
   const [markAsReadMutation] = useMarkNotificationAsReadMutation();
   const markAsRead = (notificationId: string) => {
     markAsReadMutation({ id: notificationId });
   };
 
-  /**
-   * Mark all unread notifications as read.
-   *
-   * Collects all unread notification IDs and sends them to the API
-   * in a single batch operation for efficiency.
-   */
+  /** Mark all unread notifications as read in one batch. */
   const [markAllAsReadMutation] = useMarkAllNotificationsAsReadMutation();
   const markAllAsRead = () => {
     const unreadIds = processedNotifications
@@ -165,8 +118,7 @@ export const useNotification = () => {
 
   /**
    * Delete a notification permanently.
-   *
-   * @param {string} notificationId - The ID of the notification to delete
+   * @param notificationId - Notification ID to delete
    */
   const [deleteNotificationMutation] = useDeleteNotificationMutation();
   const deleteNotification = (notificationId: string) => {
@@ -174,11 +126,9 @@ export const useNotification = () => {
   };
 
   /**
-   * Save notification token to the server and storage.
-   * This should be called once when the user grants notification permissions.
-   *
-   * @param {string} token - The Expo push token to save
-   * @returns {Promise<boolean>} Success status of the operation
+   * Persist Expo push token to server and local storage once.
+   * @param token - Expo push token
+   * @returns True when saved successfully
    */
   const [saveNotificationTokenMutation] = useSaveNotificationTokenMutation();
   const saveNotificationToken = async (token: string): Promise<boolean> => {
@@ -229,35 +179,23 @@ export const useNotification = () => {
     }
   };
 
-  /**
-   * Get the count of unread notifications.
-   *
-   * @returns {number} The number of unread notifications
-   */
+  /** @returns Count of unread notifications */
   const getUnreadCount = (): number => {
     return processedNotifications.filter((notification) => !notification.isRead)
       .length;
   };
 
   /**
-   * Update notification filters.
-   *
-   * Merges new filter settings with existing ones, allowing partial updates.
-   *
-   * @param {Partial<NotificationFilters>} newFilters - Partial filter object to merge
+   * Merge partial filter updates into current filter state.
+   * @param newFilters - Filter fields to update
    */
   const updateFilters = (newFilters: Partial<NotificationFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   /**
-   * Add a new notification (for future use with real-time notifications).
-   *
-   * Currently creates a notification object but doesn't persist it.
-   * This function is prepared for future implementation of real-time
-   * notification handling.
-   *
-   * @param {Omit<Notification, "id" | "timestamp">} notification - Notification data without ID and timestamp
+   * Placeholder for future realtime notification ingestion.
+   * @param notification - Notification payload without id/timestamp
    */
   const addNotification = (
     notification: Omit<Notification, "id" | "timestamp">
@@ -270,11 +208,7 @@ export const useNotification = () => {
     // TODO: Implement notification persistence when real-time notifications are added
   };
 
-  /**
-   * Manually refresh notifications from the API.
-   *
-   * Useful for pull-to-refresh functionality or manual data synchronization.
-   */
+  /** Trigger a notifications query refetch. */
   const refreshNotifications = () => {
     refetchNotifications();
   };

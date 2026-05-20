@@ -1,18 +1,6 @@
 /**
- * @fileoverview Custom React hook for managing bank account operations
- *
- * This hook provides a comprehensive solution for bank account management including:
- * - Fetching user's bank accounts
- * - Adding new bank accounts with validation
- * - Deleting existing bank accounts (with business rule protection)
- * - Setting default bank accounts
- * - Form data collection and state management
- *
- * @author Prisma Detailer Team
- * @version 1.0.0
- * @since 2024
+ * Bank account hook: fetch, add, delete, set default, and form state via RTK Query.
  */
-
 import { useState, useCallback } from "react";
 import { BankAccountProps } from "@/app/interfaces/BankingInterface";
 import {
@@ -34,6 +22,10 @@ import { useAlertContext } from "@/app/contexts/AlertContext";
 import { useSnackbar } from "../contexts/SnackbarContext";
 import { router } from "expo-router";
 
+/**
+ * Manages bank account CRUD, default selection, and add-account form state.
+ * @returns Bank accounts, loading flags, and account action handlers
+ */
 export const useBankAccount = () => {
   // Redux state management
   const dispatch = useAppDispatch();
@@ -61,8 +53,9 @@ export const useBankAccount = () => {
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const { showSnackbarWithConfig } = useSnackbar();
 
-  /* Validate the  */
-
+  /**
+   * Validate and submit a new bank account, then navigate back on success.
+   */
   const handleAddBankAccount = useCallback(async () => {
     if (!newBankAccount?.account_name?.trim() || !newBankAccount?.iban?.trim()) {
       showSnackbarWithConfig({
@@ -114,30 +107,8 @@ export const useBankAccount = () => {
   ]);
 
   /**
-   * Removes a bank account from the user's account list
-   *
-   * This function includes business logic to prevent deletion of the primary
-   * bank account and provides appropriate user feedback.
-   *
-   * @async
-   * @function handleRemoveBankAccount
-   * @param {string} accountId - The unique identifier of the bank account to remove
-   * @returns {Promise<void>} Promise that resolves when the operation completes
-   *
-   * @description
-   * **Business Rules:**
-   * - Cannot delete the primary/default bank account
-   * - Shows error alert if user attempts to delete default account
-   *
-   * **Flow:**
-   * 1. Find bank account by ID
-   * 2. Check if it's the default account
-   * 3. If default: Show error and return
-   * 4. If not default: Call delete API
-   * 5. On success: Show success alert and refetch data
-   * 6. On error: Show error alert
-   *
-   * @throws {Error} When API call fails or account is primary
+   * Remove a bank account; blocks deletion of the primary account.
+   * @param accountId - Bank account ID to delete
    */
   const handleRemoveBankAccount = useCallback(
     async (accountId: string) => {
@@ -201,31 +172,8 @@ export const useBankAccount = () => {
   );
 
   /**
-   * Sets a bank account as the default account
-   *
-   * This function includes logic to prevent unnecessary API calls when
-   * the account is already the default account.
-   *
-   * @async
-   * @function handleSetDefaultBankAccount
-   * @param {string} accountId - The unique identifier of the bank account to set as default
-   * @returns {Promise<void>} Promise that resolves when the operation completes
-   *
-   * @description
-   * **Business Logic:**
-   * - Checks if account is already default (early return)
-   * - Only processes non-default accounts
-   *
-   * **Flow:**
-   * 1. Find bank account by ID
-   * 2. Check if already default (return early if so)
-   * 3. Call API to set as default
-   * 4. On success: Show success alert and refetch data
-   * 5. On error: Show error alert
-   *
-   * @note There's a bug in the current implementation - line 175-176 has incomplete logic for finding the bank account
-   *
-   * @throws {Error} When API call fails
+   * Set a bank account as default; no-op if already default.
+   * @param accountId - Bank account ID to promote
    */
   const handleSetDefaultBankAccount = useCallback(
     async (accountId: string) => {
@@ -277,22 +225,16 @@ export const useBankAccount = () => {
     ]
   );
 
-  /**
-   * Gets the user's full name for auto-populating the account name field
-   *
-   * @function getUserFullName
-   * @returns {string} The user's full name (first_name + last_name) or empty string if no user
-   *
-   * @description
-   * This function concatenates the user's first and last name to create
-   * a full name that can be used as the default account name when adding
-   * a new bank account.
-   */
+  /** @returns User full name for default account holder field */
   const getUserFullName = useCallback(() => {
     if (!user) return "";
     return `${user.first_name} ${user.last_name}`.trim();
   }, [user]);
 
+  /**
+   * Normalize IBAN input: strip non-alphanumerics, uppercase, max 34 chars.
+   * @param iban - Raw IBAN string from form input
+   */
   const cleanIban = useCallback((iban: string): string => {
     if (!iban) return "";
 
@@ -300,6 +242,11 @@ export const useBankAccount = () => {
     return cleaned.substring(0, 34);
   }, []);
 
+  /**
+   * Update a single field on the in-progress bank account form in Redux.
+   * @param fields - Bank account field key to update
+   * @param values - New field value
+   */
   const collectBankAccountInformation = (
     fields: keyof BankAccountProps,
     values: string

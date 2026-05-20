@@ -1,14 +1,10 @@
+/**
+ * SecureStore helpers: session tokens, user profile, and push notification token.
+ */
 import { UserProfileProps } from "@/app/interfaces/ProfileInterfaces";
 import * as SecureStore from "expo-secure-store";
 
-/**
- * Save the user data to the async storage after login.
- * This is used when the user tries to relogin,
- * @param user The returned user data which is of interface {User | Seller}
- * @param access The access token returned from the server
- * @param refresh The refresh token returned from the server
- * @param pushToken Optional push notification token to store
- */
+/** Persist user, access/refresh tokens, and optional push token after login. */
 export const saveDataToStorage = async (
   user: UserProfileProps | null,
   access: string,
@@ -30,10 +26,7 @@ export const saveDataToStorage = async (
   }
 };
 
-/**
- * Retrieve user data from storage
- * @returns Promise<UserProfileProps | null> - Returns user data if found, null otherwise
- */
+/** Read parsed user profile from SecureStore, or null if missing. */
 export const getUserFromStorage =
   async (): Promise<UserProfileProps | null> => {
     try {
@@ -48,11 +41,7 @@ export const getUserFromStorage =
     }
   };
 
-/**
- * Save push notification token to storage
- * @param token The push notification token to save
- * @returns Promise<boolean> - Success status
- */
+/** Save push token and mark it as registered on the server. */
 export const savePushTokenToStorage = async (
   token: string
 ): Promise<boolean> => {
@@ -67,10 +56,7 @@ export const savePushTokenToStorage = async (
   }
 };
 
-/**
- * Retrieve push notification token from storage
- * @returns Promise<string | null> - Returns push token if found, null otherwise
- */
+/** Read stored Expo push token, or null. */
 export const getPushTokenFromStorage = async (): Promise<string | null> => {
   try {
     const token = await SecureStore.getItemAsync("push_token");
@@ -81,10 +67,7 @@ export const getPushTokenFromStorage = async (): Promise<string | null> => {
   }
 };
 
-/**
- * Check if push token has been saved to server
- * @returns Promise<boolean> - Returns true if token was saved to server
- */
+/** True if push token was previously synced to the backend. */
 export const isPushTokenSavedToServer = async (): Promise<boolean> => {
   try {
     const saved = await SecureStore.getItemAsync("push_token_saved_to_server");
@@ -95,10 +78,7 @@ export const isPushTokenSavedToServer = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Clear push token from storage (used during logout)
- * @returns Promise<boolean> - Success status
- */
+/** Remove push token and server-sync flag (e.g. on logout). */
 export const clearPushTokenFromStorage = async (): Promise<boolean> => {
   try {
     await SecureStore.deleteItemAsync("push_token");

@@ -1,3 +1,6 @@
+/**
+ * Appointments API: list, details, start/complete, images, fleet maintenance.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "./baseQuery";
 import {
@@ -9,11 +12,7 @@ const appointmentsApi = createApi({
   reducerPath: "appointmentsApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /**
-     * Get all appointments a user has for aspecifix date
-     * @param date - The date to get appointments for
-     * @returns {JobCardProps} The appointments for the date
-     */
+    /** List appointments for a given date. */
     getAllAppointments: builder.query<JobCardProps[], { date: string }>({
       query: ({ date }) => ({
         url: `/api/v1/appointments/get_all_appointments/`,
@@ -23,11 +22,7 @@ const appointmentsApi = createApi({
       transformResponse: (response: JobCardProps[]) => response,
     }),
 
-    /**
-     * Get the details of a specific appointment by the id
-     * @param id - The id of the appointment
-     * @returns {JobDetailsProps} The appointment details
-     */
+    /** Fetch full details for one appointment by id. */
     getAppointmentDetails: builder.query<
       JobDetailsProps,
       { id: string | null }
@@ -40,11 +35,7 @@ const appointmentsApi = createApi({
       transformResponse: (response: JobDetailsProps) => response,
     }),
 
-    /**
-     * Complete the appointment when the job is done
-     * @param id - The id of the appointment
-     * @returns {message: string} The message from the server
-     */
+    /** Mark an appointment as completed. */
     completeAppointment: builder.mutation<{ message: string }, { id: string }>({
       query: ({ id }) => ({
         url: `/api/v1/appointments/complete_appointment/`,
@@ -53,11 +44,7 @@ const appointmentsApi = createApi({
       }),
     }),
 
-    /**
-     * Start the appointment
-     * @param id - The id of the appointment
-     * @returns {message: string} The message from the server
-     */
+    /** Mark an appointment as started. */
     startAppointment: builder.mutation<{ message: string }, { id: string }>({
       query: ({ id }) => ({
         url: `/api/v1/appointments/start_appointment/`,
@@ -66,11 +53,7 @@ const appointmentsApi = createApi({
       }),
     }),
 
-    /**
-     * Upload before images for a job
-     * @param formData - FormData containing job_id, segment (interior/exterior), and image files
-     * @returns {message: string, images: Array} The upload response with image details
-     */
+    /** Upload before-service images (multipart FormData). */
     uploadBeforeImages: builder.mutation<
       {
         message: string;
@@ -93,11 +76,7 @@ const appointmentsApi = createApi({
       }),
     }),
 
-    /**
-     * Upload after images for a job
-     * @param formData - FormData containing job_id, segment (interior/exterior), and image files
-     * @returns {message: string, images: Array} The upload response with image details
-     */
+    /** Upload after-service images (multipart FormData). */
     uploadAfterImages: builder.mutation<
       {
         message: string;
@@ -120,11 +99,7 @@ const appointmentsApi = createApi({
       }),
     }),
 
-    /**
-     * Submit fleet maintenance data for a job
-     * @param data - Object containing job_id and fleet maintenance fields
-     * @returns {message: string, fleet_maintenance: FleetMaintenanceProps} The submission response
-     */
+    /** Submit fleet maintenance checklist data for a job. */
     submitFleetMaintenance: builder.mutation<
       {
         message: string;

@@ -1,3 +1,13 @@
+"""
+Job creation from the client app stack (internal Docker network).
+
+**Auth:** ``AllowAny`` — called server-to-server from client booking flow.
+
+**POST actions:** ``create_booking`` (single), ``create_bulk_booking`` (fleet same-site),
+``reschedule_bulk_booking`` (move existing bulk sub-jobs to new window).
+
+**Assignment:** geo-ordered detailers; express service assigns two detailers when free.
+"""
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,7 +24,11 @@ from main.tasks import send_booking_confirmation_email, send_push_notification, 
 from channels.layers import get_channel_layer
 
 class BookingView(APIView):
-    permission_classes = [AllowAny] 
+    """
+    Creates ``Job`` rows and notifies detailers; bulk paths mirror ``check_bulk_capacity`` windows.
+    """
+
+    permission_classes = [AllowAny]
 
     action_handler = {
         "create_booking": '_create_booking',
@@ -23,13 +37,15 @@ class BookingView(APIView):
     }   
 
     def get(self, request, *args, **kwargs):
+        """Route GET ``action`` (reserved) to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
-    
+
     def post(self, request, *args, **kwargs):
+        """Route POST ``action`` to create/reschedule handlers."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -75,9 +91,14 @@ class BookingView(APIView):
         return result
 
     def _create_booking(self, request):
-        """ The client app stack uses this method to communicate with the detailer app stack servers.
+        """
+        Create one accepted ``Job`` and assign nearest free detailer(s).
 
-            When the data required to complete a booking is recieved in the params, the method is to destructure it so that it can be used to create a new booking.
+        Args:
+            request: Booking payload from client (service_type, slot, address, vehicle, etc.).
+
+        Returns:
+            ``success``, ``assigned_detailers``; publishes Redis job acceptance.
         """
         try:
 
@@ -597,7 +618,7 @@ class BookingView(APIView):
 
             created_jobs = []
             with transaction.atomic():
-                # Branch 1: All vehicles go to one detailer (we found a single detailer with enough contiguous time)
+                # Bulk booking branch 1: single detailer covers full window (team_size=1 + contiguous block)
                 if single_detailer_assignment is not None:
                     assignee, first_block_start = single_detailer_assignment
                     first_job_start_min = first_block_start + travel_interval
@@ -640,7 +661,7 @@ class BookingView(APIView):
                             slot_min + slot_length_minutes,
                         )
                         created_jobs.append(job)
-                # Branch 2: Assign each vehicle to the best available detailer (earliest start, or first with room when team_size=1)
+                # Bulk booking branch 2: greedy per-vehicle assign (expand team_pool when team_size=1)
                 else:
                     for i in range(number_of_vehicles):
                         while True:
@@ -873,9 +894,11 @@ class BookingView(APIView):
             ).select_related("detailer")
 
             def _minutes_since_midnight(t):
+                # Convert appointment ``time`` to minutes from midnight
                 return t.hour * 60 + t.minute
 
             def _reschedule_free_intervals(detailer_id, range_start_min, range_end_min, jobs_for_detailer, unavails_for_detailer):
+                # Merge unavailability + job blocks into free minute intervals for reschedule slot search.
                 blocked = []
                 for u in unavails_for_detailer:
                     u_start = _minutes_since_midnight(u.start_time)
@@ -919,6 +942,7 @@ class BookingView(APIView):
                 return free
 
             def _reschedule_subtract_block(intervals, block_start, block_end):
+                """Remove a blocked minute range from a list of free intervals."""
                 out = []
                 for s, e in intervals:
                     if e <= block_start or s >= block_end:
@@ -931,6 +955,7 @@ class BookingView(APIView):
                 return out
 
             def _reschedule_earliest_start(intervals, duration):
+                """Earliest minute offset that fits ``duration`` minutes inside free intervals."""
                 best = None
                 for s, e in intervals:
                     if e - s >= duration:
@@ -939,6 +964,7 @@ class BookingView(APIView):
                 return best
 
             def _reschedule_total_slots(intervals, slot_len):
+                """Count discrete reschedule slots of length ``slot_len`` across all free intervals."""
                 return sum(max(0, (e - s) // slot_len) for s, e in intervals)
 
             intervals_by_detailer = {}
@@ -989,6 +1015,7 @@ class BookingView(APIView):
 
             new_slots = []
             with transaction.atomic():
+                # Reschedule logic branch 1: same single-detailer contiguous window as create_bulk
                 if single_detailer_assignment is not None:
                     assignee, first_block_start = single_detailer_assignment
                     first_job_start_min = first_block_start + travel_interval
@@ -1013,6 +1040,7 @@ class BookingView(APIView):
                             "detailer_id": str(assignee.id),
                         })
                 else:
+                    # Reschedule logic branch 2: per-job greedy slot on new date (exclude bulk jobs from conflicts)
                     for idx, job in enumerate(existing_jobs):
                         while True:
                             best_detailer = None
@@ -1071,7 +1099,16 @@ class BookingView(APIView):
     # Format the appointment date and time so it says the day and time 
     # Example: Wednesday 8:00 AM
     def format_appointment_date_time(self, appointment_date, appointment_time):
-        """ Format the appointment date and time so it says the day and time """
+        """
+        Human-readable label for push copy (e.g. ``Wednesday 8:00 AM``).
+
+        Args:
+            appointment_date: Datetime or date component.
+            appointment_time: ``time`` instance.
+
+        Returns:
+            Formatted string.
+        """
         return f"{appointment_date.strftime('%A')} {appointment_time.strftime('%I:%M %p')}"
     
 

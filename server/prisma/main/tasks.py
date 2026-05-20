@@ -1,3 +1,9 @@
+"""
+Celery tasks for the detailer service.
+
+Covers transactional email (Microsoft Graph), Redis stream events to the client app,
+in-app notifications, WebSocket status updates, Expo push, and scheduled reminders.
+"""
 from django.core.mail import send_mail
 from celery import shared_task
 from django.conf import settings
@@ -13,9 +19,20 @@ from main.utils.redis_streams import stream_add, STREAM_JOB_EVENTS
 
 
 def _json_dumps_safe(obj):
-    """JSON encode structures that may contain UUID/datetime/Decimal (e.g. from DRF serializer .data)."""
+    """
+    JSON-encode structures that may contain non-JSON-native types.
+
+    Handles UUID, date/datetime/time, and Decimal (from DRF serializer ``.data``).
+
+    Args:
+        obj: Serializable dict/list structure.
+
+    Returns:
+        str: JSON string safe for Redis stream payloads.
+    """
     class Encoder(json.JSONEncoder):
         def default(self, o):
+            """Serialize UUID, datetime, and Decimal for Redis stream JSON payloads."""
             if isinstance(o, UUID):
                 return str(o)
             if isinstance(o, (datetime, date, time)):
@@ -28,6 +45,15 @@ def _json_dumps_safe(obj):
 
 @shared_task
 def send_welcome_email(user_email):
+    """
+    Send the post-registration welcome email to a new detailer.
+
+    Args:
+        user_email: Recipient address.
+
+    Returns:
+        str: Success or failure message for the Celery result backend.
+    """
     subject = "Welcome to Prisma - Let's Get Started! 🎉"
     html_message = render_to_string('welcome_email.html')
     try:
@@ -39,6 +65,22 @@ def send_welcome_email(user_email):
 
 @shared_task
 def send_booking_confirmation_email(detailer_email, booking_reference, appointment_date, appointment_time, address, service_type_name, owner_note, total_amount):
+    """
+    Notify the assigned detailer of a new booking via email.
+
+    Args:
+        detailer_email: Recipient address.
+        booking_reference: Client booking reference.
+        appointment_date: Display date for the template.
+        appointment_time: Display time for the template.
+        address: Service location string.
+        service_type_name: Human-readable service name.
+        owner_note: Optional client note.
+        total_amount: Formatted price string for the template.
+
+    Returns:
+        str: Success or failure message for the Celery result backend.
+    """
     subject = "Booking Confirmation"
     html_message = render_to_string('booking_confirmation.html', {
         'booking_reference': booking_reference,
@@ -55,15 +97,28 @@ def send_booking_confirmation_email(detailer_email, booking_reference, appointme
         return f"Failed to send booking confirmation email: {str(e)}"
 
 
-"""Publish job-assigned event to Redis so the client app can set detailer(s) and send confirmation.
-   Called when a job is created on the detailer (no separate accept step).
-   Supports two call styles:
-   - New (single booking, express or not): publish_job_acceptance(booking_reference, detailers_list)
-     where detailers_list is [{"id", "name", "phone", "rating", "image"}, ...]
-   - Legacy (bulk, one event per job): publish_job_acceptance(booking_reference, email, name, phone, rating)
-   """
 @shared_task
 def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_name=None, detailer_phone=None, detailer_rating=0.0):
+    """
+    Publish a job-assigned event to Redis for the client app.
+
+    Called when a job is created on the detailer (no separate accept step).
+    Supports two call styles:
+    - New (single booking): ``publish_job_acceptance(booking_reference, detailers_list)``
+      where ``detailers_list`` is ``[{"id", "name", "phone", "rating", "image"}, ...]``.
+    - Legacy (bulk): second arg is email string with ``detailer_name``, ``detailer_phone``,
+      ``detailer_rating`` for a single detailer payload without id/image.
+
+    Args:
+        booking_reference: Client booking reference.
+        detailer_email_or_list: Legacy email string or list/dict of detailer payloads.
+        detailer_name: Legacy bulk flow display name.
+        detailer_phone: Legacy bulk flow phone.
+        detailer_rating: Legacy bulk flow rating (float).
+
+    Returns:
+        str: Stream publish result or error message.
+    """
     try:
         # Legacy bulk flow: second arg is email (string), then name, phone, rating
         if isinstance(detailer_email_or_list, str) and detailer_name is not None:
@@ -75,7 +130,6 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
                 'image': None,
             }]
         else:
-            # New format: second arg is list of detailer dicts
             detailers_list = detailer_email_or_list
             if not detailers_list:
                 return "No detailers to publish"
@@ -95,6 +149,7 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
             'booking_reference': booking_reference,
             'detailers': detailers_payload,
         }
+        # Back-compat: single detailer also exposed as top-level ``detailer`` key
         if len(detailers_payload) == 1:
             message_data['detailer'] = detailers_payload[0]
         payload = json.dumps(message_data)
@@ -106,10 +161,20 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
 
 @shared_task
 def publish_job_reassigned(booking_reference, old_detailer_ids, new_detailers_payload, is_bulk=False):
-    """Publish job_reassigned to Redis so the client app can swap assigned detailers silently.
+    """
+    Publish ``job_reassigned`` to Redis so the client app can swap assigned detailers.
 
-    The client consumer applies ``new_detailers_payload`` via ``assign_detailers_to_booking``
-    without sending a customer-facing email or push (assignment-only update).
+    The client consumer applies ``new_detailers_payload`` via
+    ``assign_detailers_to_booking`` without sending a customer-facing email or push.
+
+    Args:
+        booking_reference: Client booking reference.
+        old_detailer_ids: UUIDs (or str) of detailers being removed.
+        new_detailers_payload: List of detailer dicts (id, name, phone, rating, image).
+        is_bulk: When True, flags bulk reassignment semantics on the client.
+
+    Returns:
+        str: Stream publish result or error message.
     """
     try:
         message_data = {
@@ -138,21 +203,24 @@ def publish_job_reassigned(booking_reference, old_detailer_ids, new_detailers_pa
 @shared_task
 def publish_job_started(booking_reference, skip_client_notification=False):
     """
-    Publish job_started to Redis with current before images from the detailer Job.
+    Publish ``job_started`` to Redis with current before images from the detailer Job.
 
-    skip_client_notification: when True (e.g. republish after uploading before photos),
-    the client consumer should only sync BookedAppointmentImage rows and must not send
-    a second "appointment started" push/notification.
+    Args:
+        booking_reference: Client booking reference.
+        skip_client_notification: When True (e.g. republish after uploading before photos),
+            the client consumer should only sync ``BookedAppointmentImage`` rows and must not
+            send a second "appointment started" push/notification.
+
+    Returns:
+        str: Stream publish result or error message.
     """
     try:
         from main.models import Job
         from main.util.media_helper import get_full_media_url
         
-        # Get the job with its before images
         try:
             job = Job.objects.get(booking_reference=booking_reference)
             
-            # Collect ONLY before images with segment; omit rows with no usable URL
             before_images = []
             for img in job.images.filter(image_type='before'):
                 if not img.image:
@@ -166,7 +234,6 @@ def publish_job_started(booking_reference, skip_client_notification=False):
                     'segment': img.segment
                 })
             
-            # Structure the message with booking reference and before images
             message_data = {
                 'booking_reference': booking_reference,
                 'before_images': before_images,
@@ -175,7 +242,7 @@ def publish_job_started(booking_reference, skip_client_notification=False):
                 message_data['skip_client_notification'] = True
             
         except Job.DoesNotExist:
-            # If job not found, send just the booking reference (backwards compatible)
+            # Backwards compatible: client still receives booking_reference only
             message_data = {
                 'booking_reference': booking_reference,
                 'before_images': [],
@@ -192,21 +259,23 @@ def publish_job_started(booking_reference, skip_client_notification=False):
 @shared_task
 def publish_job_completed(booking_reference, skip_client_notification=False):
     """
-    Publish job_completed to Redis with current after images (and optional fleet data).
+    Publish ``job_completed`` to Redis with after images and optional fleet maintenance.
 
-    skip_client_notification: when True (e.g. republish after uploading after photos while
-    the job is still in progress), the client should only sync BookedAppointmentImage rows and
-    must not mark the booking completed or send completion push/notification / fleet merge.
+    Args:
+        booking_reference: Client booking reference.
+        skip_client_notification: When True, client syncs images only—no completion push,
+            fleet merge, or booking status change.
+
+    Returns:
+        str: Stream publish result or error message.
     """
     try:
         from main.models import Job
         from main.util.media_helper import get_full_media_url
         
-        # Get the job with its after images
         try:
             job = Job.objects.get(booking_reference=booking_reference)
             
-            # Collect ONLY after images with segment; omit rows with no usable URL
             after_images = []
             for img in job.images.filter(image_type='after'):
                 if not img.image:
@@ -220,7 +289,6 @@ def publish_job_completed(booking_reference, skip_client_notification=False):
                     'segment': img.segment
                 })
             
-            # Fleet maintenance only on real completion (avoid partial updates on image sync)
             fleet_maintenance_data = None
             if not skip_client_notification and hasattr(job, 'fleet_maintenance') and job.fleet_maintenance:
                 from main.serializer import JobFleetMaintenanceSerializer
@@ -251,6 +319,18 @@ def publish_job_completed(booking_reference, skip_client_notification=False):
 
 @shared_task
 def send_appointment_cancellation_email(booking_reference, detailer_email, appointment_date, appointment_time):
+    """
+    Email the detailer that an appointment was cancelled.
+
+    Args:
+        booking_reference: Client booking reference.
+        detailer_email: Recipient address.
+        appointment_date: Original appointment date for the template.
+        appointment_time: Original appointment time for the template.
+
+    Returns:
+        str: Success or failure message for the Celery result backend.
+    """
     try:
         subject = "Appointment Cancellation"
         html_message = render_to_string('appointment_cancellation.html', {
@@ -264,9 +344,21 @@ def send_appointment_cancellation_email(booking_reference, detailer_email, appoi
         return f"Failed to send appointment cancellation email: {str(e)}"
 
 
-
 @shared_task
 def send_appointment_rescheduling_email(booking_reference, detailer_email, new_appointment_date, new_appointment_time, total_amount):
+    """
+    Email the detailer that an appointment was rescheduled.
+
+    Args:
+        booking_reference: Client booking reference.
+        detailer_email: Recipient address.
+        new_appointment_date: Updated date for the template.
+        new_appointment_time: Updated time for the template.
+        total_amount: Updated price string for the template.
+
+    Returns:
+        str: Success or failure message for the Celery result backend.
+    """
     try:
         subject = "Appointment Rescheduling"
         html_message = render_to_string('appointment_rescheduling.html', {
@@ -281,11 +373,20 @@ def send_appointment_rescheduling_email(booking_reference, detailer_email, new_a
         return f"Failed to send appointment rescheduling email: {str(e)}"
 
 
-
-
 @shared_task
 def send_websocket_notification(user_id, booking_reference, status, message):
-    """ Send a websocket notification to the user """
+    """
+    Push a booking status update to the detailer's WebSocket group.
+
+    Args:
+        user_id: Detailer user id (channel group ``detailer_{user_id}``).
+        booking_reference: Booking reference shown in the app.
+        status: Status string for the client UI.
+        message: Human-readable status message.
+
+    Returns:
+        bool: True on success, False on failure (exceptions are swallowed).
+    """
     try:
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
@@ -299,16 +400,26 @@ def send_websocket_notification(user_id, booking_reference, status, message):
                 'message': message
             }
         )
-        pass
-    except Exception as e:
-        pass
+    except Exception:
         return False
     return True
 
 
 @shared_task
 def create_notification(user_id, title, type, status, message):
-    """ Create a notification """
+    """
+    Persist an in-app notification row for a detailer user.
+
+    Args:
+        user_id: Target :class:`main.models.User` primary key.
+        title: Notification title.
+        type: Notification category/type string.
+        status: Status string stored on the model.
+        message: Body text.
+
+    Returns:
+        bool: True when created, False when user missing or on error.
+    """
     try:
         from main.models import Notification, User
         user = User.objects.get(id=user_id)
@@ -320,12 +431,22 @@ def create_notification(user_id, title, type, status, message):
             message=message
         )
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
 def _normalize_push_data(type_or_data, title, message):
-    """Expo requires all push data values to be strings."""
+    """
+    Normalize Expo push ``data`` payload—all values must be strings.
+
+    Args:
+        type_or_data: Either a type string or a pre-built dict of stringifiable values.
+        title: Default title when building from a type string.
+        message: Default body when building from a type string.
+
+    Returns:
+        dict: String keys and string values for ``PushMessage.data``.
+    """
     if isinstance(type_or_data, dict):
         return {str(k): "" if v is None else str(v) for k, v in type_or_data.items()}
     data = {"type": str(type_or_data)}
@@ -336,16 +457,28 @@ def _normalize_push_data(type_or_data, title, message):
 
 @shared_task
 def send_push_notification(user_id, title, message, type):
-    """ Send a push notification to the user """
+    """
+    Send an Expo push notification to a detailer user.
+
+    Skips users without a token or with push disabled. Validates the Expo response
+    when ``validate_response`` is available on the ticket.
+
+    Args:
+        user_id: Target user primary key.
+        title: Push notification title.
+        message: Push notification body.
+        type: Type string or dict passed through :func:`_normalize_push_data`.
+
+    Returns:
+        str: Human-readable result for the Celery result backend.
+    """
     try:
         from main.models import User
         user = User.objects.get(id=user_id)
 
-        # Check if user has notification token
         if not user.notification_token:
             return f"Push notification not sent: User {user_id} has no notification token"
         
-        # Check if user has allowed push notifications
         if not user.allow_push_notifications:
             return f"Push notification not sent: User {user_id} has disabled push notifications"
         
@@ -370,19 +503,25 @@ def send_push_notification(user_id, title, message, type):
         return f"Push notification failed for user {user_id}: Invalid response"
         
     except Exception as e:
-        error_msg = f"Failed to send push notification to user {user_id}: {str(e)}"
-        return error_msg
+        return f"Failed to send push notification to user {user_id}: {str(e)}"
 
 
 @shared_task
 def send_password_reset_email(user_email, user_name, reset_token):
+    """
+    Send a password reset link email with a one-hour expiry notice.
+
+    Args:
+        user_email: Recipient address.
+        user_name: Display name for the template.
+        reset_token: Opaque token appended to the web reset URL.
+
+    Returns:
+        str: Success or failure message for the Celery result backend.
+    """
     subject = "Reset Your Prisma Password"
     
-    # Get base URL from settings
-    from django.conf import settings
     base_url = getattr(settings, 'BASE_URL', 'https://yourdomain.com')
-    
-    # Web URL that works for everyone - note the /api/v1/ prefix
     web_reset_url = f"{base_url}/api/v1/auth/web-reset-password/?token={reset_token}"
     
     html_message = render_to_string('password_reset_email.html', {
@@ -400,18 +539,23 @@ def send_password_reset_email(user_email, user_name, reset_token):
 
 @shared_task
 def check_daily_schedule():
-    """Send daily schedule summary to detailers"""
+    """
+    Send a morning push summarizing today's accepted/in-progress jobs per detailer.
+
+    Queries jobs for the current date grouped by ``primary_detailer`` and enqueues
+    :func:`send_push_notification` for each detailer with at least one job.
+
+    Returns:
+        None: Side effects only (async push tasks).
+    """
     from django.db import close_old_connections
     from main.models import Job
     from django.utils import timezone
-    from datetime import timedelta
     
-    # Close stale database connections before querying
     close_old_connections()
     
     today = timezone.now().date()
     
-    # Get all detailers with jobs today (by primary_detailer)
     detailers_with_jobs = Job.objects.filter(
         appointment_date__date=today,
         status__in=['accepted', 'in_progress'],
@@ -443,29 +587,39 @@ def check_daily_schedule():
 
 @shared_task
 def check_upcoming_jobs():
-    """Check for jobs starting soon and send reminders (25–35 minutes from now).
-    DISABLED: This trigger was removed to stop incorrect/duplicate 'Job starting soon' notifications.
-    Re-enable by adding 'check-upcoming-jobs' back to CELERY_BEAT_SCHEDULE in settings.py."""
+    """
+    Check for jobs starting soon and send reminders (25–35 minutes from now).
+
+    **Disabled:** returns immediately without scheduling pushes. Re-enable by adding
+    ``check-upcoming-jobs`` back to ``CELERY_BEAT_SCHEDULE`` in settings.
+
+    Returns:
+        str: Static message indicating the task is disabled.
+    """
     return "check_upcoming_jobs is disabled"
 
 
 @shared_task
 def send_job_closing_notification(job_id):
-    """Send 15-minute closing notification for a specific job"""
+    """
+    Send a 15-minute-before-end reminder push for an in-progress job.
+
+    Args:
+        job_id: :class:`main.models.Job` primary key.
+
+    Returns:
+        str: Result message (skipped when job not in progress or not found).
+    """
     try:
         from main.models import Job
-        from django.utils import timezone
         
-        # Get the job
         job = Job.objects.get(id=job_id)
         
-        # Check if job is still in progress
         if job.status != 'in_progress':
             return f"Job {job.booking_reference} is no longer in progress"
         
-        # Send the closing notification
         if job.primary_detailer:
-            result = send_push_notification.delay(
+            send_push_notification.delay(
                 job.primary_detailer.user.id,
                 "Job Closing Soon! 🚗",
                 f"Your appointment with {job.client_name} ends in 15 minutes please remember to complete the job",
@@ -477,5 +631,3 @@ def send_job_closing_notification(job_id):
         return f"Job with ID {job_id} not found"
     except Exception as e:
         return f"Failed to send closing notification: {str(e)}"
-    
-    

@@ -1,14 +1,11 @@
 """
-Dashboard API Views
+Detailer home dashboard aggregates.
 
-This module contains the API views for the dashboard functionality of the detailer application.
-It provides endpoints for retrieving today's overview, quick stats, and recent jobs data.
+**Auth:** ``IsAuthenticated``.
 
-The dashboard serves as the main interface for detailers to view their daily schedule,
-earnings, and job history.
+**GET actions:** ``get_today_overview``, ``get_quick_stats``, ``get_recent_jobs``.
 
-Author: Detailer App Team
-Date: 2024
+**PATCH actions:** ``start_current_job``, ``complete_current_job`` (shortcut from dashboard card).
 """
 
 from rest_framework.views import APIView
@@ -29,20 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardView(APIView):
-    """
-    Dashboard API View
-    
-    This view handles all dashboard-related API requests including:
-    - Today's overview (appointments, current job, next appointment)
-    - Quick stats (earnings, job counts, ratings)
-    - Recent jobs (completed jobs from last 7 days)
-    
-    All endpoints require authentication and return data specific to the authenticated detailer.
-    
-    Attributes:
-        permission_classes: List of permission classes (IsAuthenticated)
-        action_handler: Dictionary mapping action names to handler methods
-    """
+    """Today's schedule, earnings KPIs, recent history, and in-card job start/complete."""
     
     permission_classes = [IsAuthenticated] 
 
@@ -56,13 +40,15 @@ class DashboardView(APIView):
     }   
 
     def get(self, request, *args, **kwargs):
+        """Route GET ``action`` to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
-    
+
     def patch(self, request, *args, **kwargs):
+        """Route PATCH ``action`` (start/complete current job) to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -71,6 +57,15 @@ class DashboardView(APIView):
 
 
     def _get_today_overview(self, request):
+        """
+        Today's job counts, current in-progress card, and next pending appointment.
+
+        Args:
+            request: Authenticated DRF request.
+
+        Returns:
+            ``totalAppointments``, ``completedJobs``, ``pendingJobs``, ``currentJob``, ``nextAppointment``.
+        """
         try:
             today = timezone.now().date()
 

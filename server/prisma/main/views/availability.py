@@ -1,3 +1,15 @@
+"""
+Detailer availability and client-facing slot APIs.
+
+**Auth:** ``AllowAny`` for ``get_timeslots`` and ``check_bulk_capacity`` (client stack via Docker);
+``IsAuthenticated`` for detailer calendar CRUD.
+
+**Public GET:** slot list for a city/date; bulk capacity windows (morning/afternoon/fullday).
+
+**Authenticated GET/POST:** load/save unavailability, busy hours for a date.
+
+**Slot generation:** business hours 07:00–19:00, 30 min travel between slots; first bookable 07:30.
+"""
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -59,21 +71,19 @@ def _range_to_hour_slots(start_min, end_min):
     return out
 
 
-""" The class is used to handle all of the users availability related actions
-
-    It is also used to handle the commuinication between the client app stack and the server
-    through the internal docker container network
- """
 class AvailabilityView(APIView):
-    """ Enssure that only a few methods are accessed without authentication. 
-        This is to allow the client app stack to access the availability endpoints without authentication.
-
-        To do this, we will destructure and override the get_permissions method.
     """
+    Availability router: public slot/capacity for client booking; authenticated calendar for detailers.
+    """
+
     public_actions = ['get_timeslots', 'check_bulk_capacity']
-    
+
     def get_permissions(self):
-        """ set permissions to the allow any for the method that is connected from the client app stack
+        """
+        Allow unauthenticated access only for client-stack actions in ``public_actions``.
+
+        Returns:
+            List of permission instances for the current action.
         """
         action = self.kwargs.get('action')
         if action in self.public_actions:
@@ -83,7 +93,6 @@ class AvailabilityView(APIView):
         return [permission() for permission in permission_classes]
     
     
-    """ Create the action handler to route the user to the appropriate view, given the action """
     action_handler = {
         'get_timeslots': 'get_timeslots',
         'check_bulk_capacity': 'check_bulk_capacity',
@@ -93,13 +102,15 @@ class AvailabilityView(APIView):
     }
 
     def get(self, request, *args, **kwargs):
+        """Route GET ``action`` to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
-    
+
     def post(self, request, *args, **kwargs):
+        """Route POST ``action`` to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -173,13 +184,13 @@ class AvailabilityView(APIView):
                     "slots": []
                 }, status=status.HTTP_200_OK)
 
-            # Business hours: 7 AM to 7 PM. First bookable slot is 7:30 AM to allow 30 min drive to first appointment.
+            # Slot generation: business hours 7–19; first slot 7:30 (30 min drive to first appointment)
             business_start = time(7, 0)
             first_slot_start = time(7, 30)  # 30 min drive considered for first booking
             business_end = time(19, 0)
             travel_interval = 30
 
-            # Generate all possible slots for the day (first slot 6:30, then after each slot + travel_interval)
+            # Generate candidate slots for the day (service duration + travel_interval between starts)
             all_slots = self._generate_time_slots(
                 first_slot_start,
                 business_end,
@@ -276,7 +287,7 @@ class AvailabilityView(APIView):
                 except (TypeError, ValueError):
                     pass
 
-            # "Too late for today" check: if selected date is today, ensure enough time until 9pm
+            # Bulk booking branch: reject same-day bulk if not enough minutes left until 19:00
             business_end = time(19, 0)
             today = timezone.now().date()
             if target_date == today:
@@ -397,7 +408,7 @@ class AvailabilityView(APIView):
             # Build list of detailer ids (from queryset)
             detailer_ids = list(detailers.values_list('id', flat=True))
 
-            # Define the three booking windows: morning (7-12), afternoon (12-18), fullday (7-19)
+            # Bulk capacity: evaluate morning / afternoon / fullday windows
             windows_config = [
                 ('morning', business_start, morning_end),
                 ('afternoon', morning_end, afternoon_end),
@@ -492,6 +503,18 @@ class AvailabilityView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _generate_time_slots(self, start_time, end_time, service_duration, travel_interval):
+        """
+        Build contiguous bookable slots from start until business end.
+
+        Args:
+            start_time: First slot start (``time``).
+            end_time: Business end (``time``).
+            service_duration: Minutes per service.
+            travel_interval: Minutes gap after each slot ends before next start.
+
+        Returns:
+            List of ``{start_time, end_time, is_available}`` dicts (HH:MM strings).
+        """
         slots = []
         current_time = start_time
         
@@ -519,6 +542,17 @@ class AvailabilityView(APIView):
     
 
     def _generate_slots_from_availability(self, detailer_availability, service_duration, travel_interval):
+        """
+        Legacy helper: expand per-detailer availability rows into slot dicts (deduped by time range).
+
+        Args:
+            detailer_availability: Iterable of ``Availability`` rows.
+            service_duration: Minutes per service.
+            travel_interval: Minutes between slot starts.
+
+        Returns:
+            Unique sorted slot dicts with ``detailer_id`` / ``detailer_name``.
+        """
         all_slots = []
         
         for availability in detailer_availability:

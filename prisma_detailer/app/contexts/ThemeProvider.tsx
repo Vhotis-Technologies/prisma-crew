@@ -1,3 +1,6 @@
+/**
+ * Theme context: light/dark/system mode, persisted preference, font loading gate.
+ */
 import { useLoadedFonts } from "@/hooks/useLoadedFonts";
 import { createContext, useContext, useState, useEffect } from "react";
 import { ActivityIndicator, Dimensions, useColorScheme } from "react-native";
@@ -11,14 +14,15 @@ const ThemeContext = createContext({
   currentTheme: "light" as "light" | "dark",
 });
 
+/** Loads fonts and saved theme; exposes `theme`, `setTheme`, and resolved `currentTheme`. */
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const fontsLoaded = useLoadedFonts();
   const [theme, setTheme] = useState<ThemeMode>("system");
   const [isLoading, setIsLoading] = useState(true);
   const systemColorScheme = useColorScheme();
 
-  //  Load saved theme on app start
   useEffect(() => {
+    /** Read persisted theme from SecureStore on mount. */
     const loadSavedTheme = async () => {
       try {
         const savedTheme = await SecureStore.getItemAsync("userTheme");
@@ -40,7 +44,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     loadSavedTheme();
   }, []);
 
-  // Save theme when it changes
+  /** Persist theme choice to SecureStore. */
   const saveTheme = async (newTheme: ThemeMode) => {
     try {
       await SecureStore.setItemAsync("userTheme", newTheme);
@@ -49,7 +53,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Wrapper function to set theme and save it
+  /** Update in-memory theme and persist to SecureStore. */
   const setThemeAndSave = (newTheme: ThemeMode) => {
     setTheme(newTheme);
     saveTheme(newTheme);
@@ -73,6 +77,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/** Access theme mode and setter; requires `ThemeProvider`. */
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
   if (!context) {

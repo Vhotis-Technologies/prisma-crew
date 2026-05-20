@@ -1,3 +1,6 @@
+/**
+ * Profile hook: user profile data, statistics, settings toggles, and navigation actions.
+ */
 import {
   useGetProfileStatisticsQuery,
   useUpdatePushNotificationTokenMutation,
@@ -13,6 +16,10 @@ import { useState, useEffect } from "react";
 import { getUserFromStorage } from "../utils/storage";
 import { setUser } from "../store/slices/authSlice";
 
+/**
+ * Loads profile statistics and manages notification preference updates.
+ * @returns User profile, stats, settings handlers, and loading flags
+ */
 const useProfile = () => {
   const dispatch = useAppDispatch();
   const {
@@ -28,6 +35,7 @@ const useProfile = () => {
 
   // Load user data from storage if not available in state
   useEffect(() => {
+    /** Hydrate Redux user from SecureStore when auth state is empty. */
     const loadUserFromStorage = async () => {
       if (!currentUser && !userFromStorage) {
         try {
@@ -60,8 +68,8 @@ const useProfile = () => {
   const { setAlertConfig, setIsVisible } = useAlertContext();
 
   /**
-   * The method is designed to handle the actions that are performed when clicked
-   * @param action the actions to be performed when clicked
+   * Route profile menu actions to screens or logout.
+   * @param action - Profile action key (availability, bankAccount, etc.)
    */
   const handleActions = (action: string) => {
     switch (action) {
@@ -86,9 +94,8 @@ const useProfile = () => {
   };
 
   /**
-   * Update push notification setting on the server
-   * @param value - The new boolean value for push notifications
-   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   * Update push notification preference on server and in Redux.
+   * @param value - New push notification enabled state
    */
   const updatePushNotificationSetting = async (
     value: boolean
@@ -128,9 +135,8 @@ const useProfile = () => {
   };
 
   /**
-   * Update email notification setting on the server
-   * @param value - The new boolean value for email notifications
-   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   * Update email notification preference on server and in Redux.
+   * @param value - New email notification enabled state
    */
   const updateEmailNotificationSetting = async (
     value: boolean
@@ -187,9 +193,8 @@ const useProfile = () => {
   };
 
   /**
-   * Update marketing email setting on the server
-   * @param value - The new boolean value for marketing emails
-   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   * Update marketing email preference on server and in Redux.
+   * @param value - New marketing email enabled state
    */
   const updateMarketingEmailSetting = async (
     value: boolean

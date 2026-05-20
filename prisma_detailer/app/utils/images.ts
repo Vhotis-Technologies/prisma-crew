@@ -1,5 +1,9 @@
+/**
+ * Image capture and upload helpers: camera/gallery, job photos, FormData prep.
+ */
 import * as ExpoImagePicker from "expo-image-picker";
 
+/** Alert helpers used for permissions, errors, and multi-capture confirm. */
 export type ImageAlertHelpers = {
   showAlert: (
     title: string,
@@ -9,28 +13,14 @@ export type ImageAlertHelpers = {
   showConfirm: (title: string, message: string) => Promise<boolean>;
 };
 
-/**
- * Converts a local image URI to a File object for upload purposes.
- * This is necessary because the API expects File objects, but Expo ImagePicker returns URIs.
- *
- * @param {string} uri - The local URI of the image
- * @param {string} filename - The desired filename for the File object
- * @returns {Promise<File>} A Promise that resolves to a File object
- * @throws {Error} If the URI cannot be fetched or converted to a blob
- */
+/** Convert a local image URI to a `File` for web-style uploads. */
 const uriToFile = async (uri: string, filename: string): Promise<File> => {
   const response = await fetch(uri);
   const blob = await response.blob();
   return new File([blob], filename, { type: blob.type });
 };
 
-/**
- * Handles camera image capture using Expo ImagePicker.
- * Requests camera permissions and launches the camera interface.
- * Processes the captured image through handleImageSelection and updates local state.
- *
- * @param alertHelpers - Optional alert helpers for showing permission/error messages
- */
+/** Launch camera, request permission, and process the captured image. */
 const handleCameraSelection = async (
   alertHelpers?: ImageAlertHelpers
 ) => {
@@ -62,12 +52,7 @@ const handleCameraSelection = async (
   }
 };
 
-/**
- * Handles image selection from the device's photo gallery.
- * Requests media library permissions and launches the image picker interface.
- *
- * @param alertHelpers - Optional alert helpers for showing permission/error messages
- */
+/** Pick an image from the gallery after requesting media-library permission. */
 const handleGallerySelection = async (
   alertHelpers?: ImageAlertHelpers
 ) => {
@@ -101,14 +86,7 @@ const handleGallerySelection = async (
   }
 };
 
-/**
- * Processes a selected image by storing only serializable data in Redux state.
- * Creates a timestamped filename and stores the URI (for display) and filename (for upload).
- * File objects are created only when needed for API calls to avoid Redux serialization issues.
- *
- * @param {string} imageUri - The URI of the selected image
- * @throws {Error} If image processing fails
- */
+/** Build serializable uri/filename metadata from a picked image URI. */
 const handleImageSelection = async (imageUri: string) => {
   try {
     // Generate a filename based on timestamp
@@ -126,13 +104,7 @@ const handleImageSelection = async (imageUri: string) => {
   }
 };
 
-/**
- * Captures an image using ONLY the camera (no gallery access).
- * Used for before/after job images where freshness is critical.
- *
- * @param alertHelpers - Alert helpers for permission/error messages (required for alerts)
- * @returns Image data or null if cancelled
- */
+/** Capture a single job photo via camera only; returns null if cancelled. */
 export const captureCameraOnlyImage = async (
   alertHelpers: ImageAlertHelpers
 ): Promise<{
@@ -178,14 +150,7 @@ export const captureCameraOnlyImage = async (
   }
 };
 
-/**
- * Captures multiple images using ONLY the camera (no gallery access).
- * Allows capturing up to a specified number of images in sequence.
- *
- * @param maxImages - Maximum number of images to capture in this session
- * @param alertHelpers - Alert helpers for "Capture another?" confirm and errors
- * @returns Array of captured images
- */
+/** Capture up to `maxImages` job photos in sequence with confirm between shots. */
 export const captureMultipleCameraImages = async (
   maxImages: number,
   alertHelpers: ImageAlertHelpers
@@ -214,15 +179,7 @@ export const captureMultipleCameraImages = async (
   return images;
 };
 
-/**
- * Prepares image data for FormData upload to API.
- * Converts image data to the format expected by React Native's FormData.
- *
- * @param {Array<{ uri: string; type: string; filename: string }>} images - Array of image data
- * @param {string} jobId - The job ID
- * @param {string} segment - The segment type ('interior' or 'exterior')
- * @returns {FormData} FormData object ready for upload
- */
+/** Build multipart FormData with job_id, segment, and indexed image parts. */
 export const prepareImagesForUpload = (
   images: Array<{ uri: string; type: string; filename: string }>,
   jobId: string,

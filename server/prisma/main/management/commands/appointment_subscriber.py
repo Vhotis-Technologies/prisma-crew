@@ -1,3 +1,10 @@
+"""
+Long-running Redis consumer for client-originated job lifecycle events.
+
+Subscribes to the shared ``job_events`` stream as ``detailer_group`` and updates
+local ``Job`` records for cancellations, reschedules, and client reviews. Runs in
+Docker as ``python manage.py appointment_subscriber``.
+"""
 from django.core.management.base import BaseCommand
 import json
 import time
@@ -27,10 +34,29 @@ MAX_REVIEW_COMMENT_LEN = 1000
 
 
 class Command(BaseCommand):
+    """
+    Consume ``job_events`` Redis stream messages aimed at the detailer service.
+
+    Handles ``booking_cancelled``, ``booking_rescheduled``, and ``review_received``
+    published by the client platform; other event types are acked and ignored.
+    """
+
     help = "Read from Redis stream job_events (booking_cancelled, booking_rescheduled, review_received) and process messages."
 
     def connect_with_retry(self, max_retries=30, delay=10):
-        """Ensure Redis is reachable before starting."""
+        """
+        Block until Redis accepts a PING (container startup ordering).
+
+        Args:
+            max_retries: Maximum connection attempts before raising.
+            delay: Seconds to sleep between retries.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: Re-raises the last connection error after all retries fail.
+        """
         for attempt in range(max_retries):
             try:
                 r = get_redis(decode_responses=True)
@@ -48,16 +74,28 @@ class Command(BaseCommand):
                     raise
 
     def handle(self, *args, **kwargs):
+        """
+        Main consumer loop: replay pending messages, then block-read new stream entries.
+
+        Args:
+            *args: Unused positional args from Django.
+            **kwargs: Unused command options.
+
+        Returns:
+            None
+        """
         self.connect_with_retry()
+        # Redis: ensure detailer consumer group exists on shared job_events stream
         ensure_consumer_group(STREAM_JOB_EVENTS, DETAILER_GROUP)
         self.stdout.write(self.style.SUCCESS("Subscribed to job_events stream (detailer_group)"))
 
-        # Process pending messages from previous run
+        # Redis: drain pending (unacked) messages from a previous crash or deploy
         for msg_id, fields in read_pending(STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME):
             self._process_message(msg_id, fields)
 
         try:
             while True:
+                # Redis: blocking read for new client-published job events
                 entries = read_group_blocking(STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME, block_ms=5000)
                 for msg_id, fields in entries:
                     self._process_message(msg_id, fields)
@@ -65,8 +103,19 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("appointment_subscriber stopped"))
 
     def _process_message(self, msg_id, fields):
+        """
+        Parse one stream message, update ``Job`` / ``Review``, notify detailers, then ack.
+
+        Args:
+            msg_id: Redis stream message id (for ``ack``).
+            fields: Dict with ``event`` and JSON ``payload`` from the client service.
+
+        Returns:
+            None
+        """
         event = fields.get("event")
         raw = fields.get("payload", "{}")
+        # Redis: only handle detailer-facing events; ack and drop the rest
         if event not in ("booking_cancelled", "booking_rescheduled", "review_received"):
             ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
             return
@@ -107,6 +156,7 @@ class Command(BaseCommand):
             primary = getattr(job, "primary_detailer", None)
 
             if event == "booking_cancelled":
+                # Job status: any → cancelled (client-initiated cancel)
                 job.status = "cancelled"
                 job.save()
                 # Notify all assigned detailers (express = 2, standard = 1); fallback to primary if no M2M
@@ -153,6 +203,7 @@ class Command(BaseCommand):
                     ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
                     return
                 old_primary = primary
+                # Job status/assignment: reschedule → accepted with new primary and slot
                 job.primary_detailer = detailer
                 job.appointment_date = timezone.make_aware(
                     datetime.combine(target_date, appointment_time),
@@ -230,6 +281,7 @@ class Command(BaseCommand):
                 primary.check_for_deactivation()
                 self.stdout.write(self.style.SUCCESS(f"Detailer {primary.id} updated; notification sent."))
 
+            # Redis: successful handling — remove message from pending list
             ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
         except Job.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Job not found: {booking_reference} (review will not appear on detailer)"))
@@ -238,9 +290,23 @@ class Command(BaseCommand):
             import traceback
             self.stdout.write(self.style.ERROR(f"Error processing message: {str(e)}"))
             self.stdout.write(traceback.format_exc())
+            # Redis: ack on error to avoid poison-message retry loops (logged for support)
             ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
 
     def create_notification(self, user, title, type, status, message):
+        """
+        Persist an in-app ``Notification`` for the given detailer user.
+
+        Args:
+            user: ``User`` to attach the notification to.
+            title: Short notification title.
+            type: ``Notification.type`` choice (e.g. ``booking_cancelled``).
+            status: ``Notification.status`` choice (success, warning, error, info).
+            message: Body text shown in the app.
+
+        Returns:
+            bool: True if created, False on failure.
+        """
         try:
             Notification.objects.create(user=user, title=title, type=type, status=status, message=message)
             self.stdout.write(f"Notification created for user {user.id}")
@@ -248,4 +314,3 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(f"Failed to create notification: {e}")
             return False
-

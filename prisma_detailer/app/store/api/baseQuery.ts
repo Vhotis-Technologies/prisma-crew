@@ -1,3 +1,7 @@
+/**
+ * Axios-based base query for RTK Query: auth header, token refresh, public endpoint list.
+ * Used by all createApi modules in store/api.
+ */
 import { fetchBaseQuery, BaseQueryFn } from "@reduxjs/toolkit/query/react";
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 import * as SecureStore from "expo-secure-store";
@@ -12,11 +16,16 @@ const axiosInstance = axios.create({
   timeout: 30000,
 });
 
+/** Endpoints that do not require a Bearer token. */
 const PUBLIC_ENDPOINTS = [
   "/api/v1/authentication/login/",
   "/api/v1/authentication/refresh/",
 ];
 
+/**
+ * RTK Query base query: attaches Bearer token, handles FormData via fetch on native,
+ * refreshes access token on 401, and retries the original request.
+ */
 export const axiosBaseQuery = (): BaseQueryFn => {
   return async ({ url, method, data, params, headers }, api, extraOptions) => {
     try {

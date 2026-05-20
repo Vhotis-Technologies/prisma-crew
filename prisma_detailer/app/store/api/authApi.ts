@@ -1,3 +1,6 @@
+/**
+ * Auth API: login, register, refresh, terms, password reset.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { axiosBaseQuery } from "@/app/store/api/baseQuery";
 import { SignUpScreenProps } from "@/app/interfaces/AuthInterface";
@@ -7,11 +10,7 @@ const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /**
-     * Login a user using the api to access the url on the server.
-     * The credential passed in the body is the {UserProfileProps} which is the users main
-     * data
-     */
+    /** Authenticate detailer with email and password; returns user and tokens. */
     login: builder.mutation({
       query: (credentials) => ({
         url: "/api/v1/authentication/login/",
@@ -20,13 +19,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Register a new user using the api to access the url on the server.
-     * The credential passed in the body is the {UserProfileProps} which is the users main
-     * data
-     * ARGS: {credentials: SignUpScreenProps}
-     * RESPONSE: {message: string, user: UserProfileProps}
-     */
+    /** Create a new detailer account from onboarding sign-up data. */
     register: builder.mutation<
       { message: string; user: UserProfileProps },
       SignUpScreenProps
@@ -38,11 +31,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Refresh the access token using the api to access the url on the server.
-     * The credential passed in the body is the {UserProfileProps} which is the users main
-     * data
-     */
+    /** Exchange refresh token for new access and refresh tokens. */
     refreshToken: builder.mutation({
       query: (credentials) => ({
         url: "/api/v1/authentication/refresh/",
@@ -51,9 +40,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Get the terms and conditions from the server.
-     */
+    /** Fetch current terms and conditions document. */
     getTermsAndConditions: builder.query<
       { version: string; content: string; last_updated: string },
       void
@@ -64,9 +51,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Request password reset email.
-     */
+    /** Send password reset email to the given address. */
     requestPasswordReset: builder.mutation<
       { message: string },
       { email: string }
@@ -78,9 +63,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Validate password reset token.
-     */
+    /** Validate a password-reset token before showing the reset form. */
     validateResetToken: builder.mutation<
       {
         valid: boolean;
@@ -97,9 +80,7 @@ const authApi = createApi({
       }),
     }),
 
-    /**
-     * Reset password with token.
-     */
+    /** Set a new password using a valid reset token; returns session tokens. */
     resetPassword: builder.mutation<
       {
         message: string;

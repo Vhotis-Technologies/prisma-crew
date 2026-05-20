@@ -1,20 +1,15 @@
 """Support-driven crew reassignment for jobs (single appointments and bulk orders).
 
-**Auth:** :class:`SupportPermissionAccess` — the support server proxies requests with the shared
-``X-Support-Internal-Key`` header. Mobile clients never hit these endpoints directly.
+**Auth:** :class:`SupportPermissionAccess` — support server proxies with
+``X-Support-Internal-Key``; detailer mobile clients do not call these routes.
 
-**Endpoints (under** ``/api/v1/support/jobs/`` **):**
+**Actions:**
+- ``GET get_available_detailers`` — replacement detailers free for the slot (``booking_reference``,
+  optional ``bulk=true``)
+- ``POST reassign`` — atomic crew swap with audit, notifications, and Redis publish
+- ``GET get_reassignment_history`` — last 50 :class:`JobReassignmentAudit` rows for a reference
 
-* ``GET get_available_detailers`` — replacements that are free for a job's full duration. Excludes
-  the currently assigned crew. For bulk references (no ``-N`` suffix) we aggregate across all
-  child jobs and return detailers with enough free capacity to cover the whole window.
-* ``POST reassign`` — swap the entire crew for a job (or for every job in a bulk reference).
-  Atomic; validates the new team is mutually free; sends standard assignment notifications to the
-  new crew only; writes a :class:`JobReassignmentAudit` row; publishes ``job_reassigned``.
-* ``GET get_reassignment_history`` — chronological audit list for a booking reference.
-
-**Eligibility:** jobs in ``in_progress``, ``completed`` or ``cancelled`` cannot be reassigned —
-matches the same guard that ``support_bookings`` already uses on the client side.
+Jobs in ``in_progress``, ``completed``, or ``cancelled`` cannot be reassigned.
 """
 from __future__ import annotations
 
@@ -47,6 +42,7 @@ TRAVEL_BUFFER_MINUTES = 30
 
 
 def _detailer_image_url(detailer: Detailer):
+    """Absolute URL for the detailer's profile image, or None."""
     user = detailer.user
     if user and user.image:
         try:
@@ -57,6 +53,7 @@ def _detailer_image_url(detailer: Detailer):
 
 
 def _serialize_detailer(detailer: Detailer) -> dict:
+    """Candidate detailer card for reassignment picker UI."""
     user = detailer.user
     return {
         'id': str(detailer.id),
@@ -69,10 +66,12 @@ def _serialize_detailer(detailer: Detailer) -> dict:
 
 
 def _minutes(t: time) -> int:
+    """Convert a ``datetime.time`` to minutes since midnight."""
     return t.hour * 60 + t.minute
 
 
 def _is_bulk_sub(ref: str) -> bool:
+    """True when ``booking_reference`` ends with ``-N`` (bulk child job)."""
     return bool(ref) and '-' in ref and ref.split('-')[-1].isdigit()
 
 
@@ -106,6 +105,7 @@ def _detailer_has_conflict(detailer: Detailer, appointment_date, start_min: int,
 
 
 def _bulk_jobs_for_reference(booking_reference: str) -> List[Job]:
+    """Load all child jobs whose reference starts with ``{base}-``."""
     base = booking_reference.rstrip('-')
     return list(
         Job.objects.filter(booking_reference__startswith=f"{base}-")
@@ -116,13 +116,14 @@ def _bulk_jobs_for_reference(booking_reference: str) -> List[Job]:
 
 
 def _format_appointment_email_strings(job: Job):
+    """Return (formatted_date, formatted_time) strings for assignment emails."""
     appointment_dt = job.appointment_date
     appt_time = job.appointment_time
     formatted_date = appointment_dt.strftime('%b. %d, %Y, %I %p').replace(' 0', ' ').lower()
     formatted_time = appt_time.strftime('%I %p').replace(' 0', ' ').lower()
     return formatted_date, formatted_time
 
-# The method is used to send the booking confirmation email and push notification to the new assignee
+
 def _notify_new_assignee(job: Job, detailer: Detailer):
     """Mirror the assign-time notifications sent from BookingView._create_booking."""
     user = detailer.user
@@ -157,6 +158,7 @@ def _notify_new_assignee(job: Job, detailer: Detailer):
 
 
 def _detailer_payload_from(detailer: Detailer) -> dict:
+    """Assigned-crew payload shape for Redis / client sync after reassignment."""
     user = detailer.user
     return {
         'id': str(detailer.id),
@@ -243,6 +245,7 @@ def _validate_new_team_for_single(
     new_detailers: List[Detailer],
     required: int,
 ) -> Tuple[bool, str]:
+    """Reassignment validation: team size, active/available flags, and slot conflicts."""
     if len(new_detailers) != required:
         label = 'two detailers' if required == 2 else 'one detailer'
         return False, f"Express jobs require exactly {label}." if required == 2 else f"Standard jobs require {label}."
@@ -260,6 +263,7 @@ def _validate_new_team_for_bulk(
     jobs: List[Job],
     new_detailers: List[Detailer],
 ) -> Tuple[bool, str]:
+    """Reassignment validation: bulk envelope free, then per-job non-overlap within the new team."""
     if len(new_detailers) < 1:
         return False, 'Pick at least one replacement detailer.'
     appointment_date = jobs[0].appointment_date.date() if hasattr(jobs[0].appointment_date, 'date') else jobs[0].appointment_date
@@ -313,6 +317,7 @@ def _assign_team_to_bulk(jobs: List[Job], new_detailers: List[Detailer]):
 
 
 def _parse_uuid_list(raw) -> Tuple[List[uuid.UUID], str]:
+    """Parse ``new_detailer_ids`` from POST body; return (ids, error_message)."""
     if not isinstance(raw, list) or not raw:
         return [], 'new_detailer_ids is required.'
     out = []
@@ -325,7 +330,10 @@ def _parse_uuid_list(raw) -> Tuple[List[uuid.UUID], str]:
 
 
 class SupportJobsView(APIView):
-    """Read-only candidate queries (GET) and reassignment mutations (POST) for support staff."""
+    """Read-only candidate queries (GET) and reassignment mutations (POST) for support staff.
+
+    Detailer JWT authentication is disabled; only :class:`SupportPermissionAccess` applies.
+    """
 
     authentication_classes = ()
     permission_classes = [SupportPermissionAccess]
@@ -339,18 +347,21 @@ class SupportJobsView(APIView):
     }
 
     def get(self, request, *args, **kwargs):
+        """Dispatch GET ``action`` to available-detailers or history handler."""
         action = kwargs.get('action')
         if action not in self.get_action_handler:
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
         return getattr(self, self.get_action_handler[action])(request)
 
     def post(self, request, *args, **kwargs):
+        """Dispatch POST ``action`` (currently ``reassign`` only)."""
         action = kwargs.get('action')
         if action not in self.post_action_handler:
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
         return getattr(self, self.post_action_handler[action])(request)
 
     def _get_available_detailers(self, request):
+        """List replacement detailers for a single job or bulk reference."""
         booking_reference = (request.query_params.get('booking_reference') or '').strip()
         is_bulk = (request.query_params.get('bulk') or '').strip().lower() == 'true'
         if not booking_reference:
@@ -360,6 +371,7 @@ class SupportJobsView(APIView):
             jobs = _bulk_jobs_for_reference(booking_reference)
             if not jobs:
                 return Response({'error': 'No jobs found for this bulk reference'}, status=status.HTTP_404_NOT_FOUND)
+            # Reassignment validation: bulk jobs must not be in progress, completed, or cancelled.
             blocked = [j for j in jobs if j.status in BLOCKED_JOB_STATUSES]
             if blocked:
                 return Response(
@@ -396,6 +408,7 @@ class SupportJobsView(APIView):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Reassignment validation: terminal job statuses cannot be reassigned.
         if job.status in BLOCKED_JOB_STATUSES:
             return Response(
                 {'error': f"Job is {job.status} and cannot be reassigned."},
@@ -424,6 +437,12 @@ class SupportJobsView(APIView):
         )
 
     def _post_reassign(self, request):
+        """Route reassignment to single-job or bulk handler based on ``is_bulk``.
+
+        Body: ``booking_reference``, ``new_detailer_ids`` (list of UUIDs), ``is_bulk``,
+        ``reason_code`` (from :class:`JobReassignmentAudit.REASON_CHOICES`),
+        ``reason_notes``, ``support_user_id``, ``support_user_email``.
+        """
         data = request.data if hasattr(request.data, 'get') else {}
         booking_reference = (data.get('booking_reference') or '').strip()
         is_bulk = bool(data.get('is_bulk'))
@@ -455,6 +474,7 @@ class SupportJobsView(APIView):
 
     def _reassign_single(self, booking_reference, new_ids, reason_code, reason_notes,
                          support_user_id, support_user_email):
+        """Atomically replace crew on one job after validation and audit."""
         try:
             with transaction.atomic():
                 job = (
@@ -464,6 +484,7 @@ class SupportJobsView(APIView):
                     .get(booking_reference=booking_reference)
                 )
 
+                # Reassignment validation: refuse in_progress, completed, or cancelled jobs.
                 if job.status in BLOCKED_JOB_STATUSES:
                     return Response(
                         {'error': f"Job is {job.status} and cannot be reassigned."},
@@ -496,6 +517,7 @@ class SupportJobsView(APIView):
                         ids_seen.add(uid)
                 new_detailers = ordered
 
+                # Reassignment validation: team size, availability, and slot conflicts.
                 ok, err = _validate_new_team_for_single(job, new_detailers, required)
                 if not ok:
                     return Response({'error': err}, status=status.HTTP_400_BAD_REQUEST)
@@ -556,6 +578,7 @@ class SupportJobsView(APIView):
 
     def _reassign_bulk(self, booking_reference, new_ids, reason_code, reason_notes,
                        support_user_id, support_user_email):
+        """Atomically replace crew across all bulk child jobs after validation and audit."""
         try:
             with transaction.atomic():
                 jobs = list(
@@ -567,6 +590,7 @@ class SupportJobsView(APIView):
                 )
                 if not jobs:
                     return Response({'error': 'No jobs found for this bulk reference'}, status=status.HTTP_404_NOT_FOUND)
+                # Reassignment validation: every bulk child must be reassignable.
                 blocked = [j for j in jobs if j.status in BLOCKED_JOB_STATUSES]
                 if blocked:
                     return Response(
@@ -602,6 +626,7 @@ class SupportJobsView(APIView):
                         seen.add(uid)
                 new_team = ordered_team
 
+                # Reassignment validation: bulk window free and per-job team coverage.
                 ok, err = _validate_new_team_for_bulk(jobs, new_team)
                 if not ok:
                     return Response({'error': err}, status=status.HTTP_400_BAD_REQUEST)
@@ -664,6 +689,7 @@ class SupportJobsView(APIView):
         )
 
     def _get_reassignment_history(self, request):
+        """Return up to 50 audit rows for ``booking_reference``, newest first."""
         booking_reference = (request.query_params.get('booking_reference') or '').strip()
         if not booking_reference:
             return Response({'error': 'booking_reference is required'}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,3 +1,6 @@
+/**
+ * Notifications API: get, mark read, mark all read, delete, save token.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "./baseQuery";
 import { Notification } from "@/app/interfaces/NotificationInterface";
@@ -7,6 +10,7 @@ const notificationApi = createApi({
   baseQuery: axiosBaseQuery(),
   tagTypes: ["Notifications"],
   endpoints: (builder) => ({
+    /** List all notifications for the authenticated detailer. */
     getNotifications: builder.query<Notification[], void>({
       query: () => ({
         url: "/api/v1/notifications/get_notifications/",
@@ -29,6 +33,7 @@ const notificationApi = createApi({
           : [{ type: "Notifications", id: "LIST" }],
     }),
 
+    /** Mark a single notification as read (optimistic cache update). */
     markNotificationAsRead: builder.mutation<
       { success: boolean },
       { id: string }
@@ -65,6 +70,7 @@ const notificationApi = createApi({
       },
     }),
 
+    /** Mark multiple notifications as read by id list. */
     markAllNotificationsAsRead: builder.mutation<
       { success: boolean },
       { ids: string[] }
@@ -103,6 +109,7 @@ const notificationApi = createApi({
       },
     }),
 
+    /** Delete a notification by id (optimistic cache update). */
     deleteNotification: builder.mutation<{ success: boolean }, { id: string }>({
       query: ({ id }) => ({
         url: "/api/v1/notifications/delete_notification/",
@@ -136,6 +143,7 @@ const notificationApi = createApi({
       },
     }),
 
+    /** Register Expo push token with the server. */
     saveNotificationToken: builder.mutation<
       { success: boolean },
       { token: string }

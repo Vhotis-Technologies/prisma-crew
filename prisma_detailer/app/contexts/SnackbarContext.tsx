@@ -1,3 +1,6 @@
+/**
+ * Global snackbar context: brief success/error/warning/info toasts.
+ */
 import React, { createContext, useContext, useState } from "react";
 import { Snackbar } from "react-native-paper";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -29,6 +32,7 @@ const SnackbarContext = createContext<SnackbarContextType | undefined>(
   undefined
 );
 
+/** Provides snackbar show/hide API and renders the paper `Snackbar`. */
 export const SnackbarProvider = ({
   children,
 }: {
@@ -41,6 +45,7 @@ export const SnackbarProvider = ({
     duration: 3000,
   });
 
+  /** Show a snackbar with message, type, and optional duration. */
   const showSnackbar = (
     message: any,
     type: "success" | "error" | "warning" | "info" = "info",
@@ -54,6 +59,7 @@ export const SnackbarProvider = ({
     });
   };
 
+  /** Show a snackbar from a config object. */
   const showSnackbarWithConfig = (config: SnackbarConfig) => {
     setSnackbarState({
       visible: true,
@@ -63,6 +69,7 @@ export const SnackbarProvider = ({
     });
   };
 
+  /** Dismiss the current snackbar. */
   const hideSnackbar = () => {
     setSnackbarState((prev) => ({
       ...prev,
@@ -100,6 +107,7 @@ export const SnackbarProvider = ({
   );
 };
 
+/** Access snackbar helpers; requires `SnackbarProvider`. */
 export const useSnackbar = () => {
   const context = useContext(SnackbarContext);
   if (!context) {

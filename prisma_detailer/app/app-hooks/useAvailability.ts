@@ -1,3 +1,6 @@
+/**
+ * Availability hook: month navigation, date/time-slot selection, and busy-slot blocking.
+ */
 import { useState, useCallback, useEffect, useRef } from "react";
 import dayjs from "dayjs";
 
@@ -28,6 +31,7 @@ export interface AvailabilityStateFromServer {
   currentYear?: number;
 }
 
+/** Build default 06:00–20:00 hourly slots for a selected date. */
 const generateTimeSlots = (): TimeSlot[] => {
   const slots: TimeSlot[] = [];
   for (let hour = 6; hour <= 20; hour++) {
@@ -41,6 +45,11 @@ const generateTimeSlots = (): TimeSlot[] => {
   return slots;
 };
 
+/**
+ * Build a full calendar grid for a month, including leading/trailing week days.
+ * @param year - Calendar year
+ * @param month - Zero-based month index
+ */
 const generateMonthDays = (year: number, month: number): dayjs.Dayjs[] => {
   const days: dayjs.Dayjs[] = [];
   const firstDay = dayjs().year(year).month(month).startOf("month");
@@ -65,6 +74,11 @@ const defaultState: AvailabilityState = {
   currentYear: dayjs().year(),
 };
 
+/**
+ * Manages detailer availability selection with optional server hydration.
+ * @param initialState - Saved availability from GET get_availability
+ * @returns Availability state, navigation helpers, and selection utilities
+ */
 export const useAvailability = (initialState?: AvailabilityStateFromServer | null) => {
   const [state, setState] = useState<AvailabilityState>(defaultState);
   const hasHydrated = useRef(false);
@@ -107,7 +121,9 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Navigate to a specific month and year
+   * Navigate to a specific month and year.
+   * @param month - Zero-based month index
+   * @param year - Calendar year
    */
   const goToMonth = useCallback((month: number, year: number) => {
     setState((prev) => ({
@@ -118,7 +134,8 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Toggle date selection
+   * Toggle date selection.
+   * @param date - Date string in YYYY-MM-DD format
    */
   const toggleDateSelection = useCallback((date: string) => {
     setState((prev) => {
@@ -147,8 +164,9 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Add a date with time slots, marking given hours as blocked by job.
-   * Use after fetching busy times from the server when user selects a date not yet in list.
+   * Add a date with job-blocked time slots after fetching busy times.
+   * @param date - Date string in YYYY-MM-DD format
+   * @param busySlots - Hour strings blocked by existing jobs
    */
   const addDateWithBusySlots = useCallback((date: string, busySlots: string[]) => {
     const busySet = new Set(busySlots);
@@ -168,8 +186,9 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Select only this date (single-day mode). Replaces any existing selection.
-   * Marks given busySlots as blocked by job so they cannot be marked unavailable.
+   * Replace selection with a single date and mark busy slots as blocked.
+   * @param date - Date string in YYYY-MM-DD format
+   * @param busySlots - Hour strings blocked by existing jobs
    */
   const selectOnlyDateWithBusySlots = useCallback((date: string, busySlots: string[]) => {
     const busySet = new Set(busySlots);
@@ -189,7 +208,9 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Update isBlockedByJob for an existing date from refetched busy slots.
+   * Refresh blocked slots for an existing selected date.
+   * @param date - Date string in YYYY-MM-DD format
+   * @param busySlots - Updated busy hour strings from server
    */
   const setBusySlotsForDate = useCallback((date: string, busySlots: string[]) => {
     const busySet = new Set(busySlots);
@@ -209,7 +230,9 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, []);
 
   /**
-   * Toggle time slot selection for a specific date
+   * Toggle time slot selection for a date.
+   * @param date - Date string in YYYY-MM-DD format
+   * @param timeSlotId - Slot identifier within the date
    */
   const toggleTimeSlot = useCallback((date: string, timeSlotId: string) => {
     setState((prev) => {
@@ -246,7 +269,8 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   }, [state.currentYear, state.currentMonth]);
 
   /**
-   * Check if a date is selected
+   * Check whether a date is currently selected.
+   * @param date - Date string in YYYY-MM-DD format
    */
   const isDateSelected = useCallback(
     (date: string) => {
@@ -256,7 +280,8 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
   );
 
   /**
-   * Get selected time slots for a specific date
+   * Get selected time slots for a date.
+   * @param date - Date string in YYYY-MM-DD format
    */
   const getSelectedTimeSlots = useCallback(
     (date: string) => {

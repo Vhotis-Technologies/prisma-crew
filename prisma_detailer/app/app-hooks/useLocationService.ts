@@ -1,3 +1,6 @@
+/**
+ * Location hook: current position, watch updates, distance, and geocoding via expo-location.
+ */
 import { useState, useEffect, useRef } from "react";
 import * as Location from "expo-location";
 import { usePermissions } from "./usePermissions";
@@ -16,14 +19,8 @@ export interface LocationData {
 }
 
 /**
- * Location service hook that handles location functionality
- *
- * Features:
- * - Get current location
- * - Watch location changes
- * - Calculate distance between points
- * - Handle location errors gracefully
- * - Integrates with permission system
+ * Handles location reads, tracking, and geocoding with permission checks.
+ * @returns Current location state and location utility helpers
  */
 export const useLocationService = () => {
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(
@@ -37,7 +34,8 @@ export const useLocationService = () => {
   const { permissionStatus } = usePermissions();
 
   /**
-   * Get current location once
+   * Get current location once.
+   * @returns Location data or null when permission denied or lookup fails
    */
   const getCurrentLocation = async (): Promise<LocationData | null> => {
     if (!permissionStatus.location.granted) {
@@ -79,7 +77,9 @@ export const useLocationService = () => {
   };
 
   /**
-   * Start watching location changes
+   * Start watching location changes.
+   * @param options - Accuracy and update interval overrides
+   * @returns True when tracking started successfully
    */
   const startLocationUpdates = async (
     options: {
@@ -145,7 +145,8 @@ export const useLocationService = () => {
   };
 
   /**
-   * Calculate distance between two points using Haversine formula
+   * Haversine distance between two coordinates in kilometers.
+   * @returns Distance in km
    */
   const calculateDistance = (
     lat1: number,
@@ -168,7 +169,8 @@ export const useLocationService = () => {
   };
 
   /**
-   * Calculate distance from current location to a point
+   * Distance from current location to a target point.
+   * @returns Distance in km, or null when current location is unavailable
    */
   const getDistanceFromCurrentLocation = (
     targetLat: number,
@@ -187,7 +189,8 @@ export const useLocationService = () => {
   };
 
   /**
-   * Get location name from coordinates (reverse geocoding)
+   * Reverse-geocode coordinates to a readable address string.
+   * @returns Formatted address or null
    */
   const getLocationName = async (
     latitude: number,
@@ -218,7 +221,8 @@ export const useLocationService = () => {
   };
 
   /**
-   * Get coordinates from address (geocoding)
+   * Geocode an address string to coordinates.
+   * @returns Latitude/longitude pair or null
    */
   const getCoordinatesFromAddress = async (
     address: string

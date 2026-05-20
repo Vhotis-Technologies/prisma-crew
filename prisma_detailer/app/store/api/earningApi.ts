@@ -1,3 +1,6 @@
+/**
+ * Earnings API: summary, recent earnings, analytics, payouts, bank accounts.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "./baseQuery";
 import {
@@ -13,11 +16,7 @@ const earningApi = createApi({
   reducerPath: "earningApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /**
-     * Get the earnings summary for the current period
-     * @params {void}
-     * @returns {EarningsSummaryCardProps} the earnings summary data
-     */
+    /** Fetch earnings summary for the current period. */
     getEarningsSummary: builder.query<EarningsSummaryCardProps, void>({
       query: () => ({
         url: "/api/v1/earnings/get_earnings_summary/",
@@ -26,11 +25,7 @@ const earningApi = createApi({
       transformResponse: (response: EarningsSummaryCardProps) => response,
     }),
 
-    /**
-     * Get the recent earnings of the user (detailer)
-     * @params {void}
-     * @returns {EarningItemProps[]} the recent earnings data
-     */
+    /** List recent earning line items. */
     getRecentEarnings: builder.query<EarningItemProps[], void>({
       query: () => ({
         url: "/api/v1/earnings/get_recent_earnings/",
@@ -39,11 +34,7 @@ const earningApi = createApi({
       transformResponse: (response: EarningItemProps[]) => response,
     }),
 
-    /**
-     * Get the analytics of the user (detailer)
-     * @params {void}
-     * @returns {EarningsAnalyticsProps} the user analytics data for the current period
-     */
+    /** Fetch earnings analytics for charts and trends. */
     getEarningsAnalytics: builder.query<EarningsAnalyticsProps, void>({
       query: () => ({
         url: "/api/v1/earnings/get_earnings_analytics/",
@@ -52,11 +43,7 @@ const earningApi = createApi({
       transformResponse: (response: EarningsAnalyticsProps) => response,
     }),
 
-    /**
-     * Get the payout history of the user (detailer)
-     * @params {void}
-     * @returns {PayoutItemProps[]} the payout history data
-     */
+    /** List payout history records. */
     getPayoutHistory: builder.query<PayoutItemProps[], void>({
       query: () => ({
         url: "/api/v1/earnings/get_payout_history/",
@@ -65,11 +52,7 @@ const earningApi = createApi({
       transformResponse: (response: PayoutItemProps[]) => response,
     }),
 
-    /**
-     * Get the bank accounts of the user (detailer)
-     * @params {void}
-     * @returns {BankAccountProps[]} the bank accounts data
-     */
+    /** List bank accounts linked for payouts. */
     getBankAccounts: builder.query<BankAccountProps[], void>({
       query: () => ({
         url: "/api/v1/earnings/get_bank_accounts/",
@@ -78,11 +61,7 @@ const earningApi = createApi({
       transformResponse: (response: BankAccountProps[]) => response,
     }),
 
-    /**
-     * Add a bank account to the detailers account
-     * @params {BankAccountProps} the bank account to add
-     * @returns {BankAccountProps} the bank account that was added
-     */
+    /** Add a bank account for receiving payouts. */
     addBankAccount: builder.mutation<BankAccountProps, BankAccountProps>({
       query: (bankAccount) => ({
         url: "/api/v1/earnings/add_bank_account/",

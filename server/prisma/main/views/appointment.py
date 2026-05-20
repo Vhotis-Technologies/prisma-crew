@@ -1,3 +1,15 @@
+"""
+Assigned jobs (appointments) for the detailer mobile app.
+
+**Auth:** ``IsAuthenticated`` — jobs where user is primary or on ``detailers`` M2M.
+
+**GET actions:** ``get_all_appointments``, ``get_appointment_details``.
+
+**PATCH/POST actions:** ``start_appointment``, ``complete_appointment``, ``upload_before_images``,
+``upload_after_images``, ``submit_fleet_maintenance``.
+
+**Images:** ``MAX_SEGMENT_JOB_IMAGES`` per interior/exterior before/after segment required to complete.
+"""
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -17,6 +29,10 @@ MAX_SEGMENT_JOB_IMAGES = 4
 
 
 class AppointmentView(APIView):
+    """
+    Job lifecycle on the detailer device: list, detail, start, complete, photos, fleet checklist.
+    """
+
     permission_classes = [IsAuthenticated]
 
     action_handler = {
@@ -30,16 +46,15 @@ class AppointmentView(APIView):
     }   
 
     def get(self, request, *args, **kwargs):
+        """Route GET ``action`` to handler; returns 400 if unknown."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
     
-    """ Override the patch method here.
-        This will be used to update the detailers appointments
-    """
     def patch(self, request, *args, **kwargs):
+        """Route PATCH ``action`` (start/complete) to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -47,14 +62,23 @@ class AppointmentView(APIView):
         return handler(request)
     
     def post(self, request, *args, **kwargs):
+        """Route POST ``action`` (uploads, fleet maintenance) to handler."""
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
-    
 
     def _get_all_appointments(self, request):
+        """
+        List jobs for the authenticated detailer on a given calendar date.
+
+        Args:
+            request: Query ``date`` (YYYY-MM-DD).
+
+        Returns:
+            JSON array of summary rows, or message when none found.
+        """
         try:
             # Get the date from the request and use the date to query the jobs
             # model.
@@ -90,6 +114,15 @@ class AppointmentView(APIView):
         
     
     def _get_appointment_details(self, request):
+        """
+        Full job payload including images and fleet maintenance for one job id.
+
+        Args:
+            request: Query ``id`` — job primary key.
+
+        Returns:
+            Detail object or 404.
+        """
         try:
             # Get job where user is either primary_detailer or in detailers ManyToMany
             appointment = Job.objects.filter(
@@ -173,11 +206,14 @@ class AppointmentView(APIView):
 
 
     def _start_appointment(self, request):
-        """ Start the appointment
+        """
+        Move job from ``accepted`` to ``in_progress`` and publish Redis ``job_started``.
+
         Args:
-            request: The request objectwhy does
+            request: Body ``id`` — job primary key.
+
         Returns:
-            Response: The response object
+            Success message or 400/404 on invalid state.
         """
         try:
             appointment = Job.objects.filter(
@@ -208,13 +244,17 @@ class AppointmentView(APIView):
             
 
     def _complete_appointment(self, request):
-        """ Complete the appointment
+        """
+        Complete job after validating min before/after images per segment; publishes ``job_completed``.
+
         Args:
-            request: The request object
+            request: Body ``id`` — job primary key.
+
         Returns:
-            Response: The response object
+            Success message or 400 with segment counts.
         """
         def _bad_request(msg):
+            """Return 400 with a single error string."""
             return Response({"error": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         try:

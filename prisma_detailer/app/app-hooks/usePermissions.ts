@@ -1,3 +1,6 @@
+/**
+ * Permission hooks: push notifications and location. Prompts and status for Expo Notifications and Location.
+ */
 import { useState, useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import * as Location from "expo-location";
@@ -23,15 +26,8 @@ export interface PermissionStatus {
 }
 
 /**
- * Permission service hook that manages notification and location permissions
- *
- * Features:
- * - Checks current permission status
- * - Requests permissions with proper error handling
- * - Persists permission preferences in SecureStore
- * - Provides real-time permission status updates
- * - Handles platform-specific permission flows
- * - Graceful degradation when permissions are denied
+ * Permission service hook that manages notification and location permissions.
+ * @returns Permission status, loading flag, and request/toggle helpers
  */
 export const usePermissions = () => {
   const { setAlertConfig, setIsVisible } = useAlertContext();
@@ -161,8 +157,8 @@ export const usePermissions = () => {
   };
 
   /**
-   * Toggle notification permission - for use in settings
-   * This handles both enabling and disabling notifications
+   * Toggle notification permission from settings.
+   * @param enable - True to request permission, false to update local denied state
    */
   const toggleNotificationPermission = async (
     enable: boolean
@@ -251,8 +247,8 @@ export const usePermissions = () => {
   };
 
   /**
-   * Toggle location permission - for use in settings
-   * This handles both enabling and disabling location access
+   * Toggle location permission from settings.
+   * @param enable - True to request permission, false to update local denied state
    */
   const toggleLocationPermission = async (
     enable: boolean

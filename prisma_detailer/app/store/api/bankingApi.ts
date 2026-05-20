@@ -1,3 +1,6 @@
+/**
+ * Banking API: list accounts, set default, add, delete.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "./baseQuery";
 import { BankAccountProps } from "@/app/interfaces/BankingInterface";
@@ -6,7 +9,7 @@ const bankingApi = createApi({
   reducerPath: "bankingApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /* Get all the bank accounts of the user */
+    /** List all bank accounts for the authenticated detailer. */
     getBankAccounts: builder.query<BankAccountProps[], void>({
       query: () => ({
         url: "/api/v1/banking/get_bank_accounts/",
@@ -15,11 +18,7 @@ const bankingApi = createApi({
       transformResponse: (response: BankAccountProps[]) => response,
     }),
 
-    /**
-     * Set a bank accounr to the default account. this method takes the id of the bank account to set as default
-     * @params {string} id - The id of the bank account to set as default
-     * @returns {string} The message from the server
-     */
+    /** Set a bank account as the default payout destination. */
     setDefaultBankAccount: builder.mutation<
       { message: string },
       { accountId: string }
@@ -32,11 +31,7 @@ const bankingApi = createApi({
       transformResponse: (response: { message: string }) => response,
     }),
 
-    /**
-     * Add a new bank account to the users bank account information
-     * @params {BankAccountProps} bankAccount - The bank account to add
-     * @returns {object} The response from the server
-     */
+    /** Create a new bank account record. */
     addBankAccount: builder.mutation<
       { message: string; account_name: string },
       BankAccountProps
@@ -52,11 +47,7 @@ const bankingApi = createApi({
       }) => response,
     }),
 
-    /**
-     * Delete a bank account from the users bank account information
-     * @params {string} accountId - The id of the bank account to delete
-     * @returns {string} The message from the server
-     */
+    /** Delete a bank account by id. */
     deleteBankAccount: builder.mutation<
       { message: string },
       { accountId: string }

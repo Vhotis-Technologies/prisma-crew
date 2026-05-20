@@ -17,6 +17,7 @@ import { useAlertContext } from "@/app/contexts/AlertContext";
 
 const MIN_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
+/** Monitor Expo OTA updates; auto-download and prompt reload when pending. */
 export const useUpdateMonitor = () => {
   const { setAlertConfig } = useAlertContext();
 
@@ -35,6 +36,7 @@ export const useUpdateMonitor = () => {
   const fetchedForRef = useRef<string | null>(null);
   const promptedForRef = useRef<string | null>(null);
 
+  /** Check EAS for updates; skips throttle when `force` is true. */
   const checkForUpdates = useCallback(async (force = false) => {
     if (__DEV__ || !Updates.isEnabled) return;
     const now = Date.now();

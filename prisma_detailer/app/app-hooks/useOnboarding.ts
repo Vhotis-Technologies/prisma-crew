@@ -1,3 +1,6 @@
+/**
+ * Onboarding hook: multi-step signup form, validation, registration, and terms flow.
+ */
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
@@ -21,7 +24,9 @@ import * as SecureStore from "expo-secure-store";
 import { useSnackbar } from "@/app/contexts/SnackbarContext";
 
 /**
- * Parse technical error messages into user-friendly messages
+ * Map server/technical registration errors to user-facing messages.
+ * @param errorMessage - Raw error string from API or network layer
+ * @returns User-friendly error message
  */
 const parseUserFriendlyError = (errorMessage: string): string => {
   const message = errorMessage.toLowerCase();
@@ -117,6 +122,10 @@ const parseUserFriendlyError = (errorMessage: string): string => {
   return "Registration failed. Please check your information and try again.";
 };
 
+/**
+ * Manages detailer signup wizard state, validation, and registration submit.
+ * @returns Step state, form data, errors, and navigation/submit handlers
+ */
 export const useOnboarding = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar, showSnackbarWithConfig } = useSnackbar();
@@ -145,6 +154,11 @@ export const useOnboarding = () => {
     { id: 3, title: "Location", icon: "location-outline" },
   ];
 
+  /**
+   * Validate fields for the current signup step.
+   * @param step - Wizard step number (1–3)
+   * @returns True when the step passes validation
+   */
   const validateStep = (step: number): boolean => {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:148',message:'validateStep entry',data:{step,hasSignUpData:!!signUpData,signUpDataKeys:signUpData?Object.keys(signUpData):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
@@ -211,6 +225,7 @@ export const useOnboarding = () => {
     return isValid;
   };
 
+  /** Advance to the next step or submit on the final step when terms are accepted. */
   const handleNext = () => {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:207',message:'handleNext entry',data:{currentStep,termsAccepted},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
@@ -242,7 +257,7 @@ export const useOnboarding = () => {
     }
   };
 
-  // Custom handleNext for step 2 that includes confirm password validation
+  /** Validate step 2 including confirm-password match, then go to step 3. */
   const handleNextStep2 = () => {
     // Validate confirm password
     // Validate sign up data password
@@ -260,6 +275,7 @@ export const useOnboarding = () => {
     setCurrentStep(3);
   };
 
+  /** Go back one wizard step when not on the first step. */
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -267,11 +283,8 @@ export const useOnboarding = () => {
   };
 
   /**
-   * Submit the form to the server if the current step is the last step, and the form is valid.
-   * The method will show an alert after successfully registering the user,
-   * returning the user to the dashboard screen.
-   * @returns {token: string, refresh: string, user: UserProfileProps}
-   * Save these in the redux store and the local storage.
+   * Submit validated signup data and navigate to pending approval on success.
+   * @returns Resolves when registration attempt completes
    */
   const handleSubmit = useCallback(async () => {
     // #region agent log
@@ -362,6 +375,11 @@ export const useOnboarding = () => {
     }
   }, [currentStep, signUpData, dispatch, setAlertConfig, register]);
 
+  /**
+   * Update a signup form field in Redux and clear its field error.
+   * @param field - Signup field key
+   * @param value - New field value
+   */
   const updateFormData = (field: keyof SignUpScreenProps, value: string) => {
     const currentData = signUpData || {
       first_name: "",
@@ -380,16 +398,19 @@ export const useOnboarding = () => {
     }
   };
 
+  /**
+   * Update confirm-password value in Redux.
+   * @param value - Confirm password input
+   */
   const updateConfirmPassword = (value: string) => {
     dispatch(setConfirmPassword(value));
   };
 
   /**
-   * Save the user data to the async storage after login.
-   * This is used when the user tries to relogin,
-   * @param user The returned user data which is of interface {User | Seller}
-   * @param access The access token returned from the server
-   * @param refresh The refresh token returned from the server
+   * Persist auth session to SecureStore after login.
+   * @param user - Authenticated user profile
+   * @param access - Access token
+   * @param refresh - Refresh token
    */
   const saveDataToStorage = async (
     user: UserProfileProps | null,
@@ -406,15 +427,18 @@ export const useOnboarding = () => {
     }
   };
 
+  /** Toggle password field visibility. */
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
+  /** Accept terms and close the terms modal. */
   const handleAcceptTerms = () => {
     setTermsAccepted(true);
     setShowTermsModal(false);
   };
 
+  /** Open the terms acceptance modal. */
   const handleShowTerms = () => {
     setShowTermsModal(true);
   };

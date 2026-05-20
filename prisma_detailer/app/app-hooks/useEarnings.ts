@@ -1,3 +1,6 @@
+/**
+ * Earnings hook: summary, analytics, payout history, and refetch helpers via RTK Query.
+ */
 import { useCallback } from "react";
 import {
   useGetEarningsSummaryQuery,
@@ -9,8 +12,8 @@ import {
 } from "@/app/store/api/earningApi";
 
 /**
- * Simplified hook for earnings navigation and actions
- * Each component now fetches its own data using RTK Query
+ * Aggregates earnings RTK Query data and exposes payout/bank-account action stubs.
+ * @returns Earnings datasets, loading flags, refetch helper, and action handlers
  */
 export const useEarnings = () => {
   const {
@@ -34,7 +37,7 @@ export const useEarnings = () => {
     refetch: refetchPayoutHistory,
   } = useGetPayoutHistoryQuery();
 
-  /* Refetch the data when the user refetch the data */
+  /** Refetch all earnings-related queries. */
   const handleRefetchData = useCallback(() => {
     refetchEarningsSummary();
     refetchRecentEarnings();
@@ -54,7 +57,8 @@ export const useEarnings = () => {
     isLoadingPayoutHistory;
 
   /**
-   * Set bank account as primary
+   * Set bank account as primary.
+   * @param accountId - Bank account ID to promote
    */
   const setPrimaryBankAccount = useCallback((accountId: string) => {
     // Set primary bank account
@@ -62,7 +66,8 @@ export const useEarnings = () => {
   }, []);
 
   /**
-   * Delete bank account
+   * Delete a bank account.
+   * @param accountId - Bank account ID to remove
    */
   const deleteBankAccount = useCallback((accountId: string) => {
     // Delete bank account
@@ -70,7 +75,8 @@ export const useEarnings = () => {
   }, []);
 
   /**
-   * Add new bank account
+   * Add a new bank account.
+   * @param accountData - Bank account payload
    */
   const addBankAccount = useCallback((accountData: any) => {
     // Add bank account
@@ -78,7 +84,9 @@ export const useEarnings = () => {
   }, []);
 
   /**
-   * Request payout
+   * Request a payout to a bank account.
+   * @param amount - Payout amount
+   * @param bankAccountId - Destination bank account ID
    */
   const requestPayout = useCallback((amount: number, bankAccountId: string) => {
     // Request payout

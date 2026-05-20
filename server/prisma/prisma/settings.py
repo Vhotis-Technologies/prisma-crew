@@ -132,10 +132,12 @@ if IS_STAGING:
     GS_CREDENTIALS_PATH_STAGING = os.path.join(BASE_DIR, 'prisma-6fc48-642e49c334e8.json')
     GS_BUCKET_NAME_STAGING = os.getenv('GS_BUCKET_NAME_STAGING', 'prisma_staging_bucket')
     GS_LOCATION_STAGING = os.getenv('GS_LOCATION_STAGING', 'main-app')
-    GS_CREDENTIALS_STAGING = service_account.Credentials.from_service_account_file(
-        GS_CREDENTIALS_PATH_STAGING,
-        scopes=['https://www.googleapis.com/auth/cloud-platform'],
-    )
+    GS_CREDENTIALS_STAGING = None
+    if GS_CREDENTIALS_PATH_STAGING and Path(GS_CREDENTIALS_PATH_STAGING).is_file():
+        GS_CREDENTIALS_STAGING = service_account.Credentials.from_service_account_file(
+            GS_CREDENTIALS_PATH_STAGING,
+            scopes=['https://www.googleapis.com/auth/cloud-platform'],
+        )
     STORAGES = {
         'default': {
             'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
@@ -221,6 +223,7 @@ CACHES = {
         'OPTIONS': {},
     },
 }
+RATELIMIT_USE_CACHE = 'default'
 
 # REST Framework Configuration
 _rest_renderers = ['rest_framework.renderers.JSONRenderer']
@@ -342,6 +345,7 @@ LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
 
 SUPPORT_INTERNAL_API_KEY = (os.getenv('SUPPORT_INTERNAL_API_KEY') or '').strip()
+FIELD_ENCRYPTION_KEY = (os.getenv('FIELD_ENCRYPTION_KEY') or '').strip()
 
 LOGGING = {
     'version': 1,

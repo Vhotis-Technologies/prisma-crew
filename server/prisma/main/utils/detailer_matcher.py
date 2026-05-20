@@ -51,8 +51,8 @@ def find_detailers_for_location(
     country = country.strip()
     city = city.strip()
 
-    # Base filters for all steps
     def apply_filters(qs):
+        """Apply optional ``is_available`` filter to a detailer queryset."""
         if is_available is not None:
             return qs.filter(is_available=is_available)
         return qs

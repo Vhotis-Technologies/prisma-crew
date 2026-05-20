@@ -1,3 +1,6 @@
+/**
+ * Redux store: auth/banking slices and RTK Query APIs for the detailer app.
+ */
 import { configureStore } from "@reduxjs/toolkit";
 import authApi from "./api/authApi";
 import authReducer from "./slices/authSlice";
@@ -37,10 +40,14 @@ const store = configureStore({
     ),
 });
 
+/** Full Redux state shape for selectors and base query. */
 export type RootState = ReturnType<typeof store.getState>;
+/** Typed dispatch for thunks and slice actions. */
 export type AppDispatch = typeof store.dispatch;
 
+/** Typed `useDispatch` bound to the detailer store. */
 export const useAppDispatch = () => useDispatch<AppDispatch>();
+/** Typed `useSelector` for the detailer store. */
 export const useAppSelector = useSelector;
 
 export default store;

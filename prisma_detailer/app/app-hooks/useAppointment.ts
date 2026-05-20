@@ -1,3 +1,6 @@
+/**
+ * Appointment hook: calendar navigation, daily time slots, job details, and appointment lifecycle actions.
+ */
 import { useState, useMemo, useCallback, useEffect } from "react";
 import dayjs from "dayjs";
 import { router, useRouter } from "expo-router";
@@ -18,19 +21,14 @@ import { useAlertContext } from "../contexts/AlertContext";
 import { useSnackbar } from "../contexts/SnackbarContext";
 
 /**
- * Custom hook for managing appointment calendar functionality
- *
- * This hook provides all the state management and data generation for the appointment calendar system.
- * It handles month navigation, day selection, calendar data generation, and navigation to daily views.
+ * Manages appointment calendar state, RTK Query data, and job actions.
  *
  * Features:
- * - Month navigation with visual indicators
- * - Calendar day generation with proper week layout
- * - Time slot generation for daily views
- * - Navigation to daily screen with date parameters
- * - Responsive data structures for calendar components
+ * - Month/day navigation and calendar grid generation
+ * - Daily time slots and appointment detail routing
+ * - Start/complete, image upload, and fleet maintenance handlers
  *
- * @returns Object containing state, data, and action functions
+ * @returns Calendar state, derived data, query results, and action handlers
  */
 export const useAppointment = () => {
   const { showSnackbarWithConfig } = useSnackbar();
@@ -227,6 +225,10 @@ export const useAppointment = () => {
     return slots;
   }, [selectedDay]);
 
+  /**
+   * Switch the calendar to a specific month and clear the selected day.
+   * @param month - Target month as a dayjs instance
+   */
   const navigateToMonth = (month: dayjs.Dayjs) => {
     setSelectedMonth(month);
     setSelectedDay(null); // Reset selected day when changing months
@@ -273,12 +275,8 @@ export const useAppointment = () => {
   };
 
   /**
-   * Handle job card press
-   *
-   * Navigates to the appointment details screen with the job data
-   * passed as route parameters for detailed view.
-   *
-   * @param job - JobCardProps object containing appointment details
+   * Handle job card press by loading appointment details.
+   * @param id - Appointment/job ID
    */
   const handleJobPress = useCallback(
     async (id: string) => {

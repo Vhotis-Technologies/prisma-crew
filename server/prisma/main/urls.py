@@ -1,8 +1,14 @@
+"""
+URL routing for the detailer API (v1).
+
+Maps authentication, bookings, appointments, banking, earnings, notifications,
+password reset, and internal support endpoints. Serves media files in DEBUG.
+"""
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from main.views.authentication import AuthenticationView, CustomTokenObtainPairView
-from rest_framework_simplejwt.views import TokenRefreshView 
+from main.views.authentication import TokenRefreshView
 from main.views.availability import AvailabilityView    
 from main.views.dashboard import DashboardView
 from main.views.booking import BookingView

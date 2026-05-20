@@ -1,3 +1,6 @@
+/**
+ * Availability API: get schedule, create/update slots, busy times per date.
+ */
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "./baseQuery";
 import type { AvailabilityStateFromServer } from "@/app/app-hooks/useAvailability";
@@ -11,7 +14,7 @@ const availabilityApi = createApi({
   reducerPath: "availabilityApi",
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
-    /* Get an array of all the detailers availability for a year */
+    /** Fetch detailer availability for the current year. */
     getAvailability: builder.query<AvailabilityStateFromServer, void>({
       query: () => ({
         url: "/api/v1/availability/get_availability/",
@@ -19,7 +22,7 @@ const availabilityApi = createApi({
       }),
     }),
 
-    /* Create/update availability for a detailer */
+    /** Create or update availability for selected dates and time slots. */
     createAvailability: builder.mutation<
       AvailabilityStateFromServer,
       CreateAvailabilityPayload
@@ -31,7 +34,7 @@ const availabilityApi = createApi({
       }),
     }),
 
-    /* Get busy (job) time slots for a single date for the current detailer */
+    /** Get busy (booked) time slots for a single date. */
     getBusyTimes: builder.query<
       { date: string; busySlots: string[] },
       string | null

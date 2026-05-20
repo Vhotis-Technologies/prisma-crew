@@ -1,3 +1,13 @@
+"""
+Detailer profile stats, notification preferences, and live location (Redis GEO).
+
+**Auth:** ``IsAuthenticated``.
+
+**GET actions:** ``get_profile_statistics``, ``get_user_profile``.
+
+**POST/PATCH actions:** ``update_push_notification_token``, ``update_email_notification_token``,
+``update_marketing_email_token``, ``update_location``.
+"""
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +18,10 @@ from main.utils.redis_geo import update_detailer_location
 
 
 class ProfileView(APIView):
+    """
+    Profile tab data: ratings, earnings totals, preference toggles, GPS for dispatch.
+    """
+
     permission_classes = [IsAuthenticated]
 
     action_handler = {
@@ -20,6 +34,12 @@ class ProfileView(APIView):
     }
 
     def get(self, request, *args, **kwargs):
+        """
+        Route GET ``action`` to handler.
+
+        Returns:
+            Handler ``Response`` or 400 for unknown actions.
+        """
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -27,6 +47,12 @@ class ProfileView(APIView):
         return handler(request)
 
     def post(self, request, *args, **kwargs):
+        """
+        Route POST ``action`` to handler.
+
+        Returns:
+            Handler ``Response`` or 400 for unknown actions.
+        """
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -34,15 +60,29 @@ class ProfileView(APIView):
         return handler(request)
 
     def patch(self, request, *args, **kwargs):
+        """
+        Route PATCH ``action`` to handler.
+
+        Returns:
+            Handler ``Response`` or 400 for unknown actions.
+        """
         action = kwargs.get('action')
         if action not in self.action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handler[action])
         return handler(request)
-    
+
     def _get_profile_statistics(self, request):
+        """
+        Aggregate bookings, earnings, average rating, and review list.
+
+        Args:
+            request: Authenticated DRF request.
+
+        Returns:
+            ``avg_rating``, ``total_bookings``, ``total_earnings``, ``reviews`` array.
+        """
         try:
-            # Get the stats which includes average rating, total bookings, total earnings and reviews
             total_bookings = Job.objects.filter(
                 Q(primary_detailer__user=request.user) | Q(detailers__user=request.user)
             ).distinct().count()
@@ -53,8 +93,7 @@ class ProfileView(APIView):
 
             reviews = Review.objects.filter(detailer__user=request.user)
 
-            review_data=[]
-            # Loop through this and create a review data object
+            review_data = []
             for review in reviews:
                 review_data.append({
                     'id': review.id,
@@ -70,86 +109,112 @@ class ProfileView(APIView):
                 'total_earnings': total_earnings,
                 'reviews': review_data
             }
-            pass
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
     def _update_push_notification_token(self, request):
+        """
+        Toggle ``allow_push_notifications`` on the user.
+
+        Args:
+            request: Body ``update`` boolean.
+
+        Returns:
+            Success payload with new value.
+        """
         try:
             update_value = request.data.get('update')
-            
+
             if update_value is None:
                 return Response(
-                    {'error': 'Update value is required'}, 
+                    {'error': 'Update value is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             request.user.allow_push_notifications = update_value
             request.user.save()
-            
+
             return Response({
                 'success': True,
                 'message': 'Push notification setting updated successfully',
                 'value': update_value
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
     def _update_email_notification_token(self, request):
+        """
+        Toggle ``allow_email_notifications`` on the user.
+
+        Args:
+            request: Body ``update`` boolean.
+
+        Returns:
+            Success payload with new value.
+        """
         try:
             update_value = request.data.get('update')
-            
+
             if update_value is None:
                 return Response(
-                    {'error': 'Update value is required'}, 
+                    {'error': 'Update value is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
-            # Update the user's email notification setting
+
             request.user.allow_email_notifications = update_value
             request.user.save()
-            
+
             return Response({
                 'success': True,
                 'message': 'Email notification setting updated successfully',
                 'value': update_value
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
     def _update_marketing_email_token(self, request):
+        """
+        Toggle ``allow_marketing_emails`` on the user.
+
+        Args:
+            request: Body ``update`` boolean.
+
+        Returns:
+            Success payload with new value.
+        """
         try:
             update_value = request.data.get('update')
-            
+
             if update_value is None:
                 return Response(
-                    {'error': 'Update value is required'}, 
+                    {'error': 'Update value is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
-            # Update the user's marketing email setting
+
             request.user.allow_marketing_emails = update_value
             request.user.save()
-            
+
             return Response({
                 'success': True,
                 'message': 'Marketing email setting updated successfully',
                 'value': update_value
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def _update_location(self, request):
-        """Update detailer's current location (DB + Redis GEO). Authenticated detailer only."""
+        """
+        Update detailer latitude/longitude in DB and Redis GEO index.
+
+        Args:
+            request: Body ``latitude``, ``longitude`` floats.
+
+        Returns:
+            Success message; Redis failures are logged but do not fail the request.
+        """
         try:
             latitude = request.data.get('latitude')
             longitude = request.data.get('longitude')
@@ -179,7 +244,6 @@ class ProfileView(APIView):
             try:
                 update_detailer_location(detailer.id, lng_f, lat_f)
             except Exception as e:
-                # Log but do not fail the request; DB is updated
                 import logging
                 logging.getLogger(__name__).warning(
                     "Redis GEO update failed for detailer %s: %s", detailer.id, e
@@ -190,4 +254,3 @@ class ProfileView(APIView):
             )
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-

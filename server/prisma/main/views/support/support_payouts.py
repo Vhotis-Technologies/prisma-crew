@@ -1,12 +1,19 @@
 """
-Crew payout queue for support: list pending/processing payouts, list unpaid earnings,
-create new payouts from unpaid earnings, and mark payouts as completed.
+Crew payout queue for support: list pending/processing payouts, unpaid earnings,
+create payouts from earnings, and mark payouts completed after bank transfer.
 
-Crew members cannot self-initiate payouts; only support can create a payout from
-pending earnings. After bank transfer, support marks the payout as paid which in turn
-marks the linked earnings as paid.
+Crew cannot self-initiate payouts; support bundles pending earnings and records payment.
 
-**Auth:** ``SupportPermissionAccess`` (``X-Support-Internal-Key`` from support server).
+**Auth:** :class:`SupportPermissionAccess` — ``X-Support-Internal-Key`` from support server.
+
+**Actions:**
+- ``GET get_payout_queue`` — pending/processing (or filtered) payout rows
+- ``GET get_crew_payout_detail`` — single payout by ``payout_id``
+- ``GET get_crew_unpaid_earnings`` — aggregated unpaid totals per crew member
+- ``GET get_crew_unpaid_earnings_detail`` — per-job earnings + masked bank account
+- ``POST mark_payout_paid`` — complete an existing payout after transfer
+- ``POST create_crew_payout`` — create pending payout from unpaid earnings
+- ``POST record_crew_payment_made`` — create payout and mark completed in one step
 """
 from __future__ import annotations
 
@@ -22,12 +29,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from main.models import BankAccount, Detailer, Earning, PayoutHistory
+from main.utils.pii_encryption import mask_iban
 from main.views.support.support_permission_access import SupportPermissionAccess
 
 logger = logging.getLogger(__name__)
 
 
 def _fmt_display_date(dt) -> str:
+    """Human-readable date for support UI (``%d %b %Y``); safe for ``date`` and ``datetime``."""
     if not dt:
         return ""
     # Period bounds are datetime.date; is_aware() calls utcoffset() and crashes on date.
@@ -39,6 +48,7 @@ def _fmt_display_date(dt) -> str:
 
 
 def _iso(dt) -> str:
+    """ISO-8601 string for API payloads; empty string if falsy."""
     if not dt:
         return ""
     if hasattr(dt, "isoformat"):
@@ -60,6 +70,7 @@ def _earning_period_bounds(payout: PayoutHistory) -> tuple:
 
 
 def _serialize_crew_payout(payout: PayoutHistory) -> dict:
+    """Serialize a :class:`PayoutHistory` row for the support payout queue UI."""
     detailer = payout.detailer
     user = detailer.user if detailer else None
     period_start, period_end = _earning_period_bounds(payout)
@@ -107,24 +118,27 @@ def _resolve_bank_account_for_detailer(detailer: Detailer) -> BankAccount | None
 
 
 def _serialize_bank_account(detailer: Detailer) -> dict:
+    """Bank account summary for support; IBAN is always masked (never full value in API)."""
     bank_account = _resolve_bank_account_for_detailer(detailer)
     if not bank_account:
         return {
             "has_bank_account": False,
             "account_name": "",
-            "iban": "",
+            "iban_masked": "",
         }
-    iban = (bank_account.iban or "").strip()
+    # IBAN masking: only last four digits exposed; full IBAN stays in DB encrypted/plain per model.
+    iban_masked = mask_iban(bank_account.iban)
     return {
         "has_bank_account": True,
         "account_name": bank_account.account_name or "",
-        "iban": iban,
+        "iban_masked": iban_masked,
         "is_primary": bank_account.is_primary,
         "is_verified": bank_account.is_verified,
     }
 
 
 def _serialize_unpaid_earning(earning: Earning) -> dict:
+    """Single pending earning line for crew unpaid-earnings detail."""
     job = earning.job
     return {
         "id": str(earning.id),
@@ -142,6 +156,12 @@ def _serialize_unpaid_earning(earning: Earning) -> dict:
 
 
 class SupportPayoutsView(APIView):
+    """Support crew payout queue, unpaid earnings, and post-transfer completion.
+
+    Detailer JWT authentication is disabled; only :class:`SupportPermissionAccess` applies.
+    """
+
+    authentication_classes = ()
     permission_classes = [SupportPermissionAccess]
 
     get_action_handler = {
@@ -157,18 +177,21 @@ class SupportPayoutsView(APIView):
     }
 
     def get(self, request, *args, **kwargs):
+        """Dispatch GET ``action`` to queue, detail, or unpaid-earnings handlers."""
         action = kwargs.get("action")
         if action not in self.get_action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         return getattr(self, self.get_action_handler[action])(request, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        """Dispatch POST ``action`` to mark-paid, create, or record-payment handlers."""
         action = kwargs.get("action")
         if action not in self.post_action_handler:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
         return getattr(self, self.post_action_handler[action])(request, **kwargs)
 
     def _get_payout_queue(self, request, **kwargs):
+        """List payout requests; default filter is pending + processing."""
         status_filter = (request.query_params.get("status") or "").strip().lower()
         qs = PayoutHistory.objects.select_related(
             "detailer", "detailer__user"
@@ -185,6 +208,7 @@ class SupportPayoutsView(APIView):
         return Response({"data": {"payout_requests": rows}}, status=status.HTTP_200_OK)
 
     def _get_crew_payout_detail(self, request, **kwargs):
+        """Return one payout row by ``payout_id`` query param."""
         payout_id = (request.query_params.get("payout_id") or "").strip()
         if not payout_id:
             return Response({"error": "payout_id required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -199,6 +223,7 @@ class SupportPayoutsView(APIView):
         return Response({"data": {"payout": _serialize_crew_payout(payout)}}, status=status.HTTP_200_OK)
 
     def _post_mark_payout_paid(self, request, **kwargs):
+        """Mark an existing pending/processing payout completed after bank transfer."""
         data = request.data if hasattr(request.data, "get") else {}
         payout_id = (data.get("payout_request_id") or data.get("payout_id") or "").strip()
         payment_reference = (data.get("payment_reference") or "").strip()
@@ -231,6 +256,7 @@ class SupportPayoutsView(APIView):
                 payout.external_transaction_id = f"{payment_reference} | {admin_notes}"[:100]
             elif payment_reference:
                 payout.external_transaction_id = payment_reference[:100]
+            # Payout marking: completes payout and marks linked earnings paid via model helper.
             payout.mark_as_completed(external_transaction_id=payout.external_transaction_id or None)
 
         logger.info(
@@ -296,7 +322,12 @@ class SupportPayoutsView(APIView):
 
 
     def _get_crew_unpaid_earnings_detail(self, request, **kwargs):
-        """Return per-job unpaid earnings for a single crew member."""
+        """Return per-job unpaid earnings for a single crew member.
+
+        Includes ``bank_account`` from :func:`_serialize_bank_account`; ``iban_masked`` is
+        always masked via :func:`main.utils.pii_encryption.mask_iban` — full IBAN is never
+        returned in API responses.
+        """
         crew_id = (request.query_params.get("crew_member_id") or "").strip()
         if not crew_id:
             return Response(
@@ -505,6 +536,7 @@ class SupportPayoutsView(APIView):
                 external_id = f"{payment_reference} | {admin_notes}"[:100]
             elif admin_notes:
                 external_id = admin_notes[:100]
+            # Payout marking: one-step create + complete for support who already sent transfer.
             payout.mark_as_completed(external_transaction_id=external_id or None)
 
         payout_id = payout.id

@@ -1,6 +1,9 @@
+/**
+ * App config from Expo extra: API URLs, keys, and app metadata.
+ */
 import Constants from "expo-constants";
 
-// Function to get config with fallbacks
+/** Read `expoConfig.extra` with manifest fallback for older Expo runtimes. */
 const getConfig = () => {
   const config =
     Constants.expoConfig?.extra || (Constants.manifest as any)?.extra || {};
@@ -8,17 +11,19 @@ const getConfig = () => {
 };
 
 const config = getConfig();
-// API Configuration with fallbacks for testing
+
+/** Backend and WebSocket base URLs for the detailer app. */
 export const API_CONFIG = {
   detailerAppUrl: config.detailer_app_url,
   customerAppUrl: config.customer_app_url,
   websocketUrl: config.websockets_url,
 };
 
+/** Third-party API keys from Expo config. */
 export const KEY_CONFIGS = {
   googleApiKeys: config.googoleApiKeys,
 };
-// App Configuration
+/** Display name, version, deep-link scheme, and EAS project id. */
 export const APP_CONFIG = {
   name: Constants.expoConfig?.name || "Prisma Detailer",
   version: Constants.expoConfig?.version || "1.0.0",

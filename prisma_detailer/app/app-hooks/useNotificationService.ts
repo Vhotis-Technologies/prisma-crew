@@ -1,3 +1,6 @@
+/**
+ * Expo Notifications: register for push, get token, schedule/cancel local notifications.
+ */
 import { useState, useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -10,14 +13,8 @@ import {
 } from "../utils/storage";
 
 /**
- * Notification service hook that handles push notifications
- *
- * Features:
- * - Registers device for push notifications
- * - Manages notification tokens
- * - Handles notification responses
- * - Schedules local notifications
- * - Integrates with permission system
+ * Registers for push notifications and manages local notification helpers.
+ * @returns Push token, last notification, and notification service helpers
  */
 export const useNotificationService = () => {
   const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
@@ -49,7 +46,8 @@ export const useNotificationService = () => {
   };
 
   /**
-   * Register device for push notifications
+   * Register device for push notifications and return Expo token.
+   * @returns Expo push token when permission is granted
    */
   const registerForPushNotificationsAsync = async () => {
     let token;
@@ -94,7 +92,12 @@ export const useNotificationService = () => {
   };
 
   /**
-   * Schedule a local notification
+   * Schedule a local notification.
+   * @param title - Notification title
+   * @param body - Notification body
+   * @param data - Optional payload
+   * @param trigger - Optional trigger; null sends immediately
+   * @returns Scheduled notification ID or null
    */
   const scheduleLocalNotification = async (
     title: string,
@@ -126,7 +129,8 @@ export const useNotificationService = () => {
   };
 
   /**
-   * Cancel a scheduled notification
+   * Cancel a scheduled notification.
+   * @param notificationId - Scheduled notification ID
    */
   const cancelNotification = async (notificationId: string) => {
     try {

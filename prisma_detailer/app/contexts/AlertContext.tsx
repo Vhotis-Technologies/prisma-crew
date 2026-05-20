@@ -1,3 +1,6 @@
+/**
+ * Global alert modal context: show success/error/warning dialogs app-wide.
+ */
 import React, { createContext, useContext, useState } from "react";
 import AlertModal from "../components/helpers/AlertModal";
 //import AlertModal from "../components/helpers/AlertModal";
@@ -19,13 +22,14 @@ interface AlertContextType {
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
+/** Provides alert state and renders `AlertModal` when visible. */
 export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertState | undefined>(
     undefined
   );
 
-  // Custom setAlertConfig that also sets isVisible
+  /** Update alert config and sync visibility from `config.isVisible`. */
   const handleSetAlertConfig = (config: AlertState) => {
     setAlertConfig(config);
     setIsVisible(config.isVisible);
@@ -63,6 +67,7 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/** Access alert config and visibility controls; requires `AlertProvider`. */
 export const useAlertContext = () => {
   const context = useContext(AlertContext);
   if (!context) {

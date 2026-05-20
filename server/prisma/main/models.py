@@ -1,3 +1,11 @@
+"""
+Detailer-service domain models.
+
+Covers crew accounts, jobs synced from the client platform, time-based earnings,
+encrypted payout bank details, reviews, and payout lifecycle records. Jobs completed
+on the detailer app drive ``Earning`` rows; ``PayoutHistory`` batches pending earnings
+into bank transfers.
+"""
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
@@ -12,7 +20,20 @@ from main.tasks import send_welcome_email, send_push_notification
 # User Management
 # -------------------------------
 class UserManager(BaseUserManager):
+    """Create detailer-app users with email as the login identifier."""
+
     def create_user(self, email, password=None, **extra_fields):
+        """
+        Create and persist a detailer user with a hashed password.
+
+        Args:
+            email: Unique login email; required.
+            password: Plain password to hash, or None for unusable password.
+            **extra_fields: Extra ``User`` field values (``is_detailer`` defaults True).
+
+        Returns:
+            User: The saved user instance.
+        """
         if not email:
             raise ValueError("Email is required")
         extra_fields.setdefault("is_detailer", True)
@@ -23,6 +44,20 @@ class UserManager(BaseUserManager):
         return user
     
     def create_superuser(self, email, password=None, **extra_fields):
+        """
+        Create a staff/superuser account for Django admin and internal tools.
+
+        Args:
+            email: Unique login email.
+            password: Plain password to hash.
+            **extra_fields: Must include ``is_staff`` and ``is_superuser`` as True.
+
+        Returns:
+            User: The saved superuser instance.
+
+        Raises:
+            ValueError: If ``is_staff`` or ``is_superuser`` is not True.
+        """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -35,6 +70,12 @@ class UserManager(BaseUserManager):
     
 
 class User(AbstractUser):
+    """
+    Detailer-app account: authentication, notification preferences, and profile.
+
+    Email is the username. New users trigger a welcome email after first save.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
@@ -62,9 +103,25 @@ class User(AbstractUser):
     
     
     def get_full_name(self):
+        """
+        Return display name from first and last name.
+
+        Returns:
+            str: ``"{first_name} {last_name}"``.
+        """
         return f"{self.first_name} {self.last_name}"
     
     def save(self, *args, **kwargs):
+        """
+        Keep ``username`` in sync with email and queue welcome email on create.
+
+        Args:
+            *args: Passed to ``AbstractUser.save``.
+            **kwargs: Passed to ``AbstractUser.save``.
+
+        Returns:
+            None
+        """
         self.username = self.email
         is_new = self.pk is None
         super().save(*args, **kwargs)
@@ -76,6 +133,12 @@ class User(AbstractUser):
 # Detailer
 # -------------------------------
 class Detailer(models.Model):
+    """
+    Crew profile linked to a ``User``: location, availability flags, and performance rating.
+
+    Earnings and jobs hang off this record. Rating can come from job scores or ``Review`` rows.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE )
     rating = models.FloatField(default=0, blank=True, null=True)
@@ -94,15 +157,33 @@ class Detailer(models.Model):
     def __str__(self):
         return f'{self.user.get_full_name()} - {self.user.email}'
 
-    # Aggregation helpers
     def total_earnings(self):
+        """
+        Sum net amounts across all earnings for this detailer.
+
+        Returns:
+            Decimal | int: Total net earnings, or 0 if none.
+        """
         return self.earnings.aggregate(total=Sum("net_amount"))["total"] or 0
 
     def unpaid_earnings(self):
-        return self.earnings.filter(payment_status="pending").aggregate(total=Sum("net_amount"))["total"] or 0
+        """
+        Sum net amounts for earnings still awaiting payout.
+
+        Returns:
+            Decimal | int: Total pending net earnings, or 0 if none.
+        """
+        return self.earnings.aggregate(total=Sum("net_amount"))["total"] or 0
 
     def update_rating_from_reviews(self):
-        """Update detailer's rating from the average of all their reviews."""
+        """
+        Recompute ``rating`` from the average of all ``Review`` rows for this detailer.
+
+        Caps the stored value at 5.0; sets 0.0 when there are no reviews.
+
+        Returns:
+            None
+        """
         from django.db.models import Avg
         result = Review.objects.filter(detailer=self).aggregate(avg_rating=Avg('rating'))
         avg_rating = result['avg_rating']
@@ -114,9 +195,17 @@ class Detailer(models.Model):
 
     def check_for_deactivation(self):
         """
-        Check if detailer should be deactivated based on poor performance (using Review model):
-        - 3 or more ratings of 2.0 or below in the last 20 reviews
-        - OR 2 or more ratings of 1.0 in the last 15 reviews
+        Deactivate detailer when recent review quality falls below platform thresholds.
+
+        Rules (only evaluated after at least 10 reviews in the last 20):
+        - 3+ ratings <= 2.0 in the last 20 reviews, or
+        - 2+ ratings of 1.0 in the last 15 reviews.
+
+        On deactivation, clears ``is_active`` and ``is_available`` and may send a push.
+
+        Returns:
+            tuple[bool, str]: ``(True, reason)`` if deactivated this call;
+            ``(False, "")`` otherwise.
         """
         last_20_reviews = list(Review.objects.filter(detailer=self).order_by('-created_at')[:20])
         last_15_reviews = last_20_reviews[:15]
@@ -158,6 +247,8 @@ class Detailer(models.Model):
 # Service Type
 # -------------------------------
 class ServiceType(models.Model):
+    """Catalog service offered on jobs (name, duration, price, marketing copy)."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=120)  # e.g. "Full Interior Clean"
     description = models.JSONField(blank=True, null=True, default=dict)
@@ -172,6 +263,8 @@ class ServiceType(models.Model):
 # Availability
 # -------------------------------
 class TimeSlot(models.Model):
+    """Bookable window for a detailer on a given date (availability scheduling)."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
     date = models.DateField()
@@ -188,6 +281,13 @@ class TimeSlot(models.Model):
         return f'{self.detailer.user.get_full_name()} - {self.date} - {self.start_time} - {self.end_time}'
 
 class Job(models.Model):
+    """
+    Client booking mirrored on the detailer service (assignments, status, pricing).
+
+    Completed jobs auto-create ``Earning`` rows per assigned detailer. Status flows
+    include pending → accepted → in_progress → completed or cancelled.
+    """
+
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
@@ -242,8 +342,16 @@ class Job(models.Model):
             models.Index(fields=['primary_detailer', 'status', 'appointment_date', 'appointment_time', 'booking_reference']),
         ]
 
-    # Create an earning record for every completed job
     def create_earning(self):
+        """
+        Create ``Earning`` rows for each detailer on this job when status is completed.
+
+        Skips detailers that already have an earning for this job. New earnings get
+        amounts from activity logs via ``calculate_from_activity_logs``.
+
+        Returns:
+            None
+        """
         if self.status == "completed":
             # Create earning for each detailer assigned to the job
             for detailer in self.detailers.all():
@@ -264,6 +372,16 @@ class Job(models.Model):
         return f'Job {self.id} - {detailer_name}'
     
     def save(self, *args, **kwargs):
+        """
+        Persist the job and ensure earnings exist when marked completed.
+
+        Args:
+            *args: Passed to ``Model.save``.
+            **kwargs: Passed to ``Model.save``.
+
+        Returns:
+            None
+        """
         super().save(*args, **kwargs)
 
         # Create earning if job is completed
@@ -272,7 +390,14 @@ class Job(models.Model):
 
     
     def update_detailer_rating(self):
-        """Update the detailer's rating based on average of all job ratings"""
+        """
+        Set primary detailer's ``rating`` from average job ratings on primary jobs.
+
+        Uses jobs where ``rating`` > 0; updates via queryset ``update`` to avoid signals.
+
+        Returns:
+            None
+        """
         try:
             if not self.primary_detailer:
                 return
@@ -305,7 +430,9 @@ class Job(models.Model):
 # -------------------------------
 class JobActivityLog(models.Model):
     """
-    Tracks time periods for a detailer on a job with different activity states
+    Time segment for a detailer on a job (travel, wait, or active cleaning).
+
+    Rates: traveling/waiting $9/hr, active cleaning $15/hr. Feeds ``Earning`` calculations.
     """
     ACTIVITY_STATES = [
         ('traveling', 'Traveling/Driving'),  # $9/hour
@@ -333,7 +460,14 @@ class JobActivityLog(models.Model):
         ]
     
     def calculate_hours_and_amount(self):
-        """Calculate hours worked and amount earned"""
+        """
+        Compute ``hours_worked`` and ``amount_earned`` from start/end and ``rate_applied``.
+
+        Uses ``timezone.now()`` when ``end_time`` is still open.
+
+        Returns:
+            tuple[Decimal, Decimal]: ``(hours_worked, amount_earned)`` after updating fields.
+        """
         from django.utils import timezone
         from decimal import Decimal
         
@@ -358,8 +492,14 @@ class JobActivityLog(models.Model):
 # -------------------------------
 def job_image_upload_path(instance, filename):
     """
-    Generate upload path including image type (before/after) and segment (interior/exterior)
-    Creates folder structure: jobs/images/{before|after}/{interior|exterior}/YYYY/MM/DD/filename
+    Build S3/storage path for job before/after photos by type and segment.
+
+    Args:
+        instance: ``JobImage`` being saved (uses ``image_type`` and ``segment``).
+        filename: Original upload filename.
+
+    Returns:
+        str: Path like ``jobs/images/{before|after}/{segment}/YYYY/MM/DD/{filename}``.
     """
     segment = getattr(instance, 'segment', 'unspecified')
     return f'jobs/images/{instance.image_type}/{segment}/{timezone.now().strftime("%Y/%m/%d")}/{filename}'
@@ -464,6 +604,13 @@ class JobFleetMaintenance(models.Model):
 
 
 class Earning(models.Model):
+    """
+    Payable amount for one detailer on one completed job.
+
+    Net pay is derived from ``JobActivityLog`` hourly buckets (active vs inactive rates).
+    Linked to ``PayoutHistory`` when a batch payout completes.
+    """
+
     PAYMENT_STATUS = [
         ("pending", "Pending"),
         ("paid", "Paid"),
@@ -487,13 +634,30 @@ class Earning(models.Model):
         return f"Earning for {self.detailer.user.get_full_name()} - Job {self.job.id}"
 
     def save(self, *args, **kwargs):
+        """
+        Persist earning; default ``net_amount`` from ``hourly_earnings`` when unset.
+
+        Args:
+            *args: Passed to ``Model.save``.
+            **kwargs: Passed to ``Model.save``.
+
+        Returns:
+            None
+        """
         # Calculate net_amount from hourly_earnings if not already set
         if not self.net_amount and self.hourly_earnings:
             self.net_amount = self.hourly_earnings
         super().save(*args, **kwargs)
     
     def calculate_from_activity_logs(self):
-        """Calculate earnings from activity logs for this job and detailer"""
+        """
+        Roll up activity logs into active/inactive hours and ``hourly_earnings`` / ``net_amount``.
+
+        Active state uses ``hourly_rate_active``; traveling/waiting use ``hourly_rate_inactive``.
+
+        Returns:
+            Decimal: Total hourly earnings (also stored on ``self.hourly_earnings``).
+        """
         from decimal import Decimal
         from django.db.models import Sum
         
@@ -521,32 +685,93 @@ class Earning(models.Model):
         return self.hourly_earnings
 
     def mark_as_paid(self, payout_date=None):
+        """
+        Mark this earning as paid after a successful payout.
+
+        Args:
+            payout_date: Date funds were sent; defaults to None if not supplied.
+
+        Returns:
+            None
+        """
+        # Earning payment_status: pending → paid (via PayoutHistory.mark_as_completed)
         self.payment_status = "paid"
         self.payout_date = payout_date
         self.save()
 
 
-"""Bank account used for crew payout transfers.
-
-Only ``account_name`` (holder) and ``iban`` are collected.
-"""
 class BankAccount(models.Model):
+    """
+    Crew bank account for payout transfers (holder name and IBAN only).
+
+    IBAN is stored encrypted at rest (``enc$`` prefix); use ``get_iban_plain`` /
+    ``set_iban_plain`` for application-layer access.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
     account_name = models.CharField(max_length=100)
-    iban = models.CharField(max_length=55)
+    iban = models.CharField(max_length=512)
     is_primary = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def get_iban_plain(self) -> str:
+        """
+        Decrypt stored IBAN for payout APIs or admin display.
+
+        Returns:
+            str: Normalized plaintext IBAN, or empty string if missing/decrypt fails.
+        """
+        from main.utils.pii_encryption import decrypt_iban
+
+        # Decrypt Fernet token (enc$ prefix) for outbound transfer or validation
+        return decrypt_iban(self.iban)
+
+    def set_iban_plain(self, plain: str) -> None:
+        """
+        Encrypt and assign IBAN on the model (does not save).
+
+        Args:
+            plain: Raw IBAN from user input.
+
+        Returns:
+            None
+        """
+        from main.utils.pii_encryption import encrypt_iban
+
+        # Encrypt before persistence; save() also encrypts plaintext passed to iban field
+        self.iban = encrypt_iban(plain)
+
+    def save(self, *args, **kwargs):
+        """
+        Encrypt plaintext IBAN before writing to the database.
+
+        Args:
+            *args: Passed to ``Model.save``.
+            **kwargs: Passed to ``Model.save``.
+
+        Returns:
+            None
+        """
+        if self.iban and not str(self.iban).startswith("enc$"):
+            from main.utils.pii_encryption import encrypt_iban
+
+            # At-rest encryption: plaintext from forms/API → enc$… token in DB
+            self.iban = encrypt_iban(self.iban)
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f'{self.account_name} - {self.iban}'
+        from main.utils.pii_encryption import mask_iban
+
+        return f"{self.account_name} - {mask_iban(self.iban)}"
 
 # -------------------------------
 # Review
 # -------------------------------
 class Review(models.Model):
+    """Client review for a job, tied to the primary detailer (rating and optional comment)."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job = models.OneToOneField(Job, on_delete=models.CASCADE)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
@@ -559,6 +784,8 @@ class Review(models.Model):
     
 
 class Availability(models.Model):
+    """Recurring or one-off availability block for a detailer on a calendar date."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE, related_name="availability")
     date = models.DateField()
@@ -572,6 +799,8 @@ class Availability(models.Model):
 # Training Records
 # -------------------------------
 class TrainingRecord(models.Model):
+    """Onboarding or compliance training item and completion status for a detailer."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -583,6 +812,13 @@ class TrainingRecord(models.Model):
 
 
 class PayoutHistory(models.Model):
+    """
+    Batch payout to a detailer's bank account (request or scheduled).
+
+    Status progresses pending → processing → completed or failed/cancelled.
+    Completing a payout marks linked ``Earning`` rows as paid.
+    """
+
     PAYOUT_STATUS_CHOICES = [
         ("pending", "Pending"),
         ("processing", "Processing"),
@@ -623,22 +859,49 @@ class PayoutHistory(models.Model):
         return f"Payout {self.payout_reference or self.id} - {self.detailer.user.get_full_name()} - {self.payout_amount}"
     
     def mark_as_processing(self):
+        """
+        Move payout to processing when transfer is submitted to the bank/processor.
+
+        Returns:
+            None
+        """
+        # Payout state: pending → processing
         self.status = "processing"
         self.processed_at = timezone.now()
         self.save()
     
     def mark_as_completed(self, external_transaction_id=None):
+        """
+        Finalize payout as completed and mark all linked earnings paid.
+
+        Args:
+            external_transaction_id: Optional processor/bank reference id.
+
+        Returns:
+            None
+        """
+        # Payout state: processing → completed
         self.status = "completed"
         self.completed_at = timezone.now()
         if external_transaction_id:
             self.external_transaction_id = external_transaction_id
         self.save()
         
-        # Mark related earnings as paid
+        # Cascade: each linked Earning pending → paid with payout completion date
         for earning in self.earnings.all():
             earning.mark_as_paid(self.completed_at.date())
     
     def mark_as_failed(self, failure_reason=None):
+        """
+        Mark payout failed; earnings stay pending for a retry or new payout batch.
+
+        Args:
+            failure_reason: Optional processor error message for support.
+
+        Returns:
+            None
+        """
+        # Payout state: processing (or pending) → failed; earnings remain pending
         self.status = "failed"
         if failure_reason:
             self.failure_reason = failure_reason
@@ -647,6 +910,12 @@ class PayoutHistory(models.Model):
 
 
 class Notification(models.Model):
+    """
+    In-app notification for a detailer user (booking, review, system, etc.).
+
+    May be created by Redis ``appointment_subscriber`` or app views alongside push.
+    """
+
     NOTIFICATION_TYPE_CHOICES = [
         ('booking_confirmed', 'Booking Confirmed'),
         ('booking_cancelled', 'Booking Cancelled'),
@@ -681,10 +950,21 @@ class Notification(models.Model):
         return f"{self.user.first_name} {self.user.last_name} - {self.title}"
     
     def save(self, *args, **kwargs):
+        """
+        Persist notification record (hook point for future side effects).
+
+        Args:
+            *args: Passed to ``Model.save``.
+            **kwargs: Passed to ``Model.save``.
+
+        Returns:
+            None
+        """
         super().save(*args, **kwargs)
 
 
 class TermsAndConditions(models.Model):
+    """Versioned terms of service text shown in the detailer app."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     version = models.CharField(max_length=20, unique=True)
     content = models.TextField()
@@ -695,6 +975,8 @@ class TermsAndConditions(models.Model):
 
 
 class PrivacyPolicy(models.Model):
+    """Versioned privacy policy content for legal acceptance flows."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     version = models.CharField(max_length=20, unique=True)
     content = models.TextField()
@@ -705,6 +987,8 @@ class PrivacyPolicy(models.Model):
 
 
 class PasswordResetToken(models.Model):
+    """Single-use, time-limited token for password reset emails."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
@@ -716,9 +1000,21 @@ class PasswordResetToken(models.Model):
         db_table = 'password_reset_tokens'
     
     def is_expired(self):
+        """
+        Check whether the token past its expiry timestamp.
+
+        Returns:
+            bool: True if current time is after ``expires_at``.
+        """
         return timezone.now() > self.expires_at
     
     def is_valid(self):
+        """
+        Whether the token can still be used for a reset.
+
+        Returns:
+            bool: True if not used and not expired.
+        """
         return not self.used and not self.is_expired()
     
     def __str__(self):

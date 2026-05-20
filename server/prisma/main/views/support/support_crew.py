@@ -1,13 +1,13 @@
 """
 Crew (detailer) directory for support: list, profile-style detail, and PATCH updates.
 
-**Auth:** ``SupportPermissionAccess`` — the support server calls this with
-``X-Support-Internal-Key``; these views are **not** authenticated with detailer JWTs.
+**Auth:** :class:`SupportPermissionAccess` — support server proxies with
+``X-Support-Internal-Key``; detailer JWTs are not used.
 
-**Endpoints:** ``get_crew_list`` (optional ``q`` search), ``get_crew_detail`` (``crew_id``),
-``update_crew`` (toggle ``is_active`` / ``is_verified``).
-
-Serialization helpers below format users attached to ``Detailer`` rows for the mobile app.
+**Actions:**
+- ``GET get_crew_list`` — searchable crew directory (optional ``q``)
+- ``GET get_crew_detail`` — profile, ratings, earnings summary (``crew_id``)
+- ``PATCH update_crew`` — toggle ``is_active`` / ``is_verified`` (``crew_id`` in body)
 """
 from __future__ import annotations
 
@@ -23,10 +23,12 @@ from rest_framework.views import APIView
 from main.models import Detailer, Earning, Job, Review
 from main.views.support.support_permission_access import SupportPermissionAccess
 
+# Max recent review comments included in crew detail payload.
 REVIEW_COMMENT_LIMIT = 50
 
 
 def _fmt_display_date(dt) -> str:
+    """Format a datetime for support UI labels (``%d %b %Y``)."""
     if not dt:
         return ""
     if timezone.is_aware(dt):
@@ -35,6 +37,7 @@ def _fmt_display_date(dt) -> str:
 
 
 def _headline(detailer: Detailer) -> str:
+    """Short location line for list cards (city, post code, or country)."""
     loc = (detailer.city or "").strip() or (detailer.post_code or "").strip() or (detailer.country or "").strip()
     if loc:
         return f"Detailer · {loc}"
@@ -42,6 +45,7 @@ def _headline(detailer: Detailer) -> str:
 
 
 def _serialize_list_item(detailer: Detailer) -> dict:
+    """Minimal crew row for directory search results."""
     u = detailer.user
     return {
         "id": str(detailer.id),
@@ -55,10 +59,12 @@ def _serialize_list_item(detailer: Detailer) -> dict:
 
 
 def _job_filter_for_detailer(detailer: Detailer):
+    """Q filter matching jobs where the detailer is primary or on the M2M team."""
     return Q(primary_detailer=detailer) | Q(detailers=detailer)
 
 
 def _serialize_detail(detailer: Detailer) -> dict:
+    """Full crew profile payload including ratings, bookings, and recent comments."""
     base = _serialize_list_item(detailer)
     u = detailer.user
 
@@ -118,12 +124,11 @@ def _serialize_detail(detailer: Detailer) -> dict:
 
 
 class CrewView(APIView):
-    """
-    No session auth: ``authentication_classes = ()`` so only the shared support key applies.
+    """Support crew directory: list, detail, and admin status updates.
 
-    Dispatches ``action`` from the URL to GET/PATCH handlers defined in
-    ``action_handler_get`` / ``action_handler_patch``.
+    Detailer JWT authentication is disabled; only :class:`SupportPermissionAccess` applies.
     """
+
     authentication_classes = ()
     permission_classes = [SupportPermissionAccess]
 
@@ -136,6 +141,7 @@ class CrewView(APIView):
     }
 
     def get(self, request, *args, **kwargs):
+        """Dispatch GET ``action`` to list or detail handler."""
         action = kwargs.get("action")
         if action not in self.action_handler_get:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -143,6 +149,7 @@ class CrewView(APIView):
         return handler(request)
 
     def patch(self, request, *args, **kwargs):
+        """Dispatch PATCH ``action`` (currently ``update_crew`` only)."""
         action = kwargs.get("action")
         if action not in self.action_handler_patch:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -150,6 +157,7 @@ class CrewView(APIView):
         return handler(request)
 
     def _get_crew_list(self, request):
+        """Return all detailers, optionally filtered by ``q`` on name/email/phone."""
         qs = Detailer.objects.select_related("user").filter(user__is_detailer=True)
         q = (request.query_params.get("q") or "").strip()
         if q:
@@ -164,6 +172,7 @@ class CrewView(APIView):
         return Response({"data": {"crew": crew}}, status=status.HTTP_200_OK)
 
     def _get_crew_detail(self, request):
+        """Return one crew member profile; requires ``crew_id`` query param."""
         raw_id = request.query_params.get("crew_id")
         if not raw_id:
             return Response({"error": "crew_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -178,6 +187,7 @@ class CrewView(APIView):
         return Response({"data": {"crew": _serialize_detail(detailer)}}, status=status.HTTP_200_OK)
 
     def _update_crew(self, request):
+        """PATCH ``is_active`` and/or ``is_verified``; deactivating clears ``is_available``."""
         raw_id = request.data.get("crew_id")
         if not raw_id:
             return Response({"error": "crew_id is required"}, status=status.HTTP_400_BAD_REQUEST)
