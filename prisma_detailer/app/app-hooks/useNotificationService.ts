@@ -5,12 +5,21 @@ import { useState, useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
+import { router } from "expo-router";
 import { usePermissions } from "./usePermissions";
 import Constants from "expo-constants";
+import { CrewRoutes } from "../main/crewRoutes";
 import {
   getPushTokenFromStorage,
   isPushTokenSavedToServer,
 } from "../utils/storage";
+
+function navigateFromNotificationData(data: Record<string, unknown> | undefined) {
+  const type = data?.type;
+  if (type === "crew_chat") {
+    router.push(CrewRoutes.supportChat);
+  }
+}
 
 /**
  * Registers for push notifications and manages local notification helpers.
@@ -207,9 +216,10 @@ export const useNotificationService = () => {
 
       responseListener.current =
         Notifications.addNotificationResponseReceivedListener((response) => {
-          // Process notification response
-          // Handle notification tap here
-          // You can navigate to specific screens based on the notification data
+          const data = response.notification.request.content.data as
+            | Record<string, unknown>
+            | undefined;
+          navigateFromNotificationData(data);
         });
 
       return;

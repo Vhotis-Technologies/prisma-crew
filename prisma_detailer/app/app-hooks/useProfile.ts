@@ -76,16 +76,8 @@ const useProfile = () => {
       case "availability":
         router.push("/main/profile/AvailabilityScreen");
         break;
-      case "bankAccount":
-        router.push("/main/profile/BankAccountScreen");
-        break;
-      case "helpSupport":
-        break;
       case "notifications":
         router.push("/main/settings/NotificationScreen");
-        break;
-      case "earnings":
-        router.push("/main/earnings/EarningScreen");
         break;
       case "logout":
         handleLogout();

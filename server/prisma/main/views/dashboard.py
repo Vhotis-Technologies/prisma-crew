@@ -96,7 +96,7 @@ class DashboardView(APIView):
                         "serviceType": in_progress_job.service_type.name if in_progress_job.service_type else "",
                         "startTime": in_progress_job.appointment_time.strftime("%H:%M") if in_progress_job.appointment_time else "",
                         "estimatedEndTime": (datetime.combine(today, in_progress_job.appointment_time) + 
-                                           timedelta(minutes=in_progress_job.service_type.duration)).strftime("%H:%M") if in_progress_job.appointment_time and in_progress_job.service_type else "",
+                                           timedelta(minutes=in_progress_job.slot_duration_minutes())).strftime("%H:%M") if in_progress_job.appointment_time else "",
                         "progress": progress,
                         "status": in_progress_job.status,
                         "valetType": in_progress_job.valet_type if in_progress_job.valet_type else "",
@@ -105,6 +105,7 @@ class DashboardView(APIView):
                         'vehicleInfo': f"{in_progress_job.vehicle_make} {in_progress_job.vehicle_model} ({in_progress_job.vehicle_registration})" if in_progress_job.vehicle_registration else "",
                         "booking_reference": in_progress_job.booking_reference,
                         "clientPhone": in_progress_job.client_phone if in_progress_job.client_phone else "",
+                        "address": in_progress_job.address if in_progress_job.address else "",
                     }
             except Exception as e:
                 logger.error(f"Error getting current job: {str(e)}")
@@ -128,7 +129,7 @@ class DashboardView(APIView):
                         "clientName": next_job.client_name if next_job.client_name else "",
                         "serviceType": next_job.service_type.name if next_job.service_type else "",
                         "appointmentTime": next_job.appointment_time.strftime("%H:%M") if next_job.appointment_time else "",
-                        "duration": next_job.service_type.duration if next_job.service_type else 0,
+                        "duration": next_job.slot_duration_minutes(),
                         "address": next_job.address if next_job.address else "",
                         "vehicleInfo": f"{next_job.vehicle_make} {next_job.vehicle_model} ({next_job.vehicle_registration})" if next_job.vehicle_registration else "",
                         "valetType": next_job.valet_type if next_job.valet_type else "",

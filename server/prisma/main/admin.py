@@ -6,11 +6,11 @@ newline-separated textareas for staff usability.
 """
 from django.contrib import admin
 from django import forms
-from .models import ServiceType, Job, Earning, BankAccount, Review, TrainingRecord, Detailer, User, TimeSlot, Availability, Notification, TermsAndConditions, PrivacyPolicy, JobFleetMaintenance, JobImage, JobActivityLog, PayoutHistory
+from .models import ServiceType, Job, Earning, BankAccount, Review, Detailer, User, Availability, Notification, TermsAndConditions, PrivacyPolicy, JobFleetMaintenance, JobImage, JobActivityLog, PayoutHistory
 
-admin.site.site_header = "Prisma Valet Detailer Admin"
-admin.site.site_title = "Prisma Valet Detailer  Admin"
-admin.site.index_title = "Welcome to Prisma Valet Admin Panel"
+admin.site.site_header = "Prisma Car Care Detailer Admin"
+admin.site.site_title = "Prisma Car Care Detailer Admin"
+admin.site.index_title = "Welcome to Prisma Car Care Admin Panel"
 
 class ServiceTypeForm(forms.ModelForm):
     """Admin form: edit ``description`` JSON array as newline-separated lines."""
@@ -188,15 +188,6 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ('job__client_name', 'job__vehicle_registration', 'comment')
     list_filter = ('rating', 'created_at')
 
-@admin.register(TrainingRecord)
-class TrainingRecordAdmin(admin.ModelAdmin):
-    """Detailer training/compliance records."""
-
-    list_display = ('detailer', 'title', 'status', 'date_completed')
-    search_fields = ('detailer__user__first_name', 'detailer__user__last_name', 'title')
-    list_filter = ('status', 'date_completed')
-
-
 @admin.register(JobImage)
 class JobImageAdmin(admin.ModelAdmin):
     """Before/after job photos by segment."""
@@ -228,14 +219,6 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'first_name', 'last_name', 'phone', 'is_detailer', 'is_admin', 'is_active')
     search_fields = ('email', 'first_name', 'last_name', 'phone')
     list_filter = ('is_detailer', 'is_admin', 'is_active', 'date_joined')
-
-@admin.register(TimeSlot)
-class TimeSlotAdmin(admin.ModelAdmin):
-    """Bookable time slots per detailer."""
-
-    list_display = ('detailer', 'date', 'start_time', 'end_time', 'is_available', 'is_booked')
-    search_fields = ('detailer__user__first_name', 'detailer__user__last_name')
-    list_filter = ('date', 'is_available', 'is_booked')
 
 @admin.register(Availability)
 class AvailabilityAdmin(admin.ModelAdmin):

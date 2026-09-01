@@ -3,6 +3,9 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+
+dayjs.extend(isoWeek);
 
 export interface TimeSlot {
   id: string;
@@ -55,9 +58,8 @@ const generateMonthDays = (year: number, month: number): dayjs.Dayjs[] => {
   const firstDay = dayjs().year(year).month(month).startOf("month");
   const lastDay = dayjs().year(year).month(month).endOf("month");
 
-  // Add days from previous month to fill first week
-  const startDate = firstDay.startOf("week");
-  const endDate = lastDay.endOf("week");
+  const startDate = firstDay.startOf("isoWeek");
+  const endDate = lastDay.endOf("isoWeek");
 
   let currentDate = startDate;
   while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
@@ -87,9 +89,8 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
     if (hasHydrated.current || !initialState) return;
     if (initialState.selectedDates && initialState.selectedDates.length >= 0) {
       hasHydrated.current = true;
-      const dates = initialState.selectedDates.slice(0, 1);
       setState({
-        selectedDates: dates,
+        selectedDates: initialState.selectedDates,
         currentMonth: initialState.currentMonth
           ? dayjs(initialState.currentMonth + "-01")
           : dayjs(),
@@ -240,8 +241,8 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
         if (selectedDate.date === date) {
           const updatedTimeSlots = selectedDate.timeSlots.map((slot) => {
             if (slot.id === timeSlotId) {
-              const updatedSlot = { ...slot, isSelected: !slot.isSelected };
-              return updatedSlot;
+              if (slot.isBlockedByJob) return slot;
+              return { ...slot, isSelected: !slot.isSelected };
             }
             return slot;
           });
@@ -298,7 +299,7 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
     return state.selectedDates.map((date) => ({
       date: date.date,
       timeSlots: date.timeSlots
-        .filter((slot) => slot.isSelected)
+        .filter((slot) => slot.isSelected && !slot.isBlockedByJob)
         .map((slot) => slot.time),
     }));
   }, [state.selectedDates]);
@@ -310,7 +311,56 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
     setState((prev) => ({
       ...prev,
       selectedDates: [],
-    }));    
+    }));
+  }, []);
+
+  /**
+   * Unmark self-set lockout hours for one date. Assigned job hours stay blocked.
+   */
+  const clearSlotsForDate = useCallback((date: string) => {
+    setState((prev) => ({
+      ...prev,
+      selectedDates: prev.selectedDates.map((selectedDate) => {
+        if (selectedDate.date !== date) return selectedDate;
+        return {
+          ...selectedDate,
+          timeSlots: selectedDate.timeSlots.map((slot) =>
+            slot.isBlockedByJob ? slot : { ...slot, isSelected: false },
+          ),
+        };
+      }),
+    }));
+  }, []);
+
+  /**
+   * Open a date for editing. Merges assigned-job hours as read-only; keeps other days.
+   */
+  const openDateWithBusySlots = useCallback((date: string, busySlots: string[]) => {
+    const busySet = new Set(busySlots);
+    setState((prev) => {
+      const existing = prev.selectedDates.find((d) => d.date === date);
+      const timeSlots: TimeSlot[] = generateTimeSlots().map((slot) => {
+        const previous = existing?.timeSlots.find((s) => s.time === slot.time);
+        const blocked = busySet.has(slot.time);
+        return {
+          ...slot,
+          isBlockedByJob: blocked,
+          isSelected: blocked || Boolean(previous?.isSelected),
+        };
+      });
+      const rest = prev.selectedDates.filter((d) => d.date !== date);
+      return {
+        ...prev,
+        selectedDates: [...rest, { date, timeSlots, isSelected: true }].sort(
+          (a, b) => a.date.localeCompare(b.date),
+        ),
+      };
+    });
+  }, []);
+
+  /** Allow GET get_availability to refill state after a successful save. */
+  const allowRehydrate = useCallback(() => {
+    hasHydrated.current = false;
   }, []);
 
   /**
@@ -340,7 +390,10 @@ export const useAvailability = (initialState?: AvailabilityStateFromServer | nul
     isDateSelected,
     addDateWithBusySlots,
     selectOnlyDateWithBusySlots,
+    openDateWithBusySlots,
     setBusySlotsForDate,
+    clearSlotsForDate,
+    allowRehydrate,
 
     // Utility methods
     getMonthDays,

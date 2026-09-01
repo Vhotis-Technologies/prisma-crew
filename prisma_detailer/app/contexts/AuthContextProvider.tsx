@@ -16,6 +16,7 @@ import { useLoginMutation } from "@/app/store/api/authApi";
 import { useUpdateLocationMutation } from "@/app/store/api/profileapi";
 import { UserProfileProps } from "@/app/interfaces/ProfileInterfaces";
 import { router } from "expo-router";
+import { CrewRoutes } from "@/app/main/crewRoutes";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
 import { usePermissions } from "@/app/app-hooks/usePermissions";
@@ -51,7 +52,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   /* Get permission service for first-time setup */
   const { requestAllPermissions } = usePermissions();
 
-  /** Restore session from SecureStore on mount and navigate to dashboard if valid. */
+  /** Restore session from SecureStore on mount and navigate to Today if valid. */
   React.useEffect(() => {
     const reauthenticateUser = async () => {
       const user = await SecureStore.getItemAsync("user");
@@ -73,7 +74,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
           // No stored push token found, will register for notifications
         }
 
-        router.replace("/main/dashboard/DashboardScreen");
+        router.replace(CrewRoutes.today);
       }
     };
     reauthenticateUser();
@@ -152,7 +153,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
             } catch (_) {
               // Do not block login if location fails
             }
-            router.replace("/main/dashboard/DashboardScreen");
+            router.replace(CrewRoutes.today);
           }
         } else {
           // Request permissions after successful login
@@ -175,7 +176,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
           } catch (_) {
             // Do not block login if location fails
           }
-          router.replace("/main/dashboard/DashboardScreen");
+          router.replace(CrewRoutes.today);
         }
       } else {
         setAlertConfig({

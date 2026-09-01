@@ -15,7 +15,36 @@ import json
 from uuid import UUID
 from datetime import date, datetime, time
 from decimal import Decimal
+from main.utils.observability import new_request_id
 from main.utils.redis_streams import stream_add, STREAM_JOB_EVENTS
+import logging
+
+_obs = logging.getLogger("main.observability")
+
+
+def _stream_job_event(event, payload, request_id=None):
+    """XADD a job_events entry with booking_reference and request_id on the stream."""
+    body = dict(payload or {})
+    rid = request_id or body.get("request_id") or new_request_id()
+    body["request_id"] = rid
+    ref = body.get("booking_reference") or ""
+    msg_id = stream_add(
+        STREAM_JOB_EVENTS,
+        {
+            "event": event,
+            "payload": _json_dumps_safe(body),
+            "booking_reference": str(ref),
+            "request_id": rid,
+        },
+    )
+    _obs.info(
+        "redis_publish event=%s booking_reference=%s request_id=%s msg_id=%s",
+        event,
+        ref,
+        rid,
+        msg_id,
+    )
+    return msg_id
 
 
 def _json_dumps_safe(obj):
@@ -54,7 +83,7 @@ def send_welcome_email(user_email):
     Returns:
         str: Success or failure message for the Celery result backend.
     """
-    subject = "Welcome to Prisma - Let's Get Started! 🎉"
+    subject = "Welcome to Prisma Car Care - Let's Get Started! 🎉"
     html_message = render_to_string('welcome_email.html')
     try:
         graph_send_mail(subject, html_message, user_email)
@@ -98,7 +127,7 @@ def send_booking_confirmation_email(detailer_email, booking_reference, appointme
 
 
 @shared_task
-def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_name=None, detailer_phone=None, detailer_rating=0.0):
+def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_name=None, detailer_phone=None, detailer_rating=0.0, request_id=None):
     """
     Publish a job-assigned event to Redis for the client app.
 
@@ -152,8 +181,7 @@ def publish_job_acceptance(booking_reference, detailer_email_or_list, detailer_n
         # Back-compat: single detailer also exposed as top-level ``detailer`` key
         if len(detailers_payload) == 1:
             message_data['detailer'] = detailers_payload[0]
-        payload = json.dumps(message_data)
-        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_acceptance', 'payload': payload})
+        msg_id = _stream_job_event("job_acceptance", message_data, request_id=request_id)
         return f"Job assigned event published to stream: {msg_id}"
     except Exception as e:
         return f"Failed to publish job assigned event to redis: {str(e)}"
@@ -193,8 +221,7 @@ def publish_job_reassigned(booking_reference, old_detailer_ids, new_detailers_pa
             ],
             'is_bulk': bool(is_bulk),
         }
-        payload = json.dumps(message_data)
-        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_reassigned', 'payload': payload})
+        msg_id = _stream_job_event("job_reassigned", message_data)
         return f"Job reassigned event published to stream: {msg_id}"
     except Exception as e:
         return f"Failed to publish job reassigned event: {str(e)}"
@@ -249,8 +276,7 @@ def publish_job_started(booking_reference, skip_client_notification=False):
             }
             if skip_client_notification:
                 message_data['skip_client_notification'] = True
-        payload = json.dumps(message_data)
-        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_started', 'payload': payload})
+        msg_id = _stream_job_event("job_started", message_data)
         return f"Job started published to stream: {msg_id}"
     except Exception as e:
         return f"Failed to publish job started to redis: {str(e)}"
@@ -310,8 +336,7 @@ def publish_job_completed(booking_reference, skip_client_notification=False):
             }
             if skip_client_notification:
                 message_data['skip_client_notification'] = True
-        payload = _json_dumps_safe(message_data)
-        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'job_completed', 'payload': payload})
+        msg_id = _stream_job_event("job_completed", message_data)
         return f"Job completed published to stream: {msg_id}"
     except Exception as e:
         return f"Failed to publish job completed to redis: {str(e)}"
@@ -519,7 +544,7 @@ def send_password_reset_email(user_email, user_name, reset_token):
     Returns:
         str: Success or failure message for the Celery result backend.
     """
-    subject = "Reset Your Prisma Password"
+    subject = "Reset Your Prisma Car Care Password"
     
     base_url = getattr(settings, 'BASE_URL', 'https://yourdomain.com')
     web_reset_url = f"{base_url}/api/v1/auth/web-reset-password/?token={reset_token}"

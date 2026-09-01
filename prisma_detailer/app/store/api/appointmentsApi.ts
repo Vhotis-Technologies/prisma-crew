@@ -19,7 +19,20 @@ const appointmentsApi = createApi({
         method: "GET",
         params: { date },
       }),
-      transformResponse: (response: JobCardProps[]) => response,
+      transformResponse: (response: JobCardProps[] | { error?: string }) =>
+        Array.isArray(response) ? response : [],
+    }),
+
+    /** Completed and past jobs for the signed-in crew member. */
+    getJobHistory: builder.query<
+      { jobs: JobCardProps[]; has_more: boolean },
+      { limit?: number; offset?: number }
+    >({
+      query: ({ limit = 30, offset = 0 }) => ({
+        url: `/api/v1/appointments/get_job_history/`,
+        method: "GET",
+        params: { limit, offset },
+      }),
     }),
 
     /** Fetch full details for one appointment by id. */
@@ -118,6 +131,8 @@ const appointmentsApi = createApi({
 
 export const {
   useGetAllAppointmentsQuery,
+  useGetJobHistoryQuery,
+  useLazyGetJobHistoryQuery,
   useCompleteAppointmentMutation,
   useGetAppointmentDetailsQuery,
   useStartAppointmentMutation,

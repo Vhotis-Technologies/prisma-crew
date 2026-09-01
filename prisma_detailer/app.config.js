@@ -9,12 +9,12 @@ module.exports = ({ config }) => {
     production: {
       detailer_app_url: "https://crew.prismavalet.com",
       customer_app_url: "https://client.prismavalet.com",
-      websockets_url: "wss://client.prismavalet.com/ws/detailer/",
+      websockets_url: "wss://crew.prismavalet.com/ws/support-chat/",
     },
     staging: {
-      detailer_app_url: "https://staging.crew.prismavalet.com",
-      customer_app_url: "https://staging.client.prismavalet.com",
-      websockets_url: "wss://staging.client.prismavalet.com/ws/detailer/",
+      detailer_app_url: "https://bat-useful-penguin.ngrok-free.app/detailer",
+      customer_app_url: "https://bat-useful-penguin.ngrok-free.app/client",
+      websockets_url: "wss://bat-useful-penguin.ngrok-free.app/detailer/ws/support-chat/",
     },
   };
 

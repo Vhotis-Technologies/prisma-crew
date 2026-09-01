@@ -1,0 +1,15 @@
+# EAS ignores files/folders that are unnecessary to upload.
+# EAS builds from source on their servers, so local native/gradle build artifacts
+# (and node_modules) only increase upload size.
+
+# Native build artifacts
+
+# JS deps & caches
+node_modules/
+.expo/
+*.log
+
+# Misc
+.git/
+__tests__/
+coverage/

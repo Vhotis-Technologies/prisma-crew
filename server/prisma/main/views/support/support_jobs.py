@@ -26,7 +26,6 @@ from rest_framework.views import APIView
 from main.models import Availability, Detailer, Job, JobReassignmentAudit
 from main.tasks import (
     create_notification,
-    publish_job_acceptance,
     publish_job_reassigned,
     send_booking_confirmation_email,
     send_push_notification,
@@ -555,10 +554,6 @@ class SupportJobsView(APIView):
                 logger.warning('Notify new assignee failed for %s: %s', detailer.id, exc)
 
         try:
-            publish_job_acceptance.delay(job.booking_reference, assigned_payload)
-        except Exception as exc:
-            logger.warning('publish_job_acceptance after reassignment failed: %s', exc)
-        try:
             publish_job_reassigned.delay(job.booking_reference, old_detailer_ids, assigned_payload, False)
         except Exception as exc:
             logger.warning('publish_job_reassigned failed: %s', exc)
@@ -661,14 +656,6 @@ class SupportJobsView(APIView):
                 _notify_new_assignee(job, assignee)
             except Exception as exc:
                 logger.warning('Bulk notify new assignee failed: %s', exc)
-            try:
-                publish_job_acceptance.delay(
-                    job.booking_reference,
-                    [_detailer_payload_from(assignee)],
-                )
-            except Exception as exc:
-                logger.warning('Bulk publish_job_acceptance failed: %s', exc)
-
         try:
             publish_job_reassigned.delay(booking_reference, old_detailer_ids, assigned_payload, True)
         except Exception as exc:

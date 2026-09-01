@@ -1,7 +1,7 @@
 """
 Job creation from the client app stack (internal Docker network).
 
-**Auth:** ``AllowAny`` — called server-to-server from client booking flow.
+**Auth:** ``ClientInternalPermission`` — client server sends ``X-Client-Internal-Key``.
 
 **POST actions:** ``create_booking`` (single), ``create_bulk_booking`` (fleet same-site),
 ``reschedule_bulk_booking`` (move existing bulk sub-jobs to new window).
@@ -11,24 +11,32 @@ Job creation from the client app stack (internal Docker network).
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from main.permissions import ClientInternalPermission
 from main.models import Detailer, ServiceType, Job, Availability
 from main.utils.detailer_matcher import find_detailers_for_location
 from main.utils.redis_geo import get_nearest_detailer_ids
+from main.utils.service_type import (
+    AmbiguousServiceType,
+    resolve_job_duration,
+    resolve_service_type,
+    service_type_error_response,
+)
 from main.serializer import DetailerSerializer, ServiceTypeSerializer
+import time as time_mod
 from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.db import transaction
 from main.util.media_helper import get_full_media_url
-from main.tasks import send_booking_confirmation_email, send_push_notification, create_notification, publish_job_acceptance   
-from channels.layers import get_channel_layer
+from main.tasks import send_booking_confirmation_email, send_push_notification, create_notification, publish_job_acceptance
+from main.utils.observability import log_timed
 
 class BookingView(APIView):
     """
     Creates ``Job`` rows and notifies detailers; bulk paths mirror ``check_bulk_capacity`` windows.
     """
 
-    permission_classes = [AllowAny]
+    authentication_classes = []
+    permission_classes = [ClientInternalPermission]
 
     action_handler = {
         "create_booking": '_create_booking',
@@ -65,17 +73,24 @@ class BookingView(APIView):
         Return a list of detailers from available_detailers who have no conflicting
         job for the given date and time slot (overlap check includes travel buffer).
         """
+        candidates = list(available_detailers[:40])
+        if not candidates:
+            return []
+        jobs_by_detailer = {}
+        day_jobs = Job.objects.filter(
+            primary_detailer_id__in=[d.id for d in candidates],
+            appointment_date__date=appointment_date,
+            status__in=['pending', 'accepted', 'in_progress'],
+        ).select_related('service_type')
+        for job in day_jobs:
+            jobs_by_detailer.setdefault(job.primary_detailer_id, []).append(job)
         result = []
-        for detailer in available_detailers:
-            conflicting_jobs = Job.objects.filter(
-                primary_detailer=detailer,
-                appointment_date__date=appointment_date,
-                status__in=['pending', 'accepted', 'in_progress'],
-            ).select_related('service_type')
+        for detailer in candidates:
+            conflicting_jobs = jobs_by_detailer.get(detailer.id, [])
             has_conflict = False
             for job in conflicting_jobs:
                 job_start = job.appointment_time
-                job_duration = getattr(job.service_type, 'duration', None) or 60
+                job_duration = job.slot_duration_minutes()
                 job_end_minutes = job_start.hour * 60 + job_start.minute + job_duration
                 job_end = time(job_end_minutes // 60, job_end_minutes % 60)
                 job_end_with_buffer_minutes = job_end.hour * 60 + job_end.minute + travel_buffer
@@ -109,20 +124,17 @@ class BookingView(APIView):
                 data = {}
             pass
 
-            channel_layer = get_channel_layer()
+            request_id = data.get("request_id") if isinstance(data, dict) else None
+            handler_started = time_mod.monotonic()
 
-            # Get the service type from the db using the name of the service type sent from the client app stack
+            raw_service_name = data.get("service_type") if isinstance(data, dict) else None
             try:
-                service_type = ServiceType.objects.get(name=data['service_type'])
-            except ServiceType.DoesNotExist:
-                return Response({
-                    "error": f"Service type '{data.get('service_type')}' not found"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                pass
-                return Response({
-                    "error": f"Error finding service type: {str(e)}"
-                }, status=status.HTTP_400_BAD_REQUEST)
+                service_type = resolve_service_type(raw_service_name)
+            except (ServiceType.DoesNotExist, AmbiguousServiceType) as exc:
+                body, code = service_type_error_response(exc, raw_service_name)
+                return Response(body, status=code)
+
+            job_duration = resolve_job_duration(data if isinstance(data, dict) else {}, service_type)
             
             # Clean up the city and country
             data['city'] = data['city'].strip() if data['city'] else None
@@ -186,13 +198,26 @@ class BookingView(APIView):
                         "error": "Invalid end_time format"
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Reject appointment times that have already passed. get_timeslots normally filters
+            # these out for same-day requests, but this guards against races (slot fetched just
+            # before close, submitted just after) or a stale/direct request bypassing that check.
+            from zoneinfo import ZoneInfo
+            appointment_datetime_check = datetime.combine(
+                appointment_date, appointment_time, tzinfo=ZoneInfo('Europe/London')
+            )
+            if appointment_datetime_check <= timezone.now():
+                return Response({
+                    "success": False,
+                    "error": "This appointment time has already passed. Please choose a different time.",
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             # Only consider detailers who are free for this specific slot (no overlapping job)
             detailers_free_for_slot = self._get_detailers_free_for_slot(
                 available_detailers=available_detailers,
                 appointment_date=appointment_date,
                 appointment_time=appointment_time,
                 appointment_end_time=appointment_end_time,
-                service_duration=service_type.duration or 60,
+                service_duration=job_duration,
             )
             if not detailers_free_for_slot:
                 return Response({
@@ -267,6 +292,7 @@ class BookingView(APIView):
                     longitude=data['longitude'],
                     appointment_date=appointment_datetime,
                     appointment_time=appointment_time,
+                    duration=job_duration,
                     status='accepted',  # No separate accept step; job is accepted when assigned
                     loyalty_tier=data.get('loyalty_tier', 'bronze'),
                     loyalty_benefits=data.get('loyalty_benefits', [])
@@ -342,7 +368,18 @@ class BookingView(APIView):
                     "image": None,
                 })
             # Publish job_acceptance so client app can set detailer(s) and send confirmation
-            publish_job_acceptance.delay(job.booking_reference, assigned_detailers_payload)
+            publish_job_acceptance.delay(
+                job.booking_reference,
+                assigned_detailers_payload,
+                request_id=request_id,
+            )
+            log_timed(
+                "booking.create_booking",
+                handler_started,
+                booking_reference=job.booking_reference,
+                request_id=request_id,
+                ok=True,
+            )
 
             # Return success response with assigned_detailers so client can show all detailers
             response_data = {
@@ -352,11 +389,27 @@ class BookingView(APIView):
             return Response(response_data, status=status.HTTP_201_CREATED)
             
         except ServiceType.DoesNotExist:
+            log_timed(
+                "booking.create_booking",
+                handler_started,
+                booking_reference=data.get("booking_reference") if isinstance(data, dict) else None,
+                request_id=request_id,
+                ok=False,
+                error="service_type_missing",
+            )
             return Response({
                 "success": False,
                 "error": f"Service type '{data.get('service_type', 'Unknown')}' not found"
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            log_timed(
+                "booking.create_booking",
+                handler_started,
+                booking_reference=data.get("booking_reference") if isinstance(data, dict) else None,
+                request_id=request_id,
+                ok=False,
+                error=str(e),
+            )
             return Response({
                 "success": False,
                 "error": str(e)
@@ -374,13 +427,18 @@ class BookingView(APIView):
         """
         try:
             data = request.data or {}
+            request_id = data.get("request_id")
+            handler_started = time_mod.monotonic()
             booking_reference = (data.get('booking_reference') or '').strip()
             if not booking_reference:
                 return Response({"error": "booking_reference is required"}, status=status.HTTP_400_BAD_REQUEST)
+            raw_service_name = data.get("service_type", "")
             try:
-                service_type = ServiceType.objects.get(name=data.get('service_type', ''))
-            except ServiceType.DoesNotExist:
-                return Response({"error": f"Service type '{data.get('service_type')}' not found"}, status=status.HTTP_400_BAD_REQUEST)
+                service_type = resolve_service_type(raw_service_name)
+            except (ServiceType.DoesNotExist, AmbiguousServiceType) as exc:
+                body, code = service_type_error_response(exc, raw_service_name)
+                return Response(body, status=code)
+            slot_duration = resolve_job_duration(data, service_type)
             number_of_vehicles = int(data.get('number_of_vehicles', 0))
             if number_of_vehicles <= 0:
                 return Response({"error": "number_of_vehicles must be positive"}, status=status.HTTP_400_BAD_REQUEST)
@@ -441,7 +499,7 @@ class BookingView(APIView):
                 valet_type_str = valet_type_str.strip()[:20]
             else:
                 valet_type_str = str(valet_type_str)[:20]
-            slot_length_minutes = service_type.duration or 60
+            slot_length_minutes = slot_duration
             detailers_qs, _ = find_detailers_for_location(
                 country=country,
                 city=city,
@@ -504,8 +562,7 @@ class BookingView(APIView):
                         blocked.append((overlap_start, overlap_end))
                 for job in jobs_for_detailer:
                     j_start = minutes_since_midnight(job.appointment_time)
-                    j_dur = getattr(job.service_type, "duration", 60) or 60
-                    j_dur = int(j_dur)
+                    j_dur = job.slot_duration_minutes()
                     j_block_start = max(0, j_start - travel_interval)
                     is_bulk_sub = (
                         getattr(job, "booking_reference", "")
@@ -648,7 +705,7 @@ class BookingView(APIView):
                             longitude=longitude,
                             appointment_date=appointment_datetime,
                             appointment_time=slot_time,
-                            duration=service_type.duration,
+                            duration=slot_duration,
                             valet_type=valet_type_str or None,
                             status='accepted',
                             loyalty_tier='bronze',
@@ -725,7 +782,7 @@ class BookingView(APIView):
                             longitude=longitude,
                             appointment_date=appointment_datetime,
                             appointment_time=slot_time,
-                            duration=service_type.duration,
+                            duration=slot_duration,
                             valet_type=valet_type_str or None,
                             status='accepted',
                             loyalty_tier='bronze',
@@ -776,6 +833,7 @@ class BookingView(APIView):
                     assigned.user.get_full_name(),
                     assigned.user.phone or '',
                     assigned.rating or 0.0,
+                    request_id=request_id,
                 )
             # Build unique assigned detailers list for client (same shape as Redis job_acceptance)
             seen_ids = set()
@@ -791,6 +849,14 @@ class BookingView(APIView):
                         "rating": float(d.rating or 0),
                         "image": None,
                     })
+            log_timed(
+                "booking.create_bulk_booking",
+                handler_started,
+                booking_reference=booking_reference,
+                request_id=request_id,
+                ok=True,
+                jobs_created=len(created_jobs),
+            )
             return Response({
                 "success": True,
                 "jobs_created": len(created_jobs),
@@ -798,6 +864,14 @@ class BookingView(APIView):
                 "assigned_detailers": assigned_detailers,
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
+            log_timed(
+                "booking.create_bulk_booking",
+                handler_started if "handler_started" in locals() else time_mod.monotonic(),
+                booking_reference=booking_reference if "booking_reference" in locals() else None,
+                request_id=request_id if "request_id" in locals() else None,
+                ok=False,
+                error=str(e),
+            )
             return Response({
                 "success": False,
                 "error": str(e),
@@ -855,7 +929,7 @@ class BookingView(APIView):
             window = (data.get('window') or '').strip().lower()
             first_job = existing_jobs[0]
             service_type = first_job.service_type
-            slot_length_minutes = service_type.duration or 60
+            slot_length_minutes = first_job.slot_duration_minutes()
             city = (first_job.city or '').strip()
             country = (first_job.country or '').strip()
             latitude = getattr(first_job, 'latitude', None)
@@ -909,8 +983,7 @@ class BookingView(APIView):
                         blocked.append((overlap_start, overlap_end))
                 for job in jobs_for_detailer:
                     j_start = _minutes_since_midnight(job.appointment_time)
-                    j_dur = getattr(job.service_type, "duration", 60) or 60
-                    j_dur = int(j_dur)
+                    j_dur = job.slot_duration_minutes()
                     j_block_start = max(0, j_start - travel_interval)
                     is_bulk_sub = (
                         getattr(job, "booking_reference", "")

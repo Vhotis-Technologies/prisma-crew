@@ -8,6 +8,7 @@ into bank transfers.
 """
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db.models.functions import Lower
 from django.utils import timezone
 import math
 import uuid
@@ -255,6 +256,14 @@ class ServiceType(models.Model):
     duration = models.IntegerField(default=0)  # in minutes
     price = models.FloatField(default=0)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="main_servicetype_name_lower_uniq",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name}"
 
@@ -262,24 +271,6 @@ class ServiceType(models.Model):
 # -------------------------------
 # Availability
 # -------------------------------
-class TimeSlot(models.Model):
-    """Bookable window for a detailer on a given date (availability scheduling)."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
-    date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    is_available = models.BooleanField(default=True)
-    is_booked = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('detailer', 'date', 'start_time', 'end_time')
-        ordering = ('date', 'start_time')
-    
-    def __str__(self):
-        return f'{self.detailer.user.get_full_name()} - {self.date} - {self.start_time} - {self.end_time}'
-
 class Job(models.Model):
     """
     Client booking mirrored on the detailer service (assignments, status, pricing).
@@ -341,6 +332,25 @@ class Job(models.Model):
         indexes = [
             models.Index(fields=['primary_detailer', 'status', 'appointment_date', 'appointment_time', 'booking_reference']),
         ]
+
+    def slot_duration_minutes(self) -> int:
+        """
+        Minutes this job occupies on the calendar.
+
+        Prefers ``duration`` stored at create time; falls back to catalog then 60.
+        """
+        try:
+            stored = int(self.duration or 0)
+        except (TypeError, ValueError):
+            stored = 0
+        if stored > 0:
+            return stored
+        catalog = getattr(self.service_type, "duration", None) or 0
+        try:
+            catalog = int(catalog)
+        except (TypeError, ValueError):
+            catalog = 0
+        return catalog if catalog > 0 else 60
 
     def create_earning(self):
         """
@@ -795,22 +805,6 @@ class Availability(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-# -------------------------------
-# Training Records
-# -------------------------------
-class TrainingRecord(models.Model):
-    """Onboarding or compliance training item and completion status for a detailer."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    detailer = models.ForeignKey(Detailer, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=[("pending", "Pending"), ("completed", "Completed")], default="pending")
-    date_completed = models.DateField(blank=True, null=True)
-
-    def __str__(self):
-        return f'Training: {self.title} - {self.detailer.user.get_full_name()}'
-
-
 class PayoutHistory(models.Model):
     """
     Batch payout to a detailer's bank account (request or scheduled).
@@ -929,6 +923,7 @@ class Notification(models.Model):
         ('payment_received', 'Payment Received'),
         ('reminder', 'Reminder'),
         ('system', 'System'),
+        ('crew_chat', 'Crew Chat'),
     ]
     NOTIFICATION_STATUS_CHOICES = [
         ('success', 'Success'),

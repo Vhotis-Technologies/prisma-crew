@@ -30,6 +30,7 @@ export interface JobCardProps {
   appointment_time: string;
   duration: number;
   status: JobStatus;
+  address?: string;
 }
 
 export interface JobDetailsProps {
@@ -43,6 +44,8 @@ export interface JobDetailsProps {
   vehicle_year: string;
   vehicle_color: string;
   vehicle_license: string;
+  /** API historically sent this misspelling. */
+  vehiclie_license?: string;
   service_type: ServiceTypeProps;
   address: string;
   city: string;
@@ -57,7 +60,9 @@ export interface JobDetailsProps {
   created_at: string;
   updated_at: string;
   specialInstruction?: string;
+  special_instruction?: string;
   valetType?: string;
+  valet_type?: string;
   addons?: string[];
   before_images_interior?: Array<{
     id: number;

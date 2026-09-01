@@ -10,29 +10,9 @@ export interface CurrentJobProps {
   status: "in_progress" | "accepted" | "completed";
   specialInstruction?: string;
   vehicleInfo?: string;
-  loyalty_tier?: string;
-  loyalty_benefits?: string[];
   booking_reference?: string;
   clientPhone?: string;
-}
-
-// Quick Stats Interfaces
-export interface QuickStatsProps {
-  weeklyEarnings: number;
-  monthlyEarnings: number;
-  completedJobsThisWeek: number;
-  completedJobsThisMonth: number;
-  pendingJobsCount: number;
-  averageRating: number;
-  totalReviews: number;
-}
-
-export interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: string;
-  color: "primary" | "success" | "warning" | "info";
-  subtitle?: string;
+  address?: string;
 }
 
 export interface TodayOverviewProps {
@@ -55,23 +35,4 @@ export interface NextAppointmentProps {
   vehicleInfo: string;
   addons?: string[];
   specialInstruction?: string;
-  loyalty_tier?: string;
-  loyalty_benefits?: string[];
-}
-
-export interface RecentJobProps {
-  id: string;
-  clientName: string;
-  serviceType: string;
-  completedAt: string;
-  earnings: number;
-  rating?: number;
-  status: "completed" | "cancelled";
-}
-
-export interface QuickActionProps {
-  id: string;
-  title: string;
-  icon: string;
-  action: () => void;
 }

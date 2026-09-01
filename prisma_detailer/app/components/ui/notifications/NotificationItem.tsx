@@ -1,280 +1,135 @@
-import React, { useRef } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+/**
+ * Notification row — swipe to delete.
+ */
+import { useRef } from "react";
+import { View, Pressable, StyleSheet } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Notification,
   NotificationType,
-  NotificationStatus,
 } from "@/app/interfaces/NotificationInterface";
-import StyledText from "@/app/components/helpers/StyledText";
-import { useThemeColor } from "@/hooks/useThemeColor";
 import { useAlertContext } from "@/app/contexts/AlertContext";
+import { useThemeTokens } from "@/hooks/useThemeTokens";
+import { CrewText } from "@/app/components/ui/system";
 
-interface NotificationItemProps {
+type NotificationItemProps = {
   notification: Notification;
   onPress: (notification: Notification) => void;
   onDelete: (notificationId: string) => void;
+};
+
+function iconFor(type: NotificationType): keyof typeof Ionicons.glyphMap {
+  switch (type) {
+    case NotificationType.BOOKING_CANCELLED:
+      return "close-circle";
+    case NotificationType.BOOKING_CONFIRMED:
+    case NotificationType.BOOKING_CREATED:
+      return "checkmark-circle";
+    case NotificationType.APPOINTMENT_STARTED:
+      return "play-circle";
+    case NotificationType.CLEANING_COMPLETED:
+    case NotificationType.CAR_READY:
+      return "sparkles";
+    case NotificationType.CREW_CHAT:
+      return "chatbubble-ellipses";
+    default:
+      return "notifications";
+  }
 }
 
-const getNotificationIcon = (
-  type: NotificationType,
-  status: NotificationStatus
-) => {
-  const errorColor = useThemeColor({}, "error");
-  const successColor = useThemeColor({}, "success");
-  const warningColor = useThemeColor({}, "warning");
-  const primaryColor = useThemeColor({}, "primary");
-  const iconColor = useThemeColor({}, "icons");
-
-  const iconConfig = {
-    [NotificationType.BOOKING_CONFIRMED]: {
-      name: "checkmark-circle" as const,
-      color: errorColor,
-    },
-    [NotificationType.BOOKING_CANCELLED]: {
-      name: "close-circle" as const,
-      color: errorColor,
-    },
-    [NotificationType.BOOKING_RESCHEDULED]: {
-      name: "time" as const,
-      color: warningColor,
-    },
-    [NotificationType.CLEANING_COMPLETED]: {
-      name: "sparkles" as const,
-      color: successColor,
-    },
-    [NotificationType.CAR_READY]: {
-      name: "car" as const,
-      color: successColor,
-    },
-    [NotificationType.PAYMENT_RECEIVED]: {
-      name: "card" as const,
-      color: successColor,
-    },
-    [NotificationType.REMINDER]: {
-      name: "notifications" as const,
-      color: primaryColor,
-    },
-    [NotificationType.SYSTEM]: {
-      name: "settings" as const,
-      color: iconColor,
-    },
-    [NotificationType.APPOINTMENT_STARTED]: {
-      name: "play-circle" as const,
-      color: primaryColor,
-    },
-    [NotificationType.BOOKING_CREATED]: {
-      name: "add-circle" as const,
-      color: primaryColor,
-    },
-    [NotificationType.PENDING]: {
-      name: "hourglass" as const,
-      color: warningColor,
-    },
-  };
-
-  return (
-    iconConfig[type] || {
-      name: "notifications" as const,
-      color: iconColor,
-    }
-  );
-};
-
-const formatTimeAgo = (timestamp: Date): string => {
-  const now = new Date();
-  const diffInMs = now.getTime() - timestamp.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  if (diffInMinutes < 1) return "Just now";
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  if (diffInDays < 7) return `${diffInDays}d ago`;
-
-  return timestamp.toLocaleDateString();
-};
+function timeAgo(timestamp: Date): string {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString();
+}
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   onPress,
   onDelete,
 }) => {
-  const cardColor = useThemeColor({}, "cards");
-  const backgroundColor = useThemeColor({}, "background");
-  const textColor = useThemeColor({}, "text");
-  const primaryColor = useThemeColor({}, "primary");
-  const iconColor = useThemeColor({}, "icons");
+  const { colors, radius, spacing } = useThemeTokens();
   const { setAlertConfig, setIsVisible } = useAlertContext();
-
-  const icon = getNotificationIcon(notification.type, notification.status);
   const swipeableRef = useRef<Swipeable>(null);
-
-  const handleDelete = () => {
-    setAlertConfig({
-      isVisible: true,
-      title: "Delete Notification",
-      message: "Are you sure you want to delete this notification?",
-      type: "warning",
-      onClose: () => setIsVisible(false),
-      onConfirm: () => {
-        onDelete(notification.id);
-        swipeableRef.current?.close();
-      },
-    });
-  };
-
-  const renderRightActions = () => {
-    return (
-      <View style={styles.deleteContainer}>
-        <TouchableOpacity
-          style={[styles.deleteButton, { backgroundColor: primaryColor }]}
-          onPress={handleDelete}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="trash-outline" size={24} color="white" />
-          <StyledText variant="bodySmall" style={styles.deleteText}>
-            Delete
-          </StyledText>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   return (
     <Swipeable
       ref={swipeableRef}
-      renderRightActions={renderRightActions}
-      rightThreshold={60}
-      overshootRight={false}
-      friction={2}
+      renderRightActions={() => (
+        <Pressable
+          onPress={() =>
+            setAlertConfig({
+              isVisible: true,
+              title: "Delete this alert?",
+              message: "This cannot be undone.",
+              type: "warning",
+              onClose: () => setIsVisible(false),
+              onConfirm: () => {
+                onDelete(notification.id);
+                swipeableRef.current?.close();
+              },
+            })
+          }
+          style={[
+            styles.delete,
+            { backgroundColor: colors.error, borderRadius: radius.md },
+          ]}
+        >
+          <Ionicons name="trash-outline" size={20} color={colors.buttonText} />
+        </Pressable>
+      )}
     >
-      <TouchableOpacity
+      <Pressable
+        onPress={() => onPress(notification)}
         style={[
-          styles.container,
+          styles.row,
           {
-            backgroundColor: notification.isRead ? cardColor : backgroundColor,
-            borderColor: textColor,
+            backgroundColor: colors.cards,
+            borderColor: notification.isRead ? colors.borders : colors.primary,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            gap: spacing.sm,
           },
         ]}
-        onPress={() => onPress(notification)}
-        activeOpacity={0.7}
       >
-        {/* Unread indicator */}
-        {!notification.isRead && (
-          <View
-            style={[styles.unreadIndicator, { backgroundColor: primaryColor }]}
-          />
-        )}
-
-        {/* Icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name={icon.name} size={24} color={icon.color} />
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <StyledText variant="titleMedium" numberOfLines={1}>
+        <Ionicons
+          name={iconFor(notification.type)}
+          size={22}
+          color={notification.isRead ? colors.muted : colors.primary}
+        />
+        <View style={{ flex: 1, gap: 2 }}>
+          <CrewText variant="subtitle" numberOfLines={1}>
             {notification.title}
-          </StyledText>
-          <StyledText variant="bodySmall" numberOfLines={2}>
+          </CrewText>
+          <CrewText variant="caption" muted numberOfLines={2}>
             {notification.message}
-          </StyledText>
-          <StyledText variant="bodySmall">
-            {formatTimeAgo(notification.timestamp)}
-          </StyledText>
+          </CrewText>
+          <CrewText variant="caption" muted>
+            {timeAgo(notification.timestamp)}
+          </CrewText>
         </View>
-
-        {/* Action indicator */}
-        <View style={styles.actionContainer}>
-          <Ionicons name="chevron-forward" size={16} color={iconColor} />
-        </View>
-      </TouchableOpacity>
+      </Pressable>
     </Swipeable>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
   },
-  unreadIndicator: {
-    position: "absolute",
-    left: 8,
-    top: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
+  delete: {
+    width: 64,
     alignItems: "center",
-    marginRight: 12,
-  },
-  content: {
-    flex: 1,
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  message: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
-  },
-  timestamp: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  actionContainer: {
     justifyContent: "center",
-    alignItems: "center",
-  },
-  deleteContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    height: "100%",
-    marginVertical: 4,
-    marginRight: 5,
-  },
-  deleteButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: "100%",
-    borderRadius: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  deleteText: {
-    color: "white",
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "600",
+    marginLeft: 8,
   },
 });

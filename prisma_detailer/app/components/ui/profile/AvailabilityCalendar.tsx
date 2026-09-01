@@ -1,253 +1,272 @@
-import React, { useState } from "react";
-import {
-  View,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  LayoutChangeEvent,
-} from "react-native";
+/**
+ * Month grid. Monday-first. Equal 7-column weeks so dates sit under Mon–Sun.
+ */
+import React from "react";
+import { View, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
-import { useThemeColor } from "@/hooks/useThemeColor";
-import StyledText from "@/app/components/helpers/StyledText";
+import { useThemeTokens } from "@/hooks/useThemeTokens";
+import { CrewText } from "@/app/components/ui/system";
 
-interface AvailabilityCalendarProps {
+type AvailabilityCalendarProps = {
   currentMonth: dayjs.Dayjs;
-  currentYear: number;
   monthDays: dayjs.Dayjs[];
-  selectedDates: string[];
+  openDate: string | null;
+  unavailableDates?: string[];
+  jobDates?: string[];
   onDatePress: (date: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
-}
+  lockPast?: boolean;
+  canGoPrevious?: boolean;
+  showLegend?: boolean;
+};
 
-const CELL_GAP = 4;
-const DAYS_PER_WEEK = 7;
-const CONTAINER_PADDING_H = 16 * 2; // horizontal padding of container
+const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function weeksOf(days: dayjs.Dayjs[]): dayjs.Dayjs[][] {
+  const weeks: dayjs.Dayjs[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+  return weeks;
+}
 
 export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   currentMonth,
-  currentYear,
   monthDays,
-  selectedDates,
+  openDate,
+  unavailableDates = [],
+  jobDates = [],
   onDatePress,
   onPreviousMonth,
   onNextMonth,
+  lockPast = true,
+  canGoPrevious = true,
+  showLegend = true,
 }) => {
-  const [contentWidth, setContentWidth] = useState(0);
-
-  const cardColor = useThemeColor({}, "cards");
-  const primaryColor = useThemeColor({}, "primary");
-  const borderColor = useThemeColor({}, "borders");
-  const textColor = useThemeColor({}, "text");
-  const buttonTextColor = useThemeColor({}, "buttonText");
-  const iconColor = useThemeColor({}, "icons");
-
-  const onLayout = (e: LayoutChangeEvent) => {
-    const { width } = e.nativeEvent.layout;
-    setContentWidth(Math.max(0, width - CONTAINER_PADDING_H));
-  };
-
-  const cellSize =
-    contentWidth > 0
-      ? (contentWidth - (DAYS_PER_WEEK - 1) * CELL_GAP) / DAYS_PER_WEEK
-      : 0;
-
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const isDateSelected = (date: dayjs.Dayjs) => {
-    return selectedDates.includes(date.format("YYYY-MM-DD"));
-  };
-
-  const isCurrentMonth = (date: dayjs.Dayjs) => {
-    return date.month() === currentMonth.month();
-  };
-
-  const isToday = (date: dayjs.Dayjs) => {
-    return date.isSame(dayjs(), "day");
-  };
+  const { colors, radius, spacing, tap } = useThemeTokens();
+  const today = dayjs().startOf("day");
+  const weeks = weeksOf(monthDays);
 
   return (
     <View
-      style={[styles.container, { backgroundColor: cardColor, borderColor }]}
-      onLayout={onLayout}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.cards,
+          borderColor: colors.borders,
+          borderRadius: radius.md,
+          padding: spacing.md,
+        },
+      ]}
     >
-      {/* Header with month navigation */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: primaryColor }]}
+        <Pressable
           onPress={onPreviousMonth}
+          disabled={!canGoPrevious}
+          accessibilityLabel="Previous month"
+          accessibilityState={{ disabled: !canGoPrevious }}
+          style={({ pressed }) => [
+            styles.navButton,
+            {
+              backgroundColor: colors.primarySoft,
+              borderRadius: radius.md,
+              minWidth: tap.min,
+              minHeight: tap.min,
+              opacity: !canGoPrevious ? 0.35 : pressed ? 0.8 : 1,
+            },
+          ]}
         >
-          <Ionicons name="chevron-back" size={20} color={buttonTextColor} />
-        </TouchableOpacity>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+        </Pressable>
 
-        <StyledText variant="titleMedium" style={{ color: textColor }}>
-          {currentMonth.format("MMMM YYYY")}
-        </StyledText>
+        <CrewText variant="subtitle">{currentMonth.format("MMMM YYYY")}</CrewText>
 
-        <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: primaryColor }]}
+        <Pressable
           onPress={onNextMonth}
+          accessibilityLabel="Next month"
+          style={({ pressed }) => [
+            styles.navButton,
+            {
+              backgroundColor: colors.primarySoft,
+              borderRadius: radius.md,
+              minWidth: tap.min,
+              minHeight: tap.min,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
         >
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={buttonTextColor}
-          />
-        </TouchableOpacity>
+          <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+        </Pressable>
       </View>
 
-      {/* Week days header - same width as date grid so each day sits directly above its column */}
-      <View
-        style={[
-          styles.weekDaysContainer,
-          cellSize > 0 && { width: contentWidth },
-        ]}
-      >
-        {weekDays.map((day, index) => (
-          <View
-            key={index}
-            style={[
-              styles.weekDayHeader,
-              cellSize > 0 && {
-                width: cellSize,
-                marginRight: index < 6 ? CELL_GAP : 0,
-              },
-            ]}
-          >
-            <StyledText variant="bodySmall" style={{ color: textColor, opacity: 0.8 }}>
+      <View style={styles.weekRow}>
+        {WEEK_DAYS.map((day) => (
+          <View key={day} style={styles.col}>
+            <CrewText variant="caption" muted style={styles.centerText}>
               {day}
-            </StyledText>
+            </CrewText>
           </View>
         ))}
       </View>
 
-      {/* Calendar grid - same width as week days row */}
-      <ScrollView
-        style={styles.calendarContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View
-          style={[
-            styles.calendarGrid,
-            cellSize > 0 && { width: contentWidth },
-          ]}
-        >
-          {monthDays.map((date, index) => {
+      {weeks.map((week) => (
+        <View key={week[0].format("YYYY-MM-DD")} style={styles.weekRow}>
+          {week.map((date) => {
             const dateString = date.format("YYYY-MM-DD");
-            const selected = isDateSelected(date);
-            const currentMonthDate = isCurrentMonth(date);
-            const today = isToday(date);
+            const inMonth = date.month() === currentMonth.month();
+            const isPast = date.isBefore(today, "day");
+            const isToday = date.isSame(today, "day");
+            const isOpen = openDate === dateString;
+            const hasOff = unavailableDates.includes(dateString);
+            const hasJob = jobDates.includes(dateString);
+            const disabled = !inMonth || (lockPast && isPast);
 
             return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.dateCell,
-                  cellSize > 0 && {
-                    width: cellSize,
-                    height: cellSize,
-                    marginRight: (index % 7) < 6 ? CELL_GAP : 0,
-                    marginBottom: CELL_GAP,
-                  },
+              <Pressable
+                key={dateString}
+                disabled={disabled}
+                onPress={() => onDatePress(dateString)}
+                accessibilityLabel={date.format("D MMMM")}
+                accessibilityState={{ disabled, selected: isOpen }}
+                style={({ pressed }) => [
+                  styles.col,
+                  styles.dayCell,
                   {
-                    backgroundColor: selected ? primaryColor : "transparent",
-                    borderColor: today ? primaryColor : borderColor,
-                    borderWidth: today ? 1 : 0,
-                    opacity: currentMonthDate ? 1 : 0.3,
+                    minHeight: tap.min,
+                    borderRadius: radius.sm,
+                    backgroundColor: isOpen
+                      ? colors.primary
+                      : hasOff
+                        ? colors.primarySoft
+                        : "transparent",
+                    borderWidth: isToday && !isOpen ? 1 : 0,
+                    borderColor: colors.primary,
+                    opacity: disabled ? 0.35 : pressed ? 0.85 : 1,
                   },
                 ]}
-                onPress={() => onDatePress(dateString)}
-                disabled={!currentMonthDate}
               >
-                <StyledText
-                  style={[
-                    styles.dateText,
-                    {
-                      color: selected
-                        ? buttonTextColor
-                        : currentMonthDate
-                        ? textColor
-                        : iconColor,
-                      fontWeight: today ? "bold" : "normal",
-                      opacity: currentMonthDate ? 1 : 0.5,
-                    },
-                  ]}
+                <CrewText
+                  variant="label"
+                  color={
+                    isOpen
+                      ? colors.buttonText
+                      : inMonth
+                        ? colors.text
+                        : colors.muted
+                  }
+                  style={styles.centerText}
                 >
                   {date.format("D")}
-                </StyledText>
-                {selected && currentMonthDate && (
+                </CrewText>
+                {hasJob && inMonth ? (
                   <View
                     style={[
-                      styles.selectedIndicator,
-                      { backgroundColor: buttonTextColor },
+                      styles.jobDot,
+                      {
+                        backgroundColor: isOpen
+                          ? colors.buttonText
+                          : colors.warning,
+                      },
                     ]}
                   />
-                )}
-              </TouchableOpacity>
+                ) : null}
+              </Pressable>
             );
           })}
         </View>
-      </ScrollView>
+      ))}
+
+      {showLegend ? (
+        <View style={[styles.legend, { gap: spacing.md }]}>
+          <LegendDot
+            color={colors.primarySoft}
+            border={colors.primary}
+            label="Off"
+          />
+          <LegendDot color={colors.warning} label="Assigned job" />
+        </View>
+      ) : null}
     </View>
   );
 };
 
+function LegendDot({
+  color,
+  border,
+  label,
+}: {
+  color: string;
+  border?: string;
+  label: string;
+}) {
+  return (
+    <View style={styles.legendItem}>
+      <View
+        style={[
+          styles.legendSwatch,
+          { backgroundColor: color, borderColor: border ?? color },
+        ]}
+      />
+      <CrewText variant="caption" muted>
+        {label}
+      </CrewText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 5,
-    marginVertical: 5,
+    borderWidth: 1,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   navButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 20,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
   },
-  monthYearText: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  weekDaysContainer: {
+  weekRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    alignItems: "stretch",
   },
-  weekDayHeader: {
+  col: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 6,
   },
-  calendarContainer: {
-    flexGrow: 1,
+  dayCell: {
+    paddingVertical: 5,
+    margin:1,
   },
-  calendarGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  centerText: {
+    textAlign: "center",
+    width: "100%",
   },
-  dateCell: {
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-    position: "relative",
-  },
-  dateText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  selectedIndicator: {
+  jobDot: {
     position: "absolute",
-    bottom: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    bottom: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 5,
+  },
+  legend: {
+    flexDirection: "row",
+    marginTop: 8,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendSwatch: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    borderWidth: 1,
   },
 });

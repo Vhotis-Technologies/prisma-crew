@@ -22,6 +22,8 @@ from .views.password_reset import RequestPasswordResetView, ResetPasswordView, V
 from main.views.support.support_crew import CrewView
 from main.views.support.support_jobs import SupportJobsView
 from main.views.support.support_payouts import SupportPayoutsView
+from main.views.support.support_crew_chat_notify import SupportCrewChatNotifyView
+from main.views.support_chat import CrewSupportChatView
 
 app_name = 'main'
 urlpatterns = [
@@ -47,6 +49,10 @@ urlpatterns = [
     path('support/crew/<str:action>/', CrewView.as_view(), name='crew'),
     path('support/jobs/<str:action>/', SupportJobsView.as_view(), name='support_jobs'),
     path('support/payouts/<str:action>/', SupportPayoutsView.as_view(), name='support_payouts'),
+    path('support/crew-chat/notify/', SupportCrewChatNotifyView.as_view(), name='support_crew_chat_notify'),
+
+    # Crew support chat (BFF endpoints)
+    path('support-chat/<str:action>/', CrewSupportChatView.as_view(), name='support_chat'),
 ]
 
 if settings.DEBUG:

@@ -21,6 +21,7 @@ export enum NotificationType {
   PAYMENT_RECEIVED = "payment_received",
   REMINDER = "reminder",
   SYSTEM = "system",
+  CREW_CHAT = "crew_chat",
 }
 
 export enum NotificationStatus {

@@ -8,7 +8,6 @@ import {
   StatusBar,
 } from "react-native";
 import { Link, router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import StyledButton from "./components/helpers/StyledButton";
 import StyledText from "./components/helpers/StyledText";
@@ -43,21 +42,21 @@ export default function LandingPage() {
     },
     {
       icon: "trending-up-outline",
-      title: "Structured Growth",
+      title: "Clear run sheet",
       description:
-        "Follow our proven workflow and watch your earnings grow with our support",
+        "See today's assigned jobs, start and complete them, and move on to the next",
     },
     {
-      icon: "cash-outline",
-      title: "Earnings",
+      icon: "calendar-outline",
+      title: "Assigned work",
       description:
-        "Earnings are paid out to your bank account every week. You can request a payout at any time.",
+        "Jobs are given to you. Open the job, do the work, and tick it off — no bidding or gig wallet",
     },
     {
-      icon: "wallet-outline",
-      title: "Payouts",
+      icon: "people-outline",
+      title: "You're on the team",
       description:
-        "You keep 100% of all your tips. You are paid hourly based on your work activity.",
+        "Full-time Prisma Crew. Payroll is handled separately from this app",
     },
   ];
 
@@ -65,17 +64,11 @@ export default function LandingPage() {
     <View style={[styles.container, { backgroundColor }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
-        <View style={styles.heroSection}>
-          <LinearGradient
-            colors={[borderColor, backgroundColor]}
-            style={styles.heroGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
+        <View style={[styles.heroSection, { backgroundColor }]}>
             <View style={styles.heroContent}>
               <Image
                 source={require("../assets/images/logo.png")}
-                style={[styles.logo, {shadowColor:"red"}]}
+                style={styles.logo}
                 resizeMode="contain"
               />
 
@@ -110,7 +103,6 @@ export default function LandingPage() {
                 </StyledButton>
               </View>
             </View>
-          </LinearGradient>
         </View>
 
         {/* Benefits Section */}
@@ -240,8 +232,7 @@ export default function LandingPage() {
                   variant="bodyMedium"
                   style={[styles.stepDescription, { color: textColor }]}
                 >
-                  Follow our structured workflow and earn money doing what you
-                  love
+                  Follow the run sheet and complete the jobs assigned to you
                 </StyledText>
               </View>
             </View>
@@ -266,8 +257,8 @@ export default function LandingPage() {
             variant="bodyLarge"
             style={[styles.ctaDescription, { color: textColor }]}
           >
-            Join our team of professional detailers and start earning with our
-            complete support system.
+            Join our team of professional detailers. We handle bookings, tools,
+            and training so you can focus on the work.
           </StyledText>
 
           <StyledButton

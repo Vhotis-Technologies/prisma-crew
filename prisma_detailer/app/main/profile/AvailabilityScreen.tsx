@@ -1,335 +1,298 @@
-import React, { useState, useEffect } from "react";
+/**
+ * Unavailable — lock new jobs for selected hours. Does not move assigned jobs.
+ */
+import { useMemo, useState } from "react";
 import {
-  StyleSheet,
   View,
+  Pressable,
   ScrollView,
-  SafeAreaView,
-  StatusBar,
-  TouchableOpacity,
+  StyleSheet,
   ActivityIndicator,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import dayjs from "dayjs";
 import { useAvailability } from "@/app/app-hooks/useAvailability";
 import { AvailabilityCalendar } from "@/app/components/ui/profile/AvailabilityCalendar";
 import { TimeSlotsSelector } from "@/app/components/ui/profile/TimeSlotsSelector";
 import { AvailabilitySummary } from "@/app/components/ui/profile/AvailabilitySummary";
-import { useThemeColor } from "@/hooks/useThemeColor";
-import { useThemeContext } from "@/app/contexts/ThemeProvider";
-import StyledText from "@/app/components/helpers/StyledText";
+import { Screen, CrewText, PrimaryButton } from "@/app/components/ui/system";
+import { useThemeTokens } from "@/hooks/useThemeTokens";
 import {
   useGetAvailabilityQuery,
   useCreateAvailabilityMutation,
   useLazyGetBusyTimesQuery,
-  useGetBusyTimesQuery,
 } from "@/app/store/api/availabilityApi";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 
-const AvailabilityScreen = () => {
-  const backgroundColor = useThemeColor({}, "background");
-  const primaryColor = useThemeColor({}, "primary");
-  const textColor = useThemeColor({}, "text");
-  const { theme } = useThemeContext();
+export default function AvailabilityScreen() {
+  const { colors, spacing, radius } = useThemeTokens();
   const { setAlertConfig } = useAlertContext();
 
-  const { data: availabilityData } = useGetAvailabilityQuery();
-  const [createAvailability, { isLoading: isSaving }] = useCreateAvailabilityMutation();
-  const [fetchBusyTimes, { isLoading: isBusyTimesLoading }] = useLazyGetBusyTimesQuery();
+  const { data: availabilityData, refetch } = useGetAvailabilityQuery();
+  const [createAvailability, { isLoading: isSaving }] =
+    useCreateAvailabilityMutation();
+  const [fetchBusyTimes, { isLoading: isBusyTimesLoading }] =
+    useLazyGetBusyTimesQuery();
 
   const {
     selectedDates,
     currentMonth,
-    currentYear,
     goToPreviousMonth,
     goToNextMonth,
     toggleTimeSlot,
     getMonthDays,
     clearAllSelections,
+    clearSlotsForDate,
     getAllSelectedAvailabilities,
-    selectOnlyDateWithBusySlots,
-    setBusySlotsForDate,
+    openDateWithBusySlots,
+    allowRehydrate,
   } = useAvailability(availabilityData ?? undefined);
 
-  const [selectedDateForTimeSlots, setSelectedDateForTimeSlots] = useState<
-    string | null
-  >(null);
-  const [pendingDateForSlots, setPendingDateForSlots] = useState<string | null>(null);
+  const [openDate, setOpenDate] = useState<string | null>(null);
+  const [pendingDate, setPendingDate] = useState<string | null>(null);
 
-  const { data: busyTimesData } = useGetBusyTimesQuery(selectedDateForTimeSlots ?? null, {
-    skip: !selectedDateForTimeSlots,
-  });
+  const unavailableDates = useMemo(
+    () =>
+      selectedDates
+        .filter((date) =>
+          date.timeSlots.some((slot) => slot.isSelected && !slot.isBlockedByJob),
+        )
+        .map((date) => date.date),
+    [selectedDates],
+  );
 
-  /* When the time-slot panel is open, refetch busy times for that date and merge so job blocks stay up to date. */
-  useEffect(() => {
-    if (busyTimesData && selectedDateForTimeSlots && busyTimesData.date === selectedDateForTimeSlots) {
-      setBusySlotsForDate(selectedDateForTimeSlots, busyTimesData.busySlots);
-    }
-  }, [busyTimesData, selectedDateForTimeSlots, setBusySlotsForDate]);
+  const jobDates = useMemo(
+    () =>
+      selectedDates
+        .filter((date) => date.timeSlots.some((slot) => slot.isBlockedByJob))
+        .map((date) => date.date),
+    [selectedDates],
+  );
+
+  const openSlots =
+    selectedDates.find((date) => date.date === openDate)?.timeSlots || [];
 
   const handleDatePress = async (date: string) => {
-    const currentSelected = selectedDates[0]?.date ?? null;
-    if (currentSelected === date) {
-      clearAllSelections();
-      setSelectedDateForTimeSlots(null);
+    if (dayjs(date).isBefore(dayjs(), "day")) return;
+    if (openDate === date) {
+      setOpenDate(null);
       return;
     }
-    setPendingDateForSlots(date);
+    setPendingDate(date);
     try {
       const data = await fetchBusyTimes(date).unwrap();
-      selectOnlyDateWithBusySlots(date, data.busySlots);
-      setSelectedDateForTimeSlots(date);
+      openDateWithBusySlots(date, data.busySlots);
+      setOpenDate(date);
     } catch {
       setAlertConfig({
         isVisible: true,
-        title: "Error",
-        message: "Could not load job times for this date. Try again.",
+        title: "Could not load this date",
+        message: "Try again in a moment.",
         type: "error",
         onConfirm: () => {},
       });
     } finally {
-      setPendingDateForSlots(null);
+      setPendingDate(null);
     }
   };
 
-  const handleTimeSlotToggle = (timeSlotId: string) => {
-    if (selectedDateForTimeSlots) {
-      toggleTimeSlot(selectedDateForTimeSlots, timeSlotId);
+  const persist = async (
+    selectedDatesPayload: Array<{ date: string; timeSlots: string[] }>,
+  ) => {
+    try {
+      await createAvailability({ selectedDates: selectedDatesPayload }).unwrap();
+      allowRehydrate();
+      await refetch();
+      setAlertConfig({
+        isVisible: true,
+        title: "Saved",
+        message:
+          "You will not be given new jobs in these hours. Jobs already assigned to you are unchanged.",
+        type: "success",
+        onConfirm: () => {},
+      });
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === "object" &&
+        "data" in err &&
+        typeof (err as { data?: { error?: string } }).data?.error === "string"
+          ? (err as { data: { error: string } }).data.error
+          : "Could not save unavailability.";
+      setAlertConfig({
+        isVisible: true,
+        title: "Error",
+        message,
+        type: "error",
+        onConfirm: () => {},
+      });
     }
   };
 
-  const getSelectedDateTimeSlots = () => {
-    if (!selectedDateForTimeSlots) return [];
-    const selectedDate = selectedDates.find(
-      (d) => d.date === selectedDateForTimeSlots
+  const handleSave = async () => {
+    const rows = getAllSelectedAvailabilities().filter(
+      (row) => row.timeSlots.length > 0 || row.date === openDate,
     );
-    return selectedDate?.timeSlots || [];
+    if (rows.length === 0) {
+      setAlertConfig({
+        isVisible: true,
+        title: "Nothing to save",
+        message: "Tap a date and mark the hours you cannot work.",
+        type: "warning",
+        onConfirm: () => {},
+      });
+      return;
+    }
+    await persist(rows);
   };
 
-  const selectedDatesStrings = selectedDates.map((date) => date.date);
+  const handleRemoveAll = () => {
+    setAlertConfig({
+      isVisible: true,
+      title: "Remove all unavailability?",
+      message:
+        "This lifts every upcoming lockout. Assigned jobs stay in your schedule.",
+      type: "warning",
+      onClose: () => {},
+      onConfirm: async () => {
+        clearAllSelections();
+        setOpenDate(null);
+        await persist([]);
+      },
+    });
+  };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: backgroundColor }]}
+    <Screen
+      padded={false}
+      edges={["top"]}
+      footer={
+        <PrimaryButton
+          label="Save"
+          loading={isSaving}
+          onPress={handleSave}
+        />
+      }
     >
-      <StatusBar
-        barStyle={theme === "dark" ? "light-content" : "dark-content"}
-      />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Ionicons name="calendar-outline" size={24} color={primaryColor} />
-          <StyledText variant="titleMedium" style={{ color: textColor }}>
-            When I'm not available
-          </StyledText>
-        </View>
-        <StyledText variant="bodySmall" style={{ color: textColor, opacity: 0.8 }}>
-          Select dates and times when you won't be available for work
-        </StyledText>
-      </View>
-
       <ScrollView
-        style={styles.scrollView}
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: spacing.xl,
+          gap: spacing.md,
+        }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
       >
-        {/* Calendar Component */}
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityLabel="Back"
+            style={({ pressed }) => [
+              styles.back,
+              {
+                borderColor: colors.borders,
+                backgroundColor: colors.cards,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <CrewText variant="title">Unavailable</CrewText>
+            <CrewText variant="caption" muted>
+              Block hours so you are not given new jobs
+            </CrewText>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.notice,
+            {
+              backgroundColor: colors.primarySoft,
+              borderRadius: radius.md,
+              padding: spacing.md,
+            },
+          ]}
+        >
+          <CrewText variant="body">
+            This locks you out of new work only. Jobs already assigned to you
+            stay put — ask support if one needs to be moved.
+          </CrewText>
+        </View>
+
         <AvailabilityCalendar
           currentMonth={currentMonth}
-          currentYear={currentYear}
           monthDays={getMonthDays()}
-          selectedDates={selectedDatesStrings}
+          openDate={openDate}
+          unavailableDates={unavailableDates}
+          jobDates={jobDates}
           onDatePress={handleDatePress}
           onPreviousMonth={goToPreviousMonth}
           onNextMonth={goToNextMonth}
         />
 
-        {/* Time Slots Selector - Only show when a date is selected; show loading while fetching busy times for a new date */}
-        {pendingDateForSlots && isBusyTimesLoading ? (
-          <View style={[styles.loadingSlotsContainer, { backgroundColor: primaryColor }]}>
-            <ActivityIndicator size="small" color="#fff" />
-            <StyledText variant="bodySmall" style={styles.loadingSlotsText}>
-              Loading job times for this date…
-            </StyledText>
+        {pendingDate && isBusyTimesLoading ? (
+          <View
+            style={[
+              styles.loading,
+              {
+                backgroundColor: colors.cards,
+                borderColor: colors.borders,
+                borderRadius: radius.md,
+              },
+            ]}
+          >
+            <ActivityIndicator color={colors.button} />
+            <CrewText variant="caption" muted>
+              Checking assigned jobs…
+            </CrewText>
           </View>
-        ) : selectedDateForTimeSlots ? (
+        ) : openDate ? (
           <TimeSlotsSelector
-            selectedDate={selectedDateForTimeSlots}
-            timeSlots={getSelectedDateTimeSlots()}
-            onTimeSlotToggle={handleTimeSlotToggle}
+            selectedDate={openDate}
+            timeSlots={openSlots}
+            onTimeSlotToggle={(id) => toggleTimeSlot(openDate, id)}
           />
-        ) : null}
+        ) : (
+          <CrewText variant="body" muted>
+            Tap a date to mark hours you cannot work.
+          </CrewText>
+        )}
 
-        {/* Availability Summary */}
         <AvailabilitySummary
           selectedDates={selectedDates}
-          onClearAll={clearAllSelections}
-          onSave={async () => {
-            const payload = { selectedDates: getAllSelectedAvailabilities() };
-            try {
-              await createAvailability(payload).unwrap();
-              setAlertConfig({
-                isVisible: true,
-                title: "Saved",
-                message: "Your unavailability has been saved.",
-                type: "success",
-                onConfirm: () => {},
-              });
-            } catch (err: unknown) {
-              const message =
-                err && typeof err === "object" && "data" in err &&
-                typeof (err as { data?: unknown }).data === "object" &&
-                (err as { data?: { error?: string } }).data?.error
-                  ? (err as { data: { error: string } }).data.error
-                  : "Failed to save.";
-              setAlertConfig({
-                isVisible: true,
-                title: "Error",
-                message,
-                type: "error",
-                onConfirm: () => {},
-              });
-            }
-          }}
-          isSaving={isSaving}
+          openDate={openDate}
+          onClearOpenDate={() => openDate && clearSlotsForDate(openDate)}
+          onRemoveAll={handleRemoveAll}
         />
-
-        {/* Instructions */}
-        <View
-          style={[
-            styles.instructionsContainer,
-            { backgroundColor: backgroundColor },
-          ]}
-        >
-          <View style={styles.instructionsHeader}>
-            <Ionicons
-              name="information-circle-outline"
-              size={20}
-              color={primaryColor}
-            />
-            <StyledText variant="titleMedium" style={{ color: textColor }}>
-              How to use
-            </StyledText>
-          </View>
-          <View style={styles.instructionsList}>
-            <View style={styles.instructionItem}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={primaryColor}
-              />
-              <StyledText variant="bodySmall" style={{ color: textColor }}>
-                Tap dates when you won't be available for work
-              </StyledText>
-            </View>
-            <View style={styles.instructionItem}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={primaryColor}
-              />
-              <StyledText variant="bodySmall" style={{ color: textColor }}>
-                Select time slots for each date you're off
-              </StyledText>
-            </View>
-            <View style={styles.instructionItem}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={primaryColor}
-              />
-              <StyledText variant="bodySmall" style={{ color: textColor }}>
-                Use quick selection (Morning/Afternoon/Evening) for faster setup
-              </StyledText>
-            </View>
-            <View style={styles.instructionItem}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={primaryColor}
-              />
-              <StyledText variant="bodySmall" style={{ color: textColor }}>
-                Slots marked "Booked" are existing jobs and cannot be changed
-              </StyledText>
-            </View>
-          </View>
-        </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
-};
-
-export default AvailabilityScreen;
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
-    paddingHorizontal: 5,
-    paddingVertical: 5,
-    paddingTop: 5,
-  },
-  headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    gap: 10,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  instructionsContainer: {
-    borderRadius: 12,
-    padding: 16,
-    paddingBottom: 50,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  instructionsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 10,
-  },
-  instructionsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  instructionsList: {
     gap: 12,
   },
-  instructionItem: {
-    flexDirection: "row",
+  back: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
   },
-  loadingSlotsContainer: {
+  notice: {},
+  loading: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
     paddingVertical: 24,
-    paddingHorizontal: 16,
-    marginHorizontal: 5,
-    marginVertical: 5,
-    borderRadius: 8,
-    opacity: 0.9,
-  },
-  loadingSlotsText: {
-    color: "#fff",
-  },
-  instructionText: {
-    fontSize: 14,
-    marginLeft: 12,
-    flex: 1,
+    borderWidth: 1,
   },
 });

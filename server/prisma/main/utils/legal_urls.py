@@ -1,37 +1,22 @@
-"""Legal document URLs for email footers and public web pages (detailer / crew deployment)."""
+"""Legal document URLs for email footers and public web pages (crew API)."""
 from django.conf import settings
 
 
-def frontend_base_url() -> str:
-    """
-    Base URL for the detailer web app (no trailing slash).
-
-    Returns:
-        str: ``FRONTEND_BASE_URL`` from settings, or ``""`` when unset.
-    """
-    return (getattr(settings, "FRONTEND_BASE_URL", None) or "").rstrip("/")
+def api_base_url() -> str:
+    """Public Django API origin (no trailing slash). Uses ``BASE_URL``."""
+    return (getattr(settings, "BASE_URL", None) or "").strip().rstrip("/") or (
+        "https://crew.prismavalet.com"
+    )
 
 
 def privacy_policy_url() -> str:
-    """
-    Absolute or site-relative URL to the privacy policy page.
-
-    Returns:
-        str: ``{base}/legal/privacy/`` when base is set, else ``/legal/privacy/``.
-    """
-    base = frontend_base_url()
-    return f"{base}/legal/privacy/" if base else "/legal/privacy/"
+    """Django-rendered privacy policy."""
+    return f"{api_base_url()}/legal/privacy/"
 
 
 def terms_of_service_url() -> str:
-    """
-    Absolute or site-relative URL to the terms of service page.
-
-    Returns:
-        str: ``{base}/legal/terms/`` when base is set, else ``/legal/terms/``.
-    """
-    base = frontend_base_url()
-    return f"{base}/legal/terms/" if base else "/legal/terms/"
+    """Django-rendered terms of service."""
+    return f"{api_base_url()}/legal/terms/"
 
 
 def email_legal_context(**extra) -> dict:
@@ -40,12 +25,6 @@ def email_legal_context(**extra) -> dict:
 
     Merges privacy/terms URLs and ``current_year`` with any caller-supplied keys.
     ``year`` in ``extra`` overrides the default calendar year for the footer.
-
-    Args:
-        **extra: Additional context keys merged after the legal defaults.
-
-    Returns:
-        dict: Context suitable for ``render_to_string`` / Celery email tasks.
     """
     from datetime import datetime
 

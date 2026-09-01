@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "749335504519",
+    "project_id": "prisma-6fc48",
+    "storage_bucket": "prisma-6fc48.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749335504519:android:42cada93fb3c7568343a22",
+        "android_client_info": {
+          "package_name": "com.prismavalet.crew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE8riyNG6eeDIfZblYooUWn36COZU8SVg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

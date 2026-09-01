@@ -20,17 +20,18 @@ from main.tasks import (
 from main.models import Job, Notification, Review
 from main.utils.redis_streams import (
     STREAM_JOB_EVENTS,
+    RedisStreamConsumer,
     ensure_consumer_group,
-    read_group_blocking,
-    read_pending,
-    ack,
     get_redis,
 )
 from main.utils.reschedule_helper import get_detailer_for_reschedule
+from main.utils.observability import log_timed, stream_lag_ms
 
 DETAILER_GROUP = "detailer_group"
 CONSUMER_NAME = "appointment_subscriber"
 MAX_REVIEW_COMMENT_LEN = 1000
+MAX_PROCESS_FAILURES = 5
+PENDING_ALERT_THRESHOLD = 50
 
 
 class Command(BaseCommand):
@@ -85,22 +86,47 @@ class Command(BaseCommand):
             None
         """
         self.connect_with_retry()
-        # Redis: ensure detailer consumer group exists on shared job_events stream
         ensure_consumer_group(STREAM_JOB_EVENTS, DETAILER_GROUP)
         self.stdout.write(self.style.SUCCESS("Subscribed to job_events stream (detailer_group)"))
 
-        # Redis: drain pending (unacked) messages from a previous crash or deploy
-        for msg_id, fields in read_pending(STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME):
-            self._process_message(msg_id, fields)
-
+        stream = RedisStreamConsumer(block_ms=5000)
+        idle_loops = 0
         try:
+            for msg_id, fields in stream.read_pending(STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME):
+                self._finish_message(stream, msg_id, fields)
             while True:
-                # Redis: blocking read for new client-published job events
-                entries = read_group_blocking(STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME, block_ms=5000)
+                entries = stream.read_group_blocking(
+                    STREAM_JOB_EVENTS, DETAILER_GROUP, CONSUMER_NAME
+                )
+                if not entries:
+                    idle_loops += 1
+                    if idle_loops % 12 == 0:
+                        pending = stream.pending_count(STREAM_JOB_EVENTS, DETAILER_GROUP)
+                        if pending >= PENDING_ALERT_THRESHOLD:
+                            self.stdout.write(
+                                self.style.ERROR(
+                                    f"ALERT: {pending} pending job_events in detailer_group "
+                                    "(subscriber may be stuck)"
+                                )
+                            )
+                    continue
+                idle_loops = 0
                 for msg_id, fields in entries:
-                    self._process_message(msg_id, fields)
+                    self._finish_message(stream, msg_id, fields)
         except KeyboardInterrupt:
             self.stdout.write(self.style.SUCCESS("appointment_subscriber stopped"))
+        finally:
+            stream.close()
+
+    def _finish_message(self, stream, msg_id, fields):
+        """Process one entry; ACK only after success or a dead-letter drop."""
+        for attempt in range(1, MAX_PROCESS_FAILURES + 1):
+            if self._process_message(msg_id, fields):
+                stream.ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
+                return
+            self.stdout.write(self.style.WARNING(f"Retry {attempt}/{MAX_PROCESS_FAILURES} for {msg_id}"))
+        self.stdout.write(self.style.ERROR(f"Dead-letter ACK for {msg_id} after {MAX_PROCESS_FAILURES} failures"))
+        stream.ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
 
     def _process_message(self, msg_id, fields):
         """
@@ -111,14 +137,42 @@ class Command(BaseCommand):
             fields: Dict with ``event`` and JSON ``payload`` from the client service.
 
         Returns:
-            None
+            bool: True when the message is done (ACK).
         """
+        started = time.monotonic()
         event = fields.get("event")
         raw = fields.get("payload", "{}")
+        request_id = fields.get("request_id")
+        booking_reference = fields.get("booking_reference") or ""
+        ok = False
+        try:
+            result = self._dispatch_job_event(msg_id, fields, event, raw)
+            ok = bool(result)
+            return result
+        finally:
+            if not request_id or not booking_reference:
+                try:
+                    payload = json.loads(raw) if raw else {}
+                    if isinstance(payload, dict):
+                        request_id = request_id or payload.get("request_id")
+                        booking_reference = booking_reference or payload.get("booking_reference") or ""
+                except Exception:
+                    pass
+            log_timed(
+                "appointment_subscriber.process",
+                started,
+                event=event,
+                booking_reference=booking_reference,
+                request_id=request_id,
+                consumer_lag_ms=stream_lag_ms(msg_id),
+                ok=ok,
+            )
+
+    def _dispatch_job_event(self, msg_id, fields, event, raw):
+        """Apply one detailer-facing job_events payload. Returns True to ACK."""
         # Redis: only handle detailer-facing events; ack and drop the rest
         if event not in ("booking_cancelled", "booking_rescheduled", "review_received"):
-            ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
-            return
+            return True
         try:
             data = json.loads(raw)
             if isinstance(data, dict):
@@ -165,8 +219,7 @@ class Command(BaseCommand):
                     detailers_to_notify = [primary]
                 if not detailers_to_notify:
                     self.stdout.write(self.style.WARNING(f"Job {booking_reference} has no detailers to notify, skipping"))
-                    ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
-                    return
+                    return True
                 for detailer in detailers_to_notify:
                     if not detailer or not getattr(detailer, "user", None):
                         continue
@@ -200,8 +253,7 @@ class Command(BaseCommand):
                     self.stdout.write(
                         self.style.WARNING(f"Reschedule {booking_reference}: {err or 'no detailer'}; job unchanged")
                     )
-                    ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
-                    return
+                    return True
                 old_primary = primary
                 # Job status/assignment: reschedule → accepted with new primary and slot
                 job.primary_detailer = detailer
@@ -248,8 +300,7 @@ class Command(BaseCommand):
             elif event == "review_received":
                 if not primary:
                     self.stdout.write(self.style.WARNING(f"Job {booking_reference} has no primary_detailer, skipping"))
-                    ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
-                    return
+                    return True
                 Review.objects.update_or_create(
                     job=job,
                     defaults={
@@ -281,17 +332,15 @@ class Command(BaseCommand):
                 primary.check_for_deactivation()
                 self.stdout.write(self.style.SUCCESS(f"Detailer {primary.id} updated; notification sent."))
 
-            # Redis: successful handling — remove message from pending list
-            ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
+            return True
         except Job.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Job not found: {booking_reference} (review will not appear on detailer)"))
-            ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
+            return True
         except Exception as e:
             import traceback
             self.stdout.write(self.style.ERROR(f"Error processing message: {str(e)}"))
             self.stdout.write(traceback.format_exc())
-            # Redis: ack on error to avoid poison-message retry loops (logged for support)
-            ack(STREAM_JOB_EVENTS, DETAILER_GROUP, msg_id)
+            return False
 
     def create_notification(self, user, title, type, status, message):
         """

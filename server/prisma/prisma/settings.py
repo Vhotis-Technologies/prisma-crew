@@ -1,12 +1,10 @@
 from pathlib import Path
 from datetime import timedelta
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 import os
 import dj_database_url
 from celery.schedules import crontab
 from google.oauth2 import service_account
-
-
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,28 +15,79 @@ IS_STAGING = PRISMA_ENV == 'staging'
 _DEFAULT_REDIS_HOST = 'client_staging_redis' if IS_STAGING else 'prisma_redis'
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-
-BASE_URL = os.getenv('BASE_URL')
-
-_DEFAULT_DETAILER_ORIGIN = (
-    'https://staging.detailer.prismavalet.com' if IS_STAGING else 'https://detailer.prismavalet.com'
-)
-# Production: detailer.prismavalet.com on droplet. Override via env for local/dev.
-_DETAILER_ORIGIN = os.getenv('DETAILER_ORIGIN', _DEFAULT_DETAILER_ORIGIN)
-# Base URL for email footers and public legal pages (/legal/privacy/, /legal/terms/).
-FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', _DETAILER_ORIGIN).rstrip('/')   
-ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [_DETAILER_ORIGIN]
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', _DETAILER_ORIGIN).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [_DETAILER_ORIGIN]
-CORS_ALLOW_CREDENTIALS = True
 DEBUG = os.getenv('DEBUG') == 'True'
-# Allow production host and ngrok tunnels (Django accepts leading dot for subdomains)
-_default_hosts = ['detailer.prismavalet.com', '450e-2a02-8084-c81-a480-c018-9c4e-4107-9d95.ngrok-free.app']
+
+_DEFAULT_API = (
+    'https://bat-useful-penguin.ngrok-free.app/detailer'
+    if IS_STAGING
+    else 'https://crew.prismavalet.com'
+)
+BASE_URL = (
+    os.getenv('BASE_URL') or os.getenv('DETAILER_ORIGIN') or _DEFAULT_API
+).strip().rstrip('/')
+
+
+def _origin_only(value: str) -> str:
+    parsed = urlparse(value.strip())
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return value.strip().rstrip("/")
+
+
+def _split_origins(raw: str | None, fallback: list[str]) -> list[str]:
+    sources = raw.split(",") if raw and raw.strip() else fallback
+    seen: set[str] = set()
+    out: list[str] = []
+    for origin in sources:
+        value = _origin_only(origin) if isinstance(origin, str) else ""
+        if value and value not in seen:
+            seen.add(value)
+            out.append(value)
+    return out
+
+
+_STAGING_NGROK_CSRF_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+    'https://*.ngrok.app',
+]
+_STAGING_NGROK_CORS_REGEXES = [
+    r'^https://[\w-]+\.ngrok-free\.app$',
+    r'^https://[\w-]+\.ngrok\.io$',
+    r'^https://[\w-]+\.ngrok\.app$',
+]
+
+
+def _append_unique(dest: list[str], values: list[str]) -> None:
+    for value in values:
+        if value and value not in dest:
+            dest.append(value)
+
+
+_api_origin = _origin_only(BASE_URL)
+CORS_ALLOWED_ORIGINS = _split_origins(
+    os.getenv('CORS_ALLOWED_ORIGINS') or os.getenv('ALLOWED_ORIGINS'),
+    [_api_origin],
+)
+CSRF_TRUSTED_ORIGINS = _split_origins(
+    os.getenv('CSRF_TRUSTED_ORIGINS'),
+    CORS_ALLOWED_ORIGINS,
+)
+_append_unique(CSRF_TRUSTED_ORIGINS, [_api_origin])
+if IS_STAGING:
+    _append_unique(CSRF_TRUSTED_ORIGINS, _STAGING_NGROK_CSRF_ORIGINS)
+    CORS_ALLOWED_ORIGIN_REGEXES = list(_STAGING_NGROK_CORS_REGEXES)
+CORS_ALLOW_CREDENTIALS = True
+
 _allowed_hosts_env = os.getenv('ALLOWED_HOSTS')
 if _allowed_hosts_env:
     ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
 else:
     ALLOWED_HOSTS = ['*']
+if IS_STAGING and '*' not in ALLOWED_HOSTS:
+    for suffix in ('.ngrok-free.app', '.ngrok.io', '.ngrok.app'):
+        if suffix not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(suffix)
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -105,10 +154,15 @@ def _resolve_database_url():
     port = os.getenv('POSTGRES_PORT', '5432')
     db = os.getenv('POSTGRES_DB')
     if user and password and host and db:
-        return (
+        url = (
             f'postgresql://{quote_plus(user)}:{quote_plus(password)}'
             f'@{host}:{port}/{db}'
         )
+        sslmode = os.getenv('POSTGRES_SSLMODE', '').strip()
+        if sslmode:
+            sep = '&' if '?' in url else '?'
+            url = f'{url}{sep}sslmode={quote_plus(sslmode)}'
+        return url
     return ''
 
 
@@ -245,7 +299,12 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [
-                f'redis://{_redis_host}:{_redis_port}/{_redis_db_channels}',
+                {
+                    "address": f"redis://{_redis_host}:{_redis_port}/{_redis_db_channels}",
+                    "socket_timeout": None,
+                    "socket_connect_timeout": 10,
+                    "retry_on_timeout": True,
+                },
             ],
         },
     },
@@ -345,6 +404,9 @@ LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
 
 SUPPORT_INTERNAL_API_KEY = (os.getenv('SUPPORT_INTERNAL_API_KEY') or '').strip()
+SUPPORT_API_URL = (os.getenv('SUPPORT_API_URL') or '').strip()
+# Shared secret from the client server (header X-Client-Internal-Key).
+CLIENT_SERVER_SECRET = (os.getenv('CLIENT_SERVER_SECRET') or '').strip()
 FIELD_ENCRYPTION_KEY = (os.getenv('FIELD_ENCRYPTION_KEY') or '').strip()
 
 LOGGING = {

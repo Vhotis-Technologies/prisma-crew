@@ -17,7 +17,7 @@ const OnboardingLayout = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor }}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={backgroundColor === "#121212" ? "light-content" : "dark-content"} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

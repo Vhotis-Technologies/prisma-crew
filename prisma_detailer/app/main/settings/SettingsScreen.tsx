@@ -1,47 +1,30 @@
 /**
- * Settings Screen – unified design (mimics client, no subscriptions)
- *
- * - Profile summary at top (avatar, name, email, Edit profile)
- * - PREFERENCES: notifications, language, theme, location
- * - ACCOUNT: Help & support (no subscription)
- * - Logout at bottom
+ * Settings — push/email, theme, location, support. No training or earnings.
  */
-
-import React, { useState, useEffect } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Pressable,
-} from "react-native";
-import { useThemeColor } from "@/hooks/useThemeColor";
-import { useThemeContext } from "@/app/contexts/ThemeProvider";
+import { useEffect, useState } from "react";
+import { View, Pressable, ScrollView, Switch, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import SettingItem from "@/app/components/ui/settings/SettingItem";
-import SettingLink from "@/app/components/ui/settings/SettingLink";
-import StyledText from "@/app/components/helpers/StyledText";
+import { Snackbar } from "react-native-paper";
+import { Screen, CrewText, PrimaryButton } from "@/app/components/ui/system";
+import { useThemeTokens } from "@/hooks/useThemeTokens";
+import { useThemeContext } from "@/app/contexts/ThemeProvider";
+import { useAuthContext } from "@/app/contexts/AuthContextProvider";
 import useProfile from "@/app/app-hooks/useProfile";
 import { usePermissions } from "@/app/app-hooks/usePermissions";
-import { useAuthContext } from "@/app/contexts/AuthContextProvider";
-import { Snackbar } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import StyledButton from "@/app/components/helpers/StyledButton";
+import { CrewRoutes } from "../crewRoutes";
 
-const SettingsScreen = () => {
+export default function SettingsScreen() {
+  const { colors, spacing, radius, tap } = useThemeTokens();
   const { theme, setTheme } = useThemeContext();
   const { handleLogout } = useAuthContext();
   const {
     userProfile,
     updatePushNotificationSetting,
     updateEmailNotificationSetting,
-    updateMarketingEmailSetting,
     isLoadingUpdatePushNotificationToken,
     isLoadingUpdateEmailNotificationToken,
-    isLoadingUpdateMarketingEmailToken,
   } = useProfile();
-
   const {
     toggleNotificationPermission,
     toggleLocationPermission,
@@ -49,16 +32,13 @@ const SettingsScreen = () => {
   } = usePermissions();
 
   const [emailNotifications, setEmailNotifications] = useState(
-    userProfile.allow_email_notifications ?? false
+    userProfile.allow_email_notifications ?? false,
   );
   const [pushNotifications, setPushNotifications] = useState(
-    !!(userProfile.allow_push_notifications && permissionStatus.notifications.granted)
-  );
-  const [marketingNotifications, setMarketingNotifications] = useState(
-    userProfile.allow_marketing_emails ?? false
+    !!(userProfile.allow_push_notifications && permissionStatus.notifications.granted),
   );
   const [locationServices, setLocationServices] = useState(
-    permissionStatus.location.granted
+    permissionStatus.location.granted,
   );
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -70,9 +50,8 @@ const SettingsScreen = () => {
         !!(
           userProfile.allow_push_notifications &&
           permissionStatus.notifications.granted
-        )
+        ),
       );
-      setMarketingNotifications(userProfile.allow_marketing_emails ?? false);
     }
   }, [userProfile, permissionStatus.notifications.granted]);
 
@@ -80,304 +59,190 @@ const SettingsScreen = () => {
     setLocationServices(permissionStatus.location.granted);
   }, [permissionStatus.location.granted]);
 
-  const handleNotificationToggle = async (type: string, value: boolean) => {
-    switch (type) {
-      case "email":
-        setEmailNotifications(value);
-        break;
-      case "push":
-        setPushNotifications(value);
-        break;
-      case "marketing":
-        setMarketingNotifications(value);
-        break;
-    }
-
-    let success = false;
-    switch (type) {
-      case "email":
-        success = await updateEmailNotificationSetting(value);
-        break;
-      case "push":
-        if (value) {
-          const permissionGranted = await toggleNotificationPermission(true);
-          if (permissionGranted) {
-            success = await updatePushNotificationSetting(true);
-            setSnackbarMessage("Push notifications enabled.");
-          } else {
-            success = false;
-            setSnackbarMessage(
-              permissionStatus.notifications.canAskAgain
-                ? "Permission denied. Try again or enable in device settings."
-                : "Enable notifications in device settings."
-            );
-          }
-        } else {
-          success = await updatePushNotificationSetting(false);
-          setSnackbarMessage("Push notifications disabled.");
-        }
-        break;
-      case "marketing":
-        success = await updateMarketingEmailSetting(value);
-        break;
-    }
-
-    if (!success) {
-      switch (type) {
-        case "email":
-          setEmailNotifications(!value);
-          setSnackbarMessage("Failed to update email notifications.");
-          break;
-        case "push":
-          setPushNotifications(!value);
-          setSnackbarMessage("Failed to update push notifications.");
-          break;
-        case "marketing":
-          setMarketingNotifications(!value);
-          setSnackbarMessage("Failed to update marketing preference.");
-          break;
-      }
-    } else {
-      if (type === "email") {
-        setSnackbarMessage(
-          value ? "Email notifications on." : "Email notifications off."
-        );
-      } else if (type === "marketing") {
-        setSnackbarMessage(
-          value ? "Marketing emails on." : "Marketing emails off."
-        );
-      }
-    }
+  const toast = (message: string) => {
+    setSnackbarMessage(message);
     setSnackbarVisible(true);
   };
 
-  const handleThemeToggle = (type: string, value: boolean) => {
-    if (value) setTheme(type as "light" | "dark" | "system");
+  const toggleEmail = async (value: boolean) => {
+    setEmailNotifications(value);
+    const ok = await updateEmailNotificationSetting(value);
+    if (!ok) {
+      setEmailNotifications(!value);
+      toast("Could not update email notifications.");
+      return;
+    }
+    toast(value ? "Email notifications on." : "Email notifications off.");
   };
 
-  const handleGeneralToggle = async (type: string, value: boolean) => {
-    if (type === "location") {
-      if (value) {
-        const success = await toggleLocationPermission(true);
-        setSnackbarMessage(
-          success ? "Location enabled." : "Failed to enable location."
+  const togglePush = async (value: boolean) => {
+    setPushNotifications(value);
+    if (value) {
+      const granted = await toggleNotificationPermission(true);
+      if (!granted) {
+        setPushNotifications(false);
+        toast(
+          permissionStatus.notifications.canAskAgain
+            ? "Permission denied. Try again or enable in device settings."
+            : "Enable notifications in device settings.",
         );
-      } else {
-        await toggleLocationPermission(false);
-        setSnackbarMessage("Disable location in device settings.");
+        return;
       }
-      setSnackbarVisible(true);
+      const ok = await updatePushNotificationSetting(true);
+      if (!ok) {
+        setPushNotifications(false);
+        toast("Could not update push notifications.");
+        return;
+      }
+      toast("Push notifications enabled.");
+      return;
+    }
+    const ok = await updatePushNotificationSetting(false);
+    if (!ok) {
+      setPushNotifications(true);
+      toast("Could not update push notifications.");
+      return;
+    }
+    toast("Push notifications disabled.");
+  };
+
+  const toggleLocation = async (value: boolean) => {
+    if (value) {
+      const ok = await toggleLocationPermission(true);
+      toast(ok ? "Location enabled." : "Could not enable location.");
+    } else {
+      await toggleLocationPermission(false);
+      toast("Disable location in device settings.");
     }
   };
 
-  const displayName = [userProfile.first_name, userProfile.last_name]
-    .filter(Boolean)
-    .join(" ")
-    .trim() || "—";
-
-  const backgroundColor = useThemeColor({}, "background");
-  const cardColor = useThemeColor({}, "cards");
-  const textColor = useThemeColor({}, "text");
-  const borderColor = useThemeColor({}, "borders");
-  const primaryColor = useThemeColor({}, "primary");
-  const tintColor = useThemeColor({}, "tint");
-  const sectionLabelColor = useThemeColor({}, "text");
-  const insets = useSafeAreaInsets();
+  const name =
+    [userProfile.first_name, userProfile.last_name].filter(Boolean).join(" ") ||
+    "Crew member";
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <Screen padded={false} edges={["top"]}>
       <ScrollView
-        style={styles.scrollView}
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: spacing.xxl,
+          gap: spacing.md,
+        }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 50 },
-        ]}
       >
-        {/* Profile summary */}
-        <Pressable
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityLabel="Back"
+            style={[
+              styles.back,
+              { borderColor: colors.borders, backgroundColor: colors.cards },
+            ]}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+          <CrewText variant="title">Settings</CrewText>
+        </View>
+
+        <View
           style={[
-            styles.profileBlock,
-            { backgroundColor: cardColor, borderColor },
+            styles.card,
+            {
+              backgroundColor: colors.cards,
+              borderColor: colors.borders,
+              borderRadius: radius.md,
+              padding: spacing.md,
+            },
           ]}
-          onPress={() => router.push("/main/profile/ProfileScreen")}
         >
-          <View style={[styles.avatar, { backgroundColor: tintColor }]}>
-            <StyledText
-              variant="titleMedium"
-              style={{ color: backgroundColor }}
-            >
-              {userProfile.first_name?.charAt(0)?.toUpperCase() ?? "?"}
-            </StyledText>
+          <CrewText variant="subtitle">{name}</CrewText>
+          <CrewText variant="caption" muted>
+            {userProfile.email}
+          </CrewText>
+        </View>
+
+        <CrewText variant="label" muted>
+          Notifications
+        </CrewText>
+        <ToggleRow
+          title="Email"
+          hint="Job updates by email"
+          value={emailNotifications}
+          onValueChange={toggleEmail}
+          disabled={isLoadingUpdateEmailNotificationToken}
+        />
+        <ToggleRow
+          title="Push"
+          hint="Alerts on this device"
+          value={pushNotifications}
+          onValueChange={togglePush}
+          disabled={isLoadingUpdatePushNotificationToken}
+        />
+
+        <CrewText variant="label" muted>
+          Theme
+        </CrewText>
+        <View style={{ flexDirection: "row", gap: spacing.xs }}>
+          {(["light", "dark", "system"] as const).map((option) => {
+            const on = theme === option;
+            return (
+              <Pressable
+                key={option}
+                onPress={() => setTheme(option)}
+                style={{
+                  flex: 1,
+                  minHeight: tap.min,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: radius.md,
+                  borderWidth: 1,
+                  borderColor: on ? colors.primary : colors.borders,
+                  backgroundColor: on ? colors.primary : colors.cards,
+                }}
+              >
+                <CrewText
+                  variant="label"
+                  color={on ? colors.buttonText : colors.text}
+                >
+                  {option[0].toUpperCase() + option.slice(1)}
+                </CrewText>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <ToggleRow
+          title="Location"
+          hint="Used to match nearby jobs"
+          value={locationServices}
+          onValueChange={toggleLocation}
+        />
+
+        <Pressable
+          onPress={() => router.push(CrewRoutes.supportChat)}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.cards,
+              borderColor: colors.borders,
+              borderRadius: radius.md,
+              padding: spacing.md,
+              flexDirection: "row",
+              alignItems: "center",
+            },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <CrewText variant="subtitle">Help & support</CrewText>
+            <CrewText variant="caption" muted>
+              Message the team
+            </CrewText>
           </View>
-          <View style={styles.profileInfo}>
-            <StyledText
-              variant="titleMedium"
-              style={{ color: textColor }}
-              numberOfLines={1}
-            >
-              {displayName}
-            </StyledText>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.email, { color: textColor }]}
-              numberOfLines={1}
-            >
-              {userProfile.email ?? "—"}
-            </StyledText>
-          </View>
-          <View style={styles.editRow}>
-            <StyledText variant="labelMedium" style={{ color: primaryColor }}>
-              Edit
-            </StyledText>
-            <Ionicons name="chevron-forward" size={18} color={primaryColor} />
-          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </Pressable>
 
-        {/* PREFERENCES */}
-        <StyledText
-          variant="labelSmall"
-          style={[styles.sectionHeader, { color: sectionLabelColor }]}
-        >
-          PREFERENCES
-        </StyledText>
-        <View
-          style={[
-            styles.sectionCard,
-            { backgroundColor: cardColor, borderColor },
-          ]}
-        >
-          <SettingItem
-            title="Email notifications"
-            description="Updates and alerts via email"
-            value={emailNotifications}
-            onValueChange={(v) => handleNotificationToggle("email", v)}
-            disabled={isLoadingUpdateEmailNotificationToken}
-          />
-          <SettingItem
-            title="Push notifications"
-            description="Instant alerts on your device"
-            value={pushNotifications}
-            onValueChange={(v) => handleNotificationToggle("push", v)}
-            disabled={isLoadingUpdatePushNotificationToken}
-          />
-          <SettingItem
-            title="Marketing communications"
-            description="Promotions and offers"
-            value={marketingNotifications}
-            onValueChange={(v) => handleNotificationToggle("marketing", v)}
-            disabled={isLoadingUpdateMarketingEmailToken}
-          />
-          <SettingLink
-            title="Language"
-            description="English"
-            onPress={() => {}}
-          />
-          <View style={[styles.themeRow, { borderBottomColor: borderColor }]}>
-            <View style={styles.themeLabels}>
-              <StyledText variant="labelLarge" style={{ color: textColor }}>
-                Theme
-              </StyledText>
-              <StyledText
-                variant="bodySmall"
-                style={{ color: textColor, opacity: 0.8 }}
-              >
-                {theme === "dark"
-                  ? "Dark"
-                  : theme === "light"
-                    ? "Light"
-                    : "System"}
-              </StyledText>
-            </View>
-            <View style={styles.themeSegments}>
-              <TouchableOpacity
-                style={[
-                  styles.segment,
-                  theme === "dark" && { backgroundColor: primaryColor },
-                  { borderColor },
-                ]}
-                onPress={() => handleThemeToggle("dark", true)}
-              >
-                <StyledText
-                  variant="labelSmall"
-                  style={{ color: theme === "dark" ? "#fff" : textColor }}
-                >
-                  Dark
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.segment,
-                  theme === "light" && { backgroundColor: primaryColor },
-                  { borderColor },
-                ]}
-                onPress={() => handleThemeToggle("light", true)}
-              >
-                <StyledText
-                  variant="labelSmall"
-                  style={{ color: theme === "light" ? "#fff" : textColor }}
-                >
-                  Light
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.segment,
-                  theme === "system" && { backgroundColor: primaryColor },
-                  { borderColor },
-                ]}
-                onPress={() => handleThemeToggle("system", true)}
-              >
-                <StyledText
-                  variant="labelSmall"
-                  style={{ color: theme === "system" ? "#fff" : textColor }}
-                >
-                  System
-                </StyledText>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <SettingItem
-            title="Location services"
-            description="Use your location for the app"
-            value={locationServices}
-            onValueChange={(v) => handleGeneralToggle("location", v)}
-          />
-        </View>
-
-        {/* ACCOUNT – no subscription */}
-        <StyledText
-          variant="labelSmall"
-          style={[styles.sectionHeader, { color: sectionLabelColor }]}
-        >
-          TRAINING & SUPPORT
-        </StyledText>
-        <View
-          style={[
-            styles.sectionCard,
-            { backgroundColor: cardColor, borderColor },
-          ]}
-        >
-          <SettingLink
-            title="Training Center"
-            description="Training and support resources"
-            onPress={() => router.push("/main/settings/TrainingScreen")}
-          />
-          <SettingLink
-            title="Help & Support"
-            description="Get help and support"
-            onPress={() => router.push("/main/settings/TrainingScreen")}
-          />
-        </View>
-
-        {/* Logout */}
-        <StyledButton
-          children="Log out"
-          onPress={handleLogout}
-          variant="tonal"
-        />
+        <PrimaryButton label="Sign out" variant="ghost" onPress={handleLogout} />
       </ScrollView>
-
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -385,83 +250,71 @@ const SettingsScreen = () => {
       >
         {snackbarMessage}
       </Snackbar>
+    </Screen>
+  );
+}
+
+function ToggleRow({
+  title,
+  hint,
+  value,
+  onValueChange,
+  disabled,
+}: {
+  title: string;
+  hint: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+}) {
+  const { colors, radius, spacing } = useThemeTokens();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.cards,
+          borderColor: colors.borders,
+          borderRadius: radius.md,
+          padding: spacing.md,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+        },
+      ]}
+    >
+      <View style={{ flex: 1 }}>
+        <CrewText variant="subtitle">{title}</CrewText>
+        <CrewText variant="caption" muted>
+          {hint}
+        </CrewText>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        trackColor={{ false: colors.borders, true: colors.primary }}
+        thumbColor={colors.buttonText}
+      />
     </View>
   );
-};
-
-export default SettingsScreen;
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-  },
-  profileBlock: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 8,
+    gap: 12,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  back: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
   },
-  profileInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  email: {
-    opacity: 0.8,
-    marginTop: 2,
-  },
-  editRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  sectionHeader: {
-    marginBottom: 8,
-    marginLeft: 4,
-    letterSpacing: 0.5,
-    opacity: 0.8,
-  },
-  sectionCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 24,
-    overflow: "hidden",
-  },
-  themeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  themeLabels: {
-    flex: 1,
-    marginRight: 16,
-  },
-  themeSegments: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  segment: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+  card: {
     borderWidth: 1,
   },
 });

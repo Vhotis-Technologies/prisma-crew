@@ -8,7 +8,8 @@ Detailer availability and client-facing slot APIs.
 
 **Authenticated GET/POST:** load/save unavailability, busy hours for a date.
 
-**Slot generation:** business hours 07:00–19:00, 30 min travel between slots; first bookable 07:30.
+**Slot generation:** business hours 07:00–19:00, 30 min travel between slots; first bookable 08:30.
+Same-day requests never offer slots earlier than "now + travel interval"; past dates return no slots.
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -184,11 +185,37 @@ class AvailabilityView(APIView):
                     "slots": []
                 }, status=status.HTTP_200_OK)
 
-            # Slot generation: business hours 7–19; first slot 7:30 (30 min drive to first appointment)
+            # Slot generation: business hours 7–19; first slot 8:30 (30 min drive to first appointment)
             business_start = time(7, 0)
-            first_slot_start = time(7, 30)  # 30 min drive considered for first booking
+            first_slot_start = time(8, 30)  # 30 min drive considered for first booking
             business_end = time(19, 0)
             travel_interval = 30
+
+            # Same-day requests: don't offer slots that have already passed (or that a detailer
+            # couldn't reach in time). Clamp the first slot up to "now + travel_interval" so a
+            # request made after hours (or late in the day) naturally yields no/fewer slots
+            # instead of replaying the full static business-hours list regardless of the clock.
+            today_local = timezone.localtime(timezone.now()).date()
+            if target_date == today_local:
+                now_local = timezone.localtime(timezone.now())
+                now_minutes = now_local.hour * 60 + now_local.minute
+                earliest_minutes = now_minutes + travel_interval
+                first_slot_minutes = max(
+                    first_slot_start.hour * 60 + first_slot_start.minute,
+                    earliest_minutes,
+                )
+                business_end_minutes = business_end.hour * 60 + business_end.minute
+                if first_slot_minutes >= business_end_minutes:
+                    return Response({
+                        "error": "No more slots available today. Business hours have ended for today.",
+                        "slots": [],
+                    }, status=status.HTTP_200_OK)
+                first_slot_start = time(first_slot_minutes // 60, first_slot_minutes % 60)
+            elif target_date < today_local:
+                return Response({
+                    "error": "Cannot book a date in the past.",
+                    "slots": [],
+                }, status=status.HTTP_200_OK)
 
             # Generate candidate slots for the day (service duration + travel_interval between starts)
             all_slots = self._generate_time_slots(
@@ -682,7 +709,7 @@ class AvailabilityView(APIView):
                 if d not in date_to_job_hours:
                     date_to_job_hours[d] = set()
                 start_min = job.appointment_time.hour * 60 + job.appointment_time.minute
-                end_min = start_min + (job.service_type.duration or 0)
+                end_min = start_min + job.slot_duration_minutes()
                 date_to_job_hours[d] |= _range_to_hour_slots(start_min, end_min)
 
             all_dates = sorted(
@@ -727,7 +754,7 @@ class AvailabilityView(APIView):
         GET: Return hour slots (HH:MM) for a single date when the detailer has a job.
         Query param: date=YYYY-MM-DD.
         Response: { "date": "YYYY-MM-DD", "busySlots": ["09:00", "10:00", ...] }
-        Used when the detailer selects a date so the app can block those slots (read-only).
+        Assigned-job hours only (read-only in the crew app). Saved unavailability is not included.
         """
         try:
             try:
@@ -764,17 +791,9 @@ class AvailabilityView(APIView):
             busy = set()
             for job in jobs:
                 start_min = job.appointment_time.hour * 60 + job.appointment_time.minute
-                end_min = start_min + (job.service_type.duration or 0)
+                end_min = start_min + job.slot_duration_minutes()
                 busy |= _range_to_hour_slots(start_min, end_min)
-            # Include existing unavailability so those times are not returned as available to mark
-            availability_rows = Availability.objects.filter(
-                detailer=detailer,
-                date=target_date,
-            )
-            for row in availability_rows:
-                start_min = row.start_time.hour * 60 + row.start_time.minute
-                end_min = row.end_time.hour * 60 + row.end_time.minute
-                busy |= _range_to_hour_slots(start_min, end_min)
+            # Jobs only. Saved unavailability stays editable so crew can lift a lockout.
             busy_slots = sorted(busy)
             return Response(
                 {"date": date_str, "busySlots": busy_slots},
@@ -857,7 +876,7 @@ class AvailabilityView(APIView):
                 ).distinct().select_related("service_type")
                 for job in jobs:
                     start_min = job.appointment_time.hour * 60 + job.appointment_time.minute
-                    end_min = start_min + (job.service_type.duration or 0)
+                    end_min = start_min + job.slot_duration_minutes()
                     out |= _range_to_hour_slots(start_min, end_min)
                 return out
 

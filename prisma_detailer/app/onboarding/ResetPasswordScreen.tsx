@@ -163,7 +163,7 @@ const ResetPasswordScreen = () => {
           "Your password has been reset successfully. You are now logged in.",
         type: "success",
         onConfirm: () => {
-          router.replace("/main/dashboard/DashboardScreen");
+          router.replace("/main/today/TodayScreen");
         },
       });
     } catch (error: any) {

@@ -3,21 +3,22 @@
  */
 import { useState, useMemo, useCallback, useEffect } from "react";
 import dayjs from "dayjs";
-import { router, useRouter } from "expo-router";
+import isoWeek from "dayjs/plugin/isoWeek";
+import { router } from "expo-router";
 import {
   CalendarDayProps,
   TimeSlotProps,
 } from "@/app/interfaces/AppointmentInterface";
+
+dayjs.extend(isoWeek);
 import {
   useGetAllAppointmentsQuery,
-  useGetAppointmentDetailsQuery,
   useStartAppointmentMutation,
   useCompleteAppointmentMutation,
   useUploadBeforeImagesMutation,
   useUploadAfterImagesMutation,
   useSubmitFleetMaintenanceMutation,
 } from "@/app/store/api/appointmentsApi";
-import { useAlertContext } from "../contexts/AlertContext";
 import { useSnackbar } from "../contexts/SnackbarContext";
 
 /**
@@ -35,10 +36,6 @@ export const useAppointment = () => {
 
   const [selectedMonth, setSelectedMonth] = useState(dayjs());
   const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs | null>(null);
-  const { setAlertConfig, setIsVisible } = useAlertContext();
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-    string | null
-  >(null);
 
   /* Destructure all the query apis here */
   const {
@@ -65,66 +62,16 @@ export const useAppointment = () => {
   const [uploadAfterImages, { isLoading: isLoadingUploadAfterImages }] =
     useUploadAfterImagesMutation();
 
-  const {
-    data: appointmentDetails,
-    isLoading: isLoadingAppointmentDetails,
-    error: errorAppointmentDetails,
-    refetch: refetchAppointmentDetails,
-  } = useGetAppointmentDetailsQuery(
-    { id: selectedAppointmentId },
-    {
-      skip: !selectedAppointmentId,
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-    }
-  );
-
   /**
-   * Route to the appointment details screen when the appointment details are loaded
-   * FIXED: Reset selectedAppointmentId after navigation to prevent stuck state
+   * Open job details by id. The details screen fetches a fresh payload so
+   * status is never a stale cache from a previous job.
    */
-  useEffect(() => {
-    if (
-      !isLoadingAppointmentDetails &&
-      appointmentDetails &&
-      selectedAppointmentId
-    ) {
-      // Navigate to details screen
-      router.push({
-        pathname: "/main/appointments/AppointmentDetailsScreen",
-        params: { appointmentDetails: JSON.stringify(appointmentDetails) },
-      });
-      setSelectedAppointmentId(null);
-    }
-  }, [isLoadingAppointmentDetails, appointmentDetails, selectedAppointmentId]);
-
-  /**
-   * FIXED: Handle errors in appointment details fetching
-   */
-  useEffect(() => {
-    if (errorAppointmentDetails && selectedAppointmentId) {
-      console.error(
-        "Error fetching appointment details:",
-        errorAppointmentDetails
-      );
-      setAlertConfig({
-        title: "Error",
-        message: "Failed to load appointment details. Please try again.",
-        type: "error",
-        isVisible: true,
-        onConfirm: () => {
-          setIsVisible(false);
-          setSelectedAppointmentId(null); // Reset state on error
-        },
-      });
-    }
-  }, [
-    errorAppointmentDetails,
-    selectedAppointmentId,
-    setAlertConfig,
-    setIsVisible,
-  ]);
+  const handleJobPress = useCallback((id: string) => {
+    router.push({
+      pathname: "/main/appointments/AppointmentDetailsScreen",
+      params: { id },
+    });
+  }, []);
 
   /**
    * Generate array of months for the scrollable month selector
@@ -162,8 +109,8 @@ export const useAppointment = () => {
   const calendarDays = useMemo(() => {
     const startOfMonth = selectedMonth.startOf("month");
     const endOfMonth = selectedMonth.endOf("month");
-    const startOfWeek = startOfMonth.startOf("week");
-    const endOfWeek = endOfMonth.endOf("week");
+    const startOfWeek = startOfMonth.startOf("isoWeek");
+    const endOfWeek = endOfMonth.endOf("isoWeek");
 
     const days: CalendarDayProps[] = [];
     let currentDay = startOfWeek;
@@ -231,7 +178,8 @@ export const useAppointment = () => {
    */
   const navigateToMonth = (month: dayjs.Dayjs) => {
     setSelectedMonth(month);
-    setSelectedDay(null); // Reset selected day when changing months
+    const today = dayjs();
+    setSelectedDay(month.isSame(today, "month") ? today : month.startOf("month"));
   };
 
   /**
@@ -245,11 +193,6 @@ export const useAppointment = () => {
    */
   const selectDay = useCallback(async (day: dayjs.Dayjs) => {
     setSelectedDay(day);
-    const date = day.format("YYYY-MM-DD");
-    router.push({
-      pathname: "/main/appointments/AppointmentDailyScreen",
-      params: { date: day.format("YYYY-MM-DD") },
-    });
   }, []);
 
   /**
@@ -259,48 +202,25 @@ export const useAppointment = () => {
    * the selected day. Used for month navigation controls.
    */
   const goToPreviousMonth = () => {
-    setSelectedMonth(selectedMonth.subtract(1, "month"));
-    setSelectedDay(null);
+    const next = selectedMonth.subtract(1, "month");
+    const today = dayjs();
+    if (next.isBefore(today, "month")) return;
+    setSelectedMonth(next);
+    setSelectedDay(next.isSame(today, "month") ? today : next.startOf("month"));
   };
 
   /**
    * Navigate to next month
    *
-   * Moves the calendar view to the next month and resets
-   * the selected day. Used for month navigation controls.
+   * Moves the calendar view to the next month and keeps a selected day
+   * so assigned jobs further ahead stay loadable.
    */
   const goToNextMonth = () => {
-    setSelectedMonth(selectedMonth.add(1, "month"));
-    setSelectedDay(null);
+    const next = selectedMonth.add(1, "month");
+    setSelectedMonth(next);
+    const today = dayjs();
+    setSelectedDay(next.isSame(today, "month") ? today : next.startOf("month"));
   };
-
-  /**
-   * Handle job card press by loading appointment details.
-   * @param id - Appointment/job ID
-   */
-  const handleJobPress = useCallback(
-    async (id: string) => {
-      try {
-        // Reset any previous state
-        setSelectedAppointmentId(null);
-
-        // Small delay to ensure state is reset before setting new ID
-        setTimeout(() => {
-          setSelectedAppointmentId(id);
-        }, 50);
-      } catch (error) {
-        console.error("Error in handleJobPress:", error);
-        setAlertConfig({
-          title: "Error",
-          message: "Failed to load appointment. Please try again.",
-          type: "error",
-          isVisible: true,
-          onConfirm: () => setIsVisible(false),
-        });
-      }
-    },
-    [setAlertConfig, setIsVisible]
-  );
 
   /**
    * Navigate to current month
@@ -309,8 +229,9 @@ export const useAppointment = () => {
    * the selected day. Used for "today" or "current month" buttons.
    */
   const goToCurrentMonth = () => {
-    setSelectedMonth(dayjs());
-    setSelectedDay(null);
+    const today = dayjs();
+    setSelectedMonth(today);
+    setSelectedDay(today);
   };
 
   /**
@@ -494,10 +415,6 @@ export const useAppointment = () => {
     selectedDay,
     allAppointments,
     isLoadingAllAppointments,
-    selectedAppointmentId,
-    appointmentDetails,
-    isLoadingAppointmentDetails,
-    errorAppointmentDetails, // Add error state to return
 
     // Data
     months,
@@ -521,6 +438,5 @@ export const useAppointment = () => {
     isLoadingUploadAfterImages,
     isLoadingSubmitFleetMaintenance,
     refetchAllAppointments,
-    refetchAppointmentDetails,
   };
 };

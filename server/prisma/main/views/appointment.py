@@ -3,7 +3,7 @@ Assigned jobs (appointments) for the detailer mobile app.
 
 **Auth:** ``IsAuthenticated`` — jobs where user is primary or on ``detailers`` M2M.
 
-**GET actions:** ``get_all_appointments``, ``get_appointment_details``.
+**GET actions:** ``get_all_appointments``, ``get_appointment_details``, ``get_job_history``.
 
 **PATCH/POST actions:** ``start_appointment``, ``complete_appointment``, ``upload_before_images``,
 ``upload_after_images``, ``submit_fleet_maintenance``.
@@ -38,6 +38,7 @@ class AppointmentView(APIView):
     action_handler = {
         "get_all_appointments": '_get_all_appointments',
         "get_appointment_details": '_get_appointment_details',
+        "get_job_history": '_get_job_history',
         "complete_appointment": '_complete_appointment',
         "start_appointment": '_start_appointment',
         "upload_before_images": '_upload_before_images',
@@ -101,8 +102,9 @@ class AppointmentView(APIView):
                         'valet_type': appointment.valet_type,
                         'appointment_date': appointment.appointment_date.strftime('%Y-%m-%d'),
                         'appointment_time': appointment.appointment_time.strftime('%H:%M'),
-                        'duration': appointment.service_type.duration if appointment.service_type.duration else 0,
+                        'duration': appointment.slot_duration_minutes(),
                         'status': appointment.status,
+                        'address': appointment.address if appointment.address else '',
                     }
                     appointment_list.append(appointment_data)
             else:
@@ -111,7 +113,60 @@ class AppointmentView(APIView):
             return Response(appointment_list, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+    def _serialize_job_card(self, appointment):
+        """Compact job row for schedule and history lists. No prices."""
+        return {
+            "id": appointment.id,
+            "booking_reference": appointment.booking_reference,
+            "service_type": appointment.service_type.name if appointment.service_type else "",
+            "client_name": appointment.client_name,
+            "valet_type": appointment.valet_type,
+            "appointment_date": appointment.appointment_date.strftime("%Y-%m-%d"),
+            "appointment_time": appointment.appointment_time.strftime("%H:%M"),
+            "duration": appointment.slot_duration_minutes(),
+            "status": appointment.status,
+            "address": appointment.address if appointment.address else "",
+        }
+
+    def _get_job_history(self, request):
+        """
+        Completed and cancelled jobs for the authenticated detailer, newest first.
+
+        Query: ``limit`` (default 30, max 50), ``offset`` (default 0).
+        """
+        try:
+            try:
+                limit = min(max(int(request.query_params.get("limit", 30)), 1), 50)
+                offset = max(int(request.query_params.get("offset", 0)), 0)
+            except (TypeError, ValueError):
+                return Response(
+                    {"error": "limit and offset must be integers"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            jobs = (
+                Job.objects.filter(
+                    Q(primary_detailer__user=request.user)
+                    | Q(detailers__user=request.user)
+                )
+                .filter(status__in=["completed", "cancelled"])
+                .select_related("service_type")
+                .distinct()
+                .order_by("-appointment_date", "-appointment_time")
+            )
+            page = list(jobs[offset : offset + limit + 1])
+            has_more = len(page) > limit
+            page = page[:limit]
+            return Response(
+                {
+                    "jobs": [self._serialize_job_card(job) for job in page],
+                    "has_more": has_more,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     def _get_appointment_details(self, request):
         """
@@ -127,7 +182,7 @@ class AppointmentView(APIView):
             # Get job where user is either primary_detailer or in detailers ManyToMany
             appointment = Job.objects.filter(
                 id=request.query_params.get('id'),
-                status__in=['pending', 'accepted', 'in_progress', 'completed']
+                status__in=['pending', 'accepted', 'in_progress', 'completed', 'cancelled']
             ).filter(
                 Q(primary_detailer__user=request.user) | Q(detailers__user=request.user)
             ).distinct().first()
@@ -144,6 +199,7 @@ class AppointmentView(APIView):
                 'vehicle_model': appointment.vehicle_model if appointment.vehicle_model else '',
                 'vehicle_color': appointment.vehicle_color if appointment.vehicle_color else '',
                 'vehicle_year': appointment.vehicle_year if appointment.vehicle_year else '',
+                'vehicle_license': appointment.vehicle_registration if appointment.vehicle_registration else '',
                 'vehiclie_license': appointment.vehicle_registration if appointment.vehicle_registration else '',
                 'service_type': {
                     'name': appointment.service_type.name if appointment.service_type.name else '',
@@ -159,47 +215,58 @@ class AppointmentView(APIView):
                 'longitude': appointment.longitude if appointment.longitude else '',
                 'appointment_date': appointment.appointment_date.strftime('%Y-%m-%d'),
                 'appointment_time': appointment.appointment_time.strftime('%H:%M'),
-                'duration': appointment.duration if appointment.duration else 0,
+                'duration': appointment.slot_duration_minutes(),
                 'status': appointment.status,
                 'special_instruction': appointment.owner_note if appointment.owner_note else '',
+                'specialInstruction': appointment.owner_note if appointment.owner_note else '',
                 'valet_type': appointment.valet_type if appointment.valet_type else '',
                 'addons': list(appointment.addon_names or []),
                 'loyalty_tier': appointment.loyalty_tier if appointment.loyalty_tier else 'bronze',
                 'loyalty_benefits': appointment.loyalty_benefits if appointment.loyalty_benefits else [],
-                'before_images_interior': [
-                    {
-                        'id': img.id,
-                        'image_url': get_full_media_url(img.image.url),
-                        'uploaded_at': img.uploaded_at.isoformat(),
-                        'segment': img.segment
-                    } for img in appointment.images.filter(image_type='before', segment='interior')
-                ],
-                'before_images_exterior': [
-                    {
-                        'id': img.id,
-                        'image_url': get_full_media_url(img.image.url),
-                        'uploaded_at': img.uploaded_at.isoformat(),
-                        'segment': img.segment
-                    } for img in appointment.images.filter(image_type='before', segment='exterior')
-                ],
-                'after_images_interior': [
-                    {
-                        'id': img.id,
-                        'image_url': get_full_media_url(img.image.url),
-                        'uploaded_at': img.uploaded_at.isoformat(),
-                        'segment': img.segment
-                    } for img in appointment.images.filter(image_type='after', segment='interior')
-                ],
-                'after_images_exterior': [
-                    {
-                        'id': img.id,
-                        'image_url': get_full_media_url(img.image.url),
-                        'uploaded_at': img.uploaded_at.isoformat(),
-                        'segment': img.segment
-                    } for img in appointment.images.filter(image_type='after', segment='exterior')
-                ],
                 'fleet_maintenance': JobFleetMaintenanceSerializer(appointment.fleet_maintenance).data if hasattr(appointment, 'fleet_maintenance') and appointment.fleet_maintenance else None,
             }
+            if appointment.status in ('completed', 'cancelled'):
+                appointment_detaile.update({
+                    'before_images_interior': [],
+                    'before_images_exterior': [],
+                    'after_images_interior': [],
+                    'after_images_exterior': [],
+                })
+            else:
+                appointment_detaile.update({
+                    'before_images_interior': [
+                        {
+                            'id': img.id,
+                            'image_url': get_full_media_url(img.image.url),
+                            'uploaded_at': img.uploaded_at.isoformat(),
+                            'segment': img.segment
+                        } for img in appointment.images.filter(image_type='before', segment='interior')
+                    ],
+                    'before_images_exterior': [
+                        {
+                            'id': img.id,
+                            'image_url': get_full_media_url(img.image.url),
+                            'uploaded_at': img.uploaded_at.isoformat(),
+                            'segment': img.segment
+                        } for img in appointment.images.filter(image_type='before', segment='exterior')
+                    ],
+                    'after_images_interior': [
+                        {
+                            'id': img.id,
+                            'image_url': get_full_media_url(img.image.url),
+                            'uploaded_at': img.uploaded_at.isoformat(),
+                            'segment': img.segment
+                        } for img in appointment.images.filter(image_type='after', segment='interior')
+                    ],
+                    'after_images_exterior': [
+                        {
+                            'id': img.id,
+                            'image_url': get_full_media_url(img.image.url),
+                            'uploaded_at': img.uploaded_at.isoformat(),
+                            'segment': img.segment
+                        } for img in appointment.images.filter(image_type='after', segment='exterior')
+                    ],
+                })
             return Response(appointment_detaile, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

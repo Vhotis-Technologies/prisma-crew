@@ -5,6 +5,13 @@ Maps locality/suburb/neighborhood names to main city names so that
 client addresses in areas like Ballentree Village (Dublin) correctly
 match detailers registered in Dublin.
 """
+import re
+
+# Dublin postal districts stored as city (D12, D15, Dublin 12).
+_DUBLIN_DISTRICT = re.compile(
+    r"^(d(?:6w|0[1-9]|1[0-8]|20|22|24)|dublin\s+(?:6w|[1-9]|1[0-8]|20|22|24))$",
+    re.IGNORECASE,
+)
 
 # Maps locality/suburb names (lowercase) to main city for matching
 # Add entries as needed when new mismatches are discovered
@@ -48,5 +55,11 @@ def normalize_city_for_matching(city: str) -> str:
     """
     if not city or not isinstance(city, str):
         return city or ""
-    normalized = city.strip().lower()
-    return CITY_NORMALIZATION.get(normalized, city.strip())
+    stripped = city.strip()
+    normalized = stripped.lower()
+    mapped = CITY_NORMALIZATION.get(normalized)
+    if mapped:
+        return mapped
+    if _DUBLIN_DISTRICT.match(normalized):
+        return "Dublin"
+    return stripped

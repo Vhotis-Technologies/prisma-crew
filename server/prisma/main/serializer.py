@@ -1,6 +1,6 @@
 """DRF serializers for the detailer API (jobs, auth, media URLs, fleet maintenance)."""
 from rest_framework import serializers
-from .models import User, Detailer, ServiceType, TimeSlot, Job, JobImage, JobFleetMaintenance, Earning, BankAccount, Review, TrainingRecord, Availability, JobActivityLog
+from .models import User, Detailer, ServiceType, Job, JobImage, JobFleetMaintenance, Earning, BankAccount, Review, Availability, JobActivityLog
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from main.util.media_helper import get_full_media_url
 
@@ -24,13 +24,6 @@ class ServiceTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceType
-        fields = '__all__'
-
-class TimeSlotSerializer(serializers.ModelSerializer):
-    """Serialize :class:`main.models.TimeSlot` availability slots."""
-
-    class Meta:
-        model = TimeSlot
         fields = '__all__'
 
 class JobImageSerializer(serializers.ModelSerializer):
