@@ -1,9 +1,12 @@
 from pathlib import Path
 from datetime import timedelta
 from urllib.parse import quote_plus, urlparse
+import json
 import os
+import sys
 import dj_database_url
 from celery.schedules import crontab
+from django.core.exceptions import ImproperlyConfigured
 from google.oauth2 import service_account
 
 
@@ -11,6 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 PRISMA_ENV = os.getenv('PRISMA_ENV', 'production').strip().lower()
 IS_STAGING = PRISMA_ENV == 'staging'
+# Docker image build runs collectstatic without secrets/env files — skip GCS for that step.
+_IS_COLLECTSTATIC = any(
+    arg == 'collectstatic' or arg.endswith('/collectstatic') for arg in sys.argv
+)
 # Staging shares one Redis (client_staging_redis); use separate logical DBs from client (0–2).
 _DEFAULT_REDIS_HOST = 'client_staging_redis' if IS_STAGING else 'prisma_redis'
 
@@ -18,7 +25,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 DEBUG = os.getenv('DEBUG') == 'True'
 
 _DEFAULT_API = (
-    'https://bat-useful-penguin.ngrok-free.app/detailer'
+    'https://staging.detailer.prismavalet.com/detailer'
     if IS_STAGING
     else 'https://crew.prismavalet.com'
 )
@@ -168,7 +175,6 @@ def _resolve_database_url():
 
 _database_url = _resolve_database_url()
 if not _database_url:
-    from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured(
         'Set DATABASE_URL or POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, and POSTGRES_DB '
         f'(PRISMA_ENV={PRISMA_ENV!r}).'
@@ -181,17 +187,50 @@ DATABASES = {
 }
 
 
-# Staging: local media. Production: Google Cloud Storage.
-if IS_STAGING:
-    GS_CREDENTIALS_PATH_STAGING = os.path.join(BASE_DIR, 'prisma-6fc48-642e49c334e8.json')
-    GS_BUCKET_NAME_STAGING = os.getenv('GS_BUCKET_NAME_STAGING', 'prisma_staging_bucket')
-    GS_LOCATION_STAGING = os.getenv('GS_LOCATION_STAGING', 'main-app')
-    GS_CREDENTIALS_STAGING = None
-    if GS_CREDENTIALS_PATH_STAGING and Path(GS_CREDENTIALS_PATH_STAGING).is_file():
-        GS_CREDENTIALS_STAGING = service_account.Credentials.from_service_account_file(
-            GS_CREDENTIALS_PATH_STAGING,
+def _load_gcs_credentials(raw: str):
+    """Accept a JSON blob or a path to a service-account file (resolve relative to BASE_DIR)."""
+    value = raw.strip()
+    if value.startswith('{'):
+        return service_account.Credentials.from_service_account_info(
+            json.loads(value),
             scopes=['https://www.googleapis.com/auth/cloud-platform'],
         )
+    path = Path(value)
+    if not path.is_file():
+        path = BASE_DIR / value
+    if not path.is_file():
+        raise ImproperlyConfigured(f'GCS credentials file not found: {value}')
+    return service_account.Credentials.from_service_account_file(
+        str(path),
+        scopes=['https://www.googleapis.com/auth/cloud-platform'],
+    )
+
+
+# Media storage. collectstatic only needs staticfiles — never load GCS secrets during image build.
+_STATICFILES_STORAGE = {
+    'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+}
+
+if _IS_COLLECTSTATIC:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': _STATICFILES_STORAGE,
+    }
+elif IS_STAGING:
+    _raw_staging_creds = (
+        os.getenv('GS_CREDENTIALS_STAGING_JSON')
+        or os.getenv('GS_CREDENTIALS_PATH_STAGING')
+        or ''
+    ).strip()
+    if not _raw_staging_creds:
+        raise ImproperlyConfigured(
+            'Set GS_CREDENTIALS_STAGING_JSON (JSON blob) or GS_CREDENTIALS_PATH_STAGING (file path).'
+        )
+    GS_CREDENTIALS_STAGING = _load_gcs_credentials(_raw_staging_creds)
+    GS_BUCKET_NAME_STAGING = os.getenv('GS_BUCKET_NAME_STAGING', 'prisma_staging_bucket')
+    GS_LOCATION_STAGING = os.getenv('GS_LOCATION_STAGING', 'detailer-app')
     STORAGES = {
         'default': {
             'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
@@ -202,31 +241,33 @@ if IS_STAGING:
                 'default_acl': None,
             },
         },
-        'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-        },
+        'staticfiles': _STATICFILES_STORAGE,
     }
 else:
+    _raw_prod_creds = (os.getenv('GS_CREDENTIALS_PATH') or '').strip()
+    if not _raw_prod_creds:
+        raise ImproperlyConfigured(
+            'Set GS_CREDENTIALS_PATH to a JSON blob or path to the service-account file.'
+        )
+    GS_CREDENTIALS = _load_gcs_credentials(_raw_prod_creds)
+    GS_CREDENTIALS_PATH = _raw_prod_creds
     GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'prisma-valet-bucket')
     GS_LOCATION = os.getenv('GS_LOCATION', 'detailer-app')
-    GS_CREDENTIALS_PATH = os.getenv('GS_CREDENTIALS_PATH', '')
-    GS_CREDENTIALS = None
-    if GS_CREDENTIALS_PATH and Path(GS_CREDENTIALS_PATH).is_file():
-        GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-            GS_CREDENTIALS_PATH,
-            scopes=['https://www.googleapis.com/auth/cloud-platform'],
-        )
-    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_LOCATION}/'
     MEDIA_ROOT = BASE_DIR / 'media'
     STORAGES = {
         'default': {
             'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
+            'OPTIONS': {
+                'bucket_name': GS_BUCKET_NAME,
+                'location': GS_LOCATION,
+                'credentials': GS_CREDENTIALS,
+                'default_acl': None,
+            },
         },
-        'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-        },
+        'staticfiles': _STATICFILES_STORAGE,
     }
-    
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

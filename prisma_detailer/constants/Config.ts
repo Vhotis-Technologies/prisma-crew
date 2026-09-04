@@ -19,9 +19,10 @@ export const API_CONFIG = {
   websocketUrl: config.websockets_url,
 };
 
-/** Third-party API keys from Expo config. */
+// Navigation uses Linking.openURL to the Google Maps app — no embedded map or Places SDK.
+/** @deprecated No longer used — detailer app does not call Google APIs directly. */
 export const KEY_CONFIGS = {
-  googleApiKeys: config.googoleApiKeys,
+  googleApiKeys: undefined as string | undefined,
 };
 /** Display name, version, deep-link scheme, and EAS project id. */
 export const APP_CONFIG = {

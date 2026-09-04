@@ -10,11 +10,13 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SnackbarProvider } from "./contexts/SnackbarContext";
 import { useUpdateMonitor } from "@/hooks/useUpdateMonitor";
+import { useFirebasePerformance } from "@/hooks/useFirebasePerformance";
 
 function AppContent() {
   const backgroundColor = useThemeColor({}, "background");
   const {currentTheme} = useThemeContext();
   useUpdateMonitor();
+  useFirebasePerformance();
   return (
     <>
       <StatusBar

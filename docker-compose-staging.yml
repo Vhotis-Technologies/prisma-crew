@@ -1,4 +1,4 @@
-# Detailer — standalone staging. Start client staging first (shared client_staging_redis).
+# Detailer — standalone staging. Start parent compose first (shared client_staging_redis).
 # docker compose -f docker-compose-staging.yml up -d --build
 
 name: prisma_detailer_staging

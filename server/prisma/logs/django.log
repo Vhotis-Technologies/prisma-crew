@@ -25172,3 +25172,7 @@ WARNING 2026-09-01 18:53:54,823 log 1 130067332064960 Unauthorized: /api/v1/noti
 WARNING 2026-09-01 18:53:54,832 log 1 130067102426816 Unauthorized: /api/v1/appointments/get_all_appointments/
 WARNING 2026-09-01 18:53:56,641 log 1 130067332064960 Unauthorized: /api/v1/authentication/refresh/
 WARNING 2026-09-01 18:53:56,648 log 1 130067102426816 Unauthorized: /api/v1/authentication/refresh/
+INFO 2026-09-03 19:11:10,755 cli 1 124368337261376 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2026-09-03 19:11:10,759 server 1 124368337261376 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-09-03 19:11:10,762 server 1 124368337261376 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-09-03 19:11:10,772 server 1 124368337261376 Listening on TCP address 0.0.0.0:8000
