@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 DEBUG = os.getenv('DEBUG') == 'True'
 
 _DEFAULT_API = (
-    'https://staging.detailer.prismavalet.com/detailer'
+    'https://staging.crew.prismavalet.com'
     if IS_STAGING
     else 'https://crew.prismavalet.com'
 )

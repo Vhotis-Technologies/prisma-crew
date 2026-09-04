@@ -13,7 +13,7 @@ def get_full_media_url(relative_url):
         relative_url: Path or URL from ``FileField.url`` (may be None).
 
     Returns:
-        str | None: Absolute URL under ``{BASE_URL}/detailer/...``, or None/relative fallback.
+        str | None: Absolute URL under ``{BASE_URL}/...``, or None/relative fallback.
     """
     if not relative_url:
         return None
@@ -28,4 +28,4 @@ def get_full_media_url(relative_url):
     if relative_url.startswith('/'):
         relative_url = relative_url[1:]
 
-    return f"{base_url}/detailer/{relative_url}"
+    return f"{base_url.rstrip('/')}/{relative_url}"
