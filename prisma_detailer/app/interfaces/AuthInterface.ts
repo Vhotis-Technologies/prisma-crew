@@ -20,6 +20,8 @@ export interface SignUpScreenProps {
   city: string;
   postcode: string;
   country: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface LoginScreenProps {

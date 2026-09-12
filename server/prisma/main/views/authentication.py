@@ -114,10 +114,19 @@ class AuthenticationView(APIView):
             if not credentials:
                 return Response({'error': 'Credentials are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-            required_fields = ['email', 'password', 'first_name', 'last_name', 'phone', 'address', 'city', 'postcode', 'country']
-            missing_fields = [field for field in required_fields if not credentials.get(field)]
+            required_fields = ['email', 'password', 'first_name', 'last_name', 'phone', 'address', 'city', 'postcode', 'country', 'latitude', 'longitude']
+            missing_fields = [field for field in required_fields if credentials.get(field) in (None, '')]
             if missing_fields:
                 return Response({'error': f'Missing required fields: {", ".join(missing_fields)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                latitude = float(credentials.get('latitude'))
+                longitude = float(credentials.get('longitude'))
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'latitude and longitude must be valid numbers from address search'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             user = User.objects.create_user(
                 email=credentials.get('email'),
@@ -135,10 +144,24 @@ class AuthenticationView(APIView):
                 city=credentials.get('city'),
                 post_code=credentials.get('postcode'),
                 country=credentials.get('country'),
+                latitude=latitude,
+                longitude=longitude,
             )
 
             user.save()
             profile.save()
+
+            # Seed Redis GEO with home-base coordinates so nearest-job assignment
+            # works before the first live GPS update on login.
+            try:
+                from main.utils.redis_geo import update_detailer_location
+                update_detailer_location(profile.id, longitude, latitude)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Redis GEO seed failed for new detailer %s: %s", profile.id, e
+                )
+
             return Response({
                 'message': 'Account created successfully. Your account is pending admin approval.',
                 'user': {
@@ -150,6 +173,8 @@ class AuthenticationView(APIView):
                     'city': profile.city,
                     'postcode': profile.post_code,
                     'country': profile.country,
+                    'latitude': profile.latitude,
+                    'longitude': profile.longitude,
                 },
             }, status=status.HTTP_201_CREATED)
 

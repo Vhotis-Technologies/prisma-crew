@@ -140,24 +140,28 @@ class BookingView(APIView):
             data['city'] = data['city'].strip() if data['city'] else None
             data['country'] = data['country'].strip() if data['country'] else None
 
-            # Optional lat/lng for geographic fallback
-            latitude = None
-            longitude = None
-            if data.get('latitude') is not None and data.get('longitude') is not None:
-                try:
-                    latitude = float(data['latitude'])
-                    longitude = float(data['longitude'])
-                except (TypeError, ValueError):
-                    pass
+            # Required lat/lng for service area check (Spire distance)
+            if data.get('latitude') is None or data.get('longitude') is None:
+                return Response({
+                    "error": "Missing required parameters: latitude, longitude"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                latitude = float(data['latitude'])
+                longitude = float(data['longitude'])
+            except (TypeError, ValueError):
+                return Response({
+                    "error": "Invalid latitude or longitude"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # Check if express service is requested
             is_express_service = data.get('is_express_service', False)
             if isinstance(is_express_service, str):
                 is_express_service = is_express_service.lower() == 'true'
 
-            # Find available detailers using three-step fallback: exact -> normalized -> 30km radius
+            # Find available detailers - now returns service_area_info with Spire distance check
             try:
-                available_detailers, _ = find_detailers_for_location(
+                available_detailers, _, service_area_info = find_detailers_for_location(
                     country=data['country'],
                     city=data['city'],
                     latitude=latitude,
@@ -169,10 +173,17 @@ class BookingView(APIView):
                     "error": f"Error finding detailers: {str(e)}"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Check for out of range error
+            if service_area_info and service_area_info.get("error") == "out_of_range":
+                return Response({
+                    "success": False,
+                    "error": service_area_info.get("message")
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             if not available_detailers.exists():
                 return Response({
                     "success": False,
-                    "error": f"No available detailers found in {data['city']}, {data['country']}. We are currently working to bring PRISMA closer to you. Please check back another time."
+                    "error": "No available detailers found. We are currently working to bring PRISMA closer to you. Please check back another time."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Parse appointment date/time first so we can filter detailers by slot availability
@@ -500,13 +511,20 @@ class BookingView(APIView):
             else:
                 valet_type_str = str(valet_type_str)[:20]
             slot_length_minutes = slot_duration
-            detailers_qs, _ = find_detailers_for_location(
+            detailers_qs, _, service_area_info = find_detailers_for_location(
                 country=country,
                 city=city,
                 latitude=latitude,
                 longitude=longitude,
                 is_available=True,
             )
+
+            # Check for out of range error
+            if service_area_info and service_area_info.get("error") == "out_of_range":
+                return Response({
+                    "error": service_area_info.get("message")
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             if not detailers_qs.exists():
                 return Response({
                     "error": "No available detailers found for this location. We are currently working to bring Prisma Car Care closer to you."
@@ -934,13 +952,18 @@ class BookingView(APIView):
             country = (first_job.country or '').strip()
             latitude = getattr(first_job, 'latitude', None)
             longitude = getattr(first_job, 'longitude', None)
-            detailers_qs, _ = find_detailers_for_location(
+            detailers_qs, _, service_area_info = find_detailers_for_location(
                 country=country,
                 city=city,
                 latitude=latitude,
                 longitude=longitude,
                 is_available=True,
             )
+
+            # Check for out of range error
+            if service_area_info and service_area_info.get("error") == "out_of_range":
+                return Response({"error": service_area_info.get("message")}, status=status.HTTP_400_BAD_REQUEST)
+
             if not detailers_qs.exists():
                 return Response({"error": "No available detailers for this location"}, status=status.HTTP_400_BAD_REQUEST)
             detailer_list = list(detailers_qs)

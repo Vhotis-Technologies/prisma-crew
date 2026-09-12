@@ -5,10 +5,19 @@ Uses the Haversine formula (pure Python, math module) to compute distances
 between coordinates. No GeoDjango or external dependencies required.
 """
 import math
-from typing import Optional
+from typing import Optional, Tuple
 
 # Earth's radius in kilometers
 EARTH_RADIUS_KM = 6371.0
+
+# Spire of Dublin service area epicenter
+SPIRE_LAT = 53.3498
+SPIRE_LNG = -6.2603
+
+# Service area zones (distance from Spire)
+FREE_ZONE_RADIUS_KM = 25.0
+MAX_SERVICE_RADIUS_KM = 35.0
+TRAVEL_SURCHARGE_EUR = 10.0
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -81,3 +90,46 @@ def get_detailers_within_radius(
             within_radius.append(detailer.id)
 
     return Detailer.objects.filter(id__in=within_radius)
+
+
+def distance_from_spire_km(lat: float, lng: float) -> float:
+    """
+    Compute distance from client location to the Spire of Dublin.
+
+    Args:
+        lat: Client latitude (degrees)
+        lng: Client longitude (degrees)
+
+    Returns:
+        Distance in kilometers from the Spire
+    """
+    return haversine_distance_km(SPIRE_LAT, SPIRE_LNG, lat, lng)
+
+
+def classify_service_area(lat: float, lng: float) -> Tuple[str, float, Optional[float]]:
+    """
+    Classify a client location relative to the Spire service area.
+
+    Service area rules:
+    - ≤ 25 km from Spire: in_zone (no surcharge)
+    - > 25 km and ≤ 35 km from Spire: surcharge (€10 travel fee for B2C)
+    - > 35 km from Spire: out_of_area (no service)
+
+    Args:
+        lat: Client latitude (degrees)
+        lng: Client longitude (degrees)
+
+    Returns:
+        Tuple of (zone, distance_km, surcharge_eur):
+        - zone: "in_zone" | "surcharge" | "out_of_area"
+        - distance_km: Actual distance from Spire in kilometers
+        - surcharge_eur: Travel surcharge amount (None for out_of_area)
+    """
+    distance = distance_from_spire_km(lat, lng)
+    
+    if distance <= FREE_ZONE_RADIUS_KM:
+        return "in_zone", distance, 0.0
+    elif distance <= MAX_SERVICE_RADIUS_KM:
+        return "surcharge", distance, TRAVEL_SURCHARGE_EUR
+    else:
+        return "out_of_area", distance, None

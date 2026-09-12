@@ -1,17 +1,19 @@
 /**
  * Onboarding hook: multi-step signup form, validation, registration, and terms flow.
+ * Wizard UI state lives in OnboardingProvider so SignUpScreen and step components share it.
  */
-import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { router } from "expo-router";
 import { useAppDispatch, useAppSelector } from "@/app/store/my_store";
 import {
   setSignUpData,
   clearSignUpData,
-  setUser,
-  setAccessToken,
-  setRefreshToken,
-  setIsAuthenticated,
   setIsLoading,
   setConfirmPassword,
 } from "@/app/store/slices/authSlice";
@@ -19,9 +21,10 @@ import { SignUpScreenProps } from "@/app/interfaces/AuthInterface";
 import { RootState } from "@/app/store/my_store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 import { useRegisterMutation } from "@/app/store/api/authApi";
-import { UserProfileProps } from "@/app/interfaces/ProfileInterfaces";
-import * as SecureStore from "expo-secure-store";
 import { useSnackbar } from "@/app/contexts/SnackbarContext";
+import { AddressSearchResult } from "@/app/components/shared/AddressSearchInput";
+
+type SignUpFieldErrors = Partial<Record<keyof SignUpScreenProps, string>>;
 
 /**
  * Map server/technical registration errors to user-facing messages.
@@ -31,7 +34,6 @@ import { useSnackbar } from "@/app/contexts/SnackbarContext";
 const parseUserFriendlyError = (errorMessage: string): string => {
   const message = errorMessage.toLowerCase();
 
-  // Handle duplicate username/email errors
   if (message.includes("duplicate key value violates unique constraint")) {
     if (
       message.includes("username") ||
@@ -48,17 +50,14 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "An account with this information already exists. Please check your details and try again.";
   }
 
-  // Handle constraint violations
   if (message.includes("violates unique constraint")) {
     return "This information is already in use. Please check your details and try again.";
   }
 
-  // Handle foreign key constraint errors
   if (message.includes("foreign key constraint")) {
     return "There was an issue with your registration data. Please try again.";
   }
 
-  // Handle validation errors
   if (
     message.includes("validation error") ||
     message.includes("invalid input")
@@ -66,7 +65,6 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "Please check your information and make sure all fields are filled correctly.";
   }
 
-  // Handle network/connection errors
   if (
     message.includes("network error") ||
     message.includes("connection refused")
@@ -74,22 +72,18 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "Unable to connect to our servers. Please check your internet connection and try again.";
   }
 
-  // Handle timeout errors
   if (message.includes("timeout") || message.includes("request timeout")) {
     return "The request took too long to process. Please try again.";
   }
 
-  // Handle authentication/authorization errors
   if (message.includes("unauthorized") || message.includes("forbidden")) {
     return "Access denied. Please try again or contact support.";
   }
 
-  // Handle server errors
   if (message.includes("internal server error") || message.includes("500")) {
     return "Something went wrong on our end. Please try again later or contact support if the problem persists.";
   }
 
-  // Handle missing fields
   if (
     message.includes("missing required fields") ||
     message.includes("required field")
@@ -97,12 +91,10 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "Please fill in all required fields and try again.";
   }
 
-  // Handle email format errors
   if (message.includes("invalid email") || message.includes("email format")) {
     return "Please enter a valid email address.";
   }
 
-  // Handle password errors
   if (
     message.includes("password") &&
     (message.includes("short") || message.includes("weak"))
@@ -110,7 +102,6 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "Password must be at least 8 characters long.";
   }
 
-  // Handle phone number errors
   if (
     message.includes("phone") &&
     (message.includes("invalid") || message.includes("format"))
@@ -118,150 +109,247 @@ const parseUserFriendlyError = (errorMessage: string): string => {
     return "Please enter a valid phone number.";
   }
 
-  // If no specific pattern matches, return a generic user-friendly message
   return "Registration failed. Please check your information and try again.";
 };
 
-/**
- * Manages detailer signup wizard state, validation, and registration submit.
- * @returns Step state, form data, errors, and navigation/submit handlers
- */
-export const useOnboarding = () => {
+const EMPTY_SIGNUP: SignUpScreenProps = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  password: "",
+  address: "",
+  city: "",
+  postcode: "",
+  country: "",
+  latitude: null,
+  longitude: null,
+};
+
+type OnboardingContextValue = ReturnType<typeof useOnboardingState>;
+
+const OnboardingContext = createContext<OnboardingContextValue | null>(null);
+
+/** Internal wizard state used by OnboardingProvider. */
+function useOnboardingState() {
   const dispatch = useAppDispatch();
-  const { showSnackbar, showSnackbarWithConfig } = useSnackbar();
+  const { showSnackbarWithConfig } = useSnackbar();
   const signUpData = useAppSelector(
-    (state: RootState) => state.auth.signUpData
+    (state: RootState) => state.auth.signUpData,
   );
   const confirmPassword = useAppSelector(
-    (state: RootState) => state.auth.confirmPassword
+    (state: RootState) => state.auth.confirmPassword,
   );
 
-  /* Import the alert context */
   const { setAlertConfig, setIsVisible } = useAlertContext();
-
-  /* Import the auth api register mutation to be used to register a new user */
-  const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [register] = useRegisterMutation();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [errors, setErrors] = useState<Partial<SignUpScreenProps>>({});
+  const [errors, setErrors] = useState<SignUpFieldErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  const steps = [
-    { id: 1, title: "Personal Info", icon: "person-outline" },
-    { id: 2, title: "Contact Details", icon: "mail-outline" },
-    { id: 3, title: "Location", icon: "location-outline" },
-  ];
+  const steps = useMemo(
+    () => [
+      { id: 1, title: "Personal Info", icon: "person-outline" },
+      { id: 2, title: "Security", icon: "lock-closed-outline" },
+      { id: 3, title: "Location", icon: "location-outline" },
+    ],
+    [],
+  );
 
   /**
    * Validate fields for the current signup step.
    * @param step - Wizard step number (1–3)
    * @returns True when the step passes validation
    */
-  const validateStep = (step: number): boolean => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:148',message:'validateStep entry',data:{step,hasSignUpData:!!signUpData,signUpDataKeys:signUpData?Object.keys(signUpData):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    const newErrors: Partial<SignUpScreenProps> = {};
+  const validateStep = useCallback(
+    (step: number): SignUpFieldErrors => {
+      const data = signUpData ?? EMPTY_SIGNUP;
+      const newErrors: SignUpFieldErrors = {};
 
-    if (!signUpData) return false;
-
-    switch (step) {
-      case 1:
-        if (!signUpData.first_name?.trim())
-          newErrors.first_name = "First name is required";
-        if (!signUpData.last_name?.trim())
-          newErrors.last_name = "Last name is required";
-        if (!signUpData.email?.trim()) {
-          newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(signUpData.email)) {
-          newErrors.email = "Please enter a valid email";
-        }
-        if (!signUpData.phone?.trim()) {
-          newErrors.phone = "Phone number is required";
-        } else {
-          // Remove all non-digit characters to check length
-          const phoneDigits = signUpData.phone.replace(/\D/g, "");
-          if (phoneDigits.length > 12) {
-            newErrors.phone = "Phone number cannot exceed 12 digits";
-          } else if (!/^\+?[\d\s\-\(\)]{10,12}$/.test(signUpData.phone)) {
-            newErrors.phone =
-              "Please enter a valid phone number (10-12 digits)";
+      switch (step) {
+        case 1:
+          if (!data.first_name?.trim())
+            newErrors.first_name = "First name is required";
+          if (!data.last_name?.trim())
+            newErrors.last_name = "Last name is required";
+          if (!data.email?.trim()) {
+            newErrors.email = "Email is required";
+          } else if (!/\S+@\S+\.\S+/.test(data.email)) {
+            newErrors.email = "Please enter a valid email";
           }
-        }
-        break;
-      case 2:
-        if (!signUpData.password?.trim()) {
-          newErrors.password = "Password is required";
-        } else if (signUpData.password && signUpData.password.length < 8) {
-          newErrors.password = "Password must be at least 8 characters";
-        } else if (signUpData.password && !/[A-Z]/.test(signUpData.password)) {
-          newErrors.password =
-            "Password must contain at least one uppercase letter";
-        } else if (signUpData.password && !/[a-z]/.test(signUpData.password)) {
-          newErrors.password =
-            "Password must contain at least one lowercase letter";
-        }
-        // Note: Confirm password validation would need to be handled in the component
-        // since it's not stored in the main formData
-        break;
-      case 3:
-        if (!signUpData.address?.trim())
-          newErrors.address = "Address is required";
-        if (!signUpData.city?.trim()) newErrors.city = "City is required";
-        if (!signUpData.postcode?.trim())
-          newErrors.postcode = "Postcode is required";
-        if (!signUpData.country?.trim())
-          newErrors.country = "Country is required";
-        break;
+          if (!data.phone?.trim()) {
+            newErrors.phone = "Phone number is required";
+          } else {
+            const phoneDigits = data.phone.replace(/\D/g, "");
+            if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+              newErrors.phone =
+                "Please enter a valid phone number (10-15 digits)";
+            }
+          }
+          break;
+        case 2:
+          if (!data.password?.trim()) {
+            newErrors.password = "Password is required";
+          } else if (data.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters";
+          } else if (!/[A-Z]/.test(data.password)) {
+            newErrors.password =
+              "Password must contain at least one uppercase letter";
+          } else if (!/[a-z]/.test(data.password)) {
+            newErrors.password =
+              "Password must contain at least one lowercase letter";
+          }
+          break;
+        case 3:
+          if (
+            data.latitude == null ||
+            data.longitude == null ||
+            !data.address?.trim() ||
+            !data.city?.trim() ||
+            !data.country?.trim()
+          ) {
+            newErrors.address =
+              "Please search and select your address from the suggestions";
+          } else if (!data.postcode?.trim()) {
+            newErrors.address =
+              "Selected address is missing a postcode. Please choose a more specific address.";
+          }
+          break;
+      }
+
+      setErrors(newErrors);
+      return newErrors;
+    },
+    [signUpData],
+  );
+
+  const showValidationFeedback = useCallback(
+    (stepErrors: SignUpFieldErrors) => {
+      const firstError = Object.values(stepErrors).find(Boolean);
+      if (firstError) {
+        showSnackbarWithConfig({
+          message: firstError,
+          type: "error",
+          duration: 3000,
+        });
+      }
+    },
+    [showSnackbarWithConfig],
+  );
+
+  /**
+   * Submit validated signup data and navigate to pending approval on success.
+   */
+  const handleSubmit = useCallback(async () => {
+    const stepErrors = validateStep(3);
+    if (Object.keys(stepErrors).length > 0 || !signUpData) {
+      showValidationFeedback(
+        Object.keys(stepErrors).length
+          ? stepErrors
+          : { address: "Please complete all location fields" },
+      );
+      return;
     }
 
-    setErrors(newErrors);
-    const isValid = Object.keys(newErrors).length === 0;
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:204',message:'validateStep exit',data:{step,isValid,errors:Object.keys(newErrors),newErrors},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    return isValid;
-  };
+    dispatch(setIsLoading(true));
+    try {
+      const response = await register(signUpData).unwrap();
+      if (response && response.user) {
+        dispatch(clearSignUpData());
+        router.push("/onboarding/PendingApprovalScreen");
+      }
+    } catch (error: any) {
+      let errorMessage = "Registration failed. Please try again.";
+      let errorTitle = "Registration Failed";
+
+      let rawErrorMessage = "";
+      if (error?.data?.error) {
+        rawErrorMessage = error.data.error;
+      } else if (error?.response?.data?.error) {
+        rawErrorMessage = error.response.data.error;
+      } else if (error?.response?.data?.detail) {
+        rawErrorMessage = error.response.data.detail;
+      } else if (error?.message) {
+        rawErrorMessage = error.message;
+      }
+
+      if (rawErrorMessage) {
+        errorMessage = parseUserFriendlyError(rawErrorMessage);
+      }
+
+      if (error?.status >= 400 && error?.status < 500) {
+        if (
+          rawErrorMessage?.toLowerCase().includes("duplicate") ||
+          rawErrorMessage?.toLowerCase().includes("already exists") ||
+          rawErrorMessage?.toLowerCase().includes("username") ||
+          rawErrorMessage?.toLowerCase().includes("email")
+        ) {
+          errorTitle = "Account Already Exists";
+        } else {
+          errorTitle = "Registration Issue";
+        }
+      } else if (error?.status >= 500) {
+        errorTitle = "Server Error";
+        errorMessage =
+          "Something went wrong on our end. Please try again later.";
+      }
+
+      setAlertConfig({
+        title: errorTitle,
+        message: errorMessage,
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+        },
+      });
+    } finally {
+      dispatch(setIsLoading(false));
+    }
+  }, [
+    validateStep,
+    signUpData,
+    showValidationFeedback,
+    dispatch,
+    register,
+    setAlertConfig,
+    setIsVisible,
+  ]);
 
   /** Advance to the next step or submit on the final step when terms are accepted. */
-  const handleNext = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:207',message:'handleNext entry',data:{currentStep,termsAccepted},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-    if (currentStep === 2) {
-      // For step 2, we need to use the custom validation that includes confirm password
-      // This will be handled by the SecurityComponent calling handleNextStep2
-      // For now, just use the standard validation
-      if (validateStep(currentStep)) {
-        setCurrentStep(currentStep + 1);
-      }
-    } else if (validateStep(currentStep)) {
-      if (currentStep < 3) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        // On the final step, check if terms are accepted before submitting
-        if (termsAccepted) {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:220',message:'handleNext calling handleSubmit',data:{currentStep,termsAccepted},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
-          handleSubmit();
-        } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:223',message:'handleNext showing terms modal',data:{currentStep,termsAccepted},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
-          setShowTermsModal(true);
-        }
-      }
+  const handleNext = useCallback(() => {
+    const stepErrors = validateStep(currentStep);
+    if (Object.keys(stepErrors).length > 0) {
+      showValidationFeedback(stepErrors);
+      return;
     }
-  };
+
+    if (currentStep < 3) {
+      setCurrentStep((step) => step + 1);
+      return;
+    }
+
+    if (termsAccepted) {
+      void handleSubmit();
+    } else {
+      setShowTermsModal(true);
+    }
+  }, [
+    currentStep,
+    termsAccepted,
+    validateStep,
+    showValidationFeedback,
+    handleSubmit,
+  ]);
 
   /** Validate step 2 including confirm-password match, then go to step 3. */
-  const handleNextStep2 = () => {
-    // Validate confirm password
-    // Validate sign up data password
-    if (!validateStep(2)) {
+  const handleNextStep2 = useCallback(() => {
+    const stepErrors = validateStep(2);
+    if (Object.keys(stepErrors).length > 0) {
+      showValidationFeedback(stepErrors);
       return;
     }
     if (signUpData?.password && confirmPassword !== signUpData.password) {
@@ -273,178 +361,94 @@ export const useOnboarding = () => {
       return;
     }
     setCurrentStep(3);
-  };
+  }, [
+    validateStep,
+    signUpData?.password,
+    confirmPassword,
+    showSnackbarWithConfig,
+    showValidationFeedback,
+  ]);
 
   /** Go back one wizard step when not on the first step. */
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((step) => step - 1);
     }
-  };
-
-  /**
-   * Submit validated signup data and navigate to pending approval on success.
-   * @returns Resolves when registration attempt completes
-   */
-  const handleSubmit = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:260',message:'handleSubmit entry',data:{currentStep,hasSignUpData:!!signUpData,signUpDataKeys:signUpData?Object.keys(signUpData):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    const validationResult = validateStep(currentStep);
-    const hasSignUpData = !!signUpData;
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:263',message:'handleSubmit validation check',data:{validationResult,hasSignUpData,currentStep,willProceed:validationResult&&hasSignUpData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    if (validationResult && hasSignUpData) {
-      // Submit signup data
-      dispatch(setIsLoading(true));
-      try {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:268',message:'handleSubmit before register call',data:{signUpDataKeys:Object.keys(signUpData||{})},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        const response = await register(signUpData).unwrap();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:270',message:'handleSubmit register success',data:{hasResponse:!!response},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        // Process registration response - account created successfully, navigate to pending approval screen
-        if (response && response.user) {
-          // Clear signup data and navigate to pending approval screen
-          dispatch(clearSignUpData());
-          router.push("/onboarding/PendingApprovalScreen");
-        }
-      } catch (error: any) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:299',message:'handleSubmit catch block',data:{errorType:typeof error,errorMessage:error?.message,errorData:error?.data,errorResponse:error?.response?.data,errorStatus:error?.response?.status,fullError:JSON.stringify(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        let errorMessage = "Registration failed. Please try again.";
-        let errorTitle = "Registration Failed";
-
-        // Extract error message from different response structures
-        let rawErrorMessage = "";
-        if (error?.data?.error) {
-          rawErrorMessage = error.data.error;
-        } else if (error?.response?.data?.error) {
-          rawErrorMessage = error.response.data.error;
-        } else if (error?.response?.data?.detail) {
-          rawErrorMessage = error.response.data.detail;
-        } else if (error?.message) {
-          rawErrorMessage = error.message;
-        }
-
-        // Convert technical error messages to user-friendly messages
-        if (rawErrorMessage) {
-          errorMessage = parseUserFriendlyError(rawErrorMessage);
-        }
-
-        // Determine if this is a validation error or server error
-        if (error?.response?.status >= 400 && error?.response?.status < 500) {
-          // Check if it's a duplicate account error
-          if (
-            rawErrorMessage?.toLowerCase().includes("duplicate") ||
-            rawErrorMessage?.toLowerCase().includes("already exists") ||
-            rawErrorMessage?.toLowerCase().includes("username") ||
-            rawErrorMessage?.toLowerCase().includes("email")
-          ) {
-            errorTitle = "Account Already Exists";
-          } else {
-            errorTitle = "Registration Issue";
-          }
-        } else if (error?.response?.status >= 500) {
-          errorTitle = "Server Error";
-          errorMessage =
-            "Something went wrong on our end. Please try again later.";
-        }
-
-        setAlertConfig({
-          title: errorTitle,
-          message: errorMessage,
-          type: "error",
-          isVisible: true,
-          onConfirm: () => {
-            setIsVisible(false);
-          },
-        });
-        return;
-      } finally {
-        dispatch(setIsLoading(false));
-      }
-    } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/73479b8f-cd94-42e8-a518-8d8ec29914be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useOnboarding.ts:352',message:'handleSubmit early return',data:{validationResult,hasSignUpData,currentStep},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-    }
-  }, [currentStep, signUpData, dispatch, setAlertConfig, register]);
+  }, [currentStep]);
 
   /**
    * Update a signup form field in Redux and clear its field error.
-   * @param field - Signup field key
-   * @param value - New field value
    */
-  const updateFormData = (field: keyof SignUpScreenProps, value: string) => {
-    const currentData = signUpData || {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      password: "",
-      address: "",
-      city: "",
-      postcode: "",
-      country: "",
-    };
-    dispatch(setSignUpData({ ...currentData, [field]: value }));
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: undefined });
-    }
-  };
+  const updateFormData = useCallback(
+    (field: keyof SignUpScreenProps, value: string | number | null) => {
+      const currentData = signUpData || EMPTY_SIGNUP;
+      dispatch(setSignUpData({ ...currentData, [field]: value }));
+      setErrors((prev) =>
+        prev[field] ? { ...prev, [field]: undefined } : prev,
+      );
+    },
+    [dispatch, signUpData],
+  );
 
-  /**
-   * Update confirm-password value in Redux.
-   * @param value - Confirm password input
-   */
-  const updateConfirmPassword = (value: string) => {
-    dispatch(setConfirmPassword(value));
-  };
+  /** Apply a Google Places selection to signup location fields (requires lat/lng). */
+  const applyPlacesAddress = useCallback(
+    (result: AddressSearchResult) => {
+      const currentData = signUpData || EMPTY_SIGNUP;
+      dispatch(
+        setSignUpData({
+          ...currentData,
+          address: result.address,
+          city: result.city,
+          postcode: result.post_code,
+          country: result.country,
+          latitude: result.latitude,
+          longitude: result.longitude,
+        }),
+      );
+      setErrors((prev) =>
+        prev.address ? { ...prev, address: undefined } : prev,
+      );
+    },
+    [dispatch, signUpData],
+  );
 
-  /**
-   * Persist auth session to SecureStore after login.
-   * @param user - Authenticated user profile
-   * @param access - Access token
-   * @param refresh - Refresh token
-   */
-  const saveDataToStorage = async (
-    user: UserProfileProps | null,
-    access: string,
-    refresh: string
-  ) => {
-    try {
-      await SecureStore.setItemAsync("user", JSON.stringify(user));
-      await SecureStore.setItemAsync("access", access);
-      await SecureStore.setItemAsync("refresh", refresh);
-      // Data saved to storage
-    } catch (error) {
-      console.error("Error saving data to storage:", error);
-    }
-  };
+  /** Clear Places-selected location fields when the user hits Change. */
+  const clearPlacesAddress = useCallback(() => {
+    const currentData = signUpData || EMPTY_SIGNUP;
+    dispatch(
+      setSignUpData({
+        ...currentData,
+        address: "",
+        city: "",
+        postcode: "",
+        country: "",
+        latitude: null,
+        longitude: null,
+      }),
+    );
+  }, [dispatch, signUpData]);
 
-  /** Toggle password field visibility. */
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const updateConfirmPassword = useCallback(
+    (value: string) => {
+      dispatch(setConfirmPassword(value));
+    },
+    [dispatch],
+  );
 
-  /** Accept terms and close the terms modal. */
-  const handleAcceptTerms = () => {
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const handleAcceptTerms = useCallback(() => {
     setTermsAccepted(true);
     setShowTermsModal(false);
-  };
+  }, []);
 
-  /** Open the terms acceptance modal. */
-  const handleShowTerms = () => {
+  const handleShowTerms = useCallback(() => {
     setShowTermsModal(true);
-  };
+  }, []);
 
   return {
-    // State
     currentStep,
     errors,
     showPassword,
@@ -452,12 +456,12 @@ export const useOnboarding = () => {
     formData: signUpData,
     termsAccepted,
     showTermsModal,
-
-    // Actions
     handleNext,
     handleBack,
     handleSubmit,
     updateFormData,
+    applyPlacesAddress,
+    clearPlacesAddress,
     togglePasswordVisibility,
     setCurrentStep,
     handleAcceptTerms,
@@ -467,4 +471,30 @@ export const useOnboarding = () => {
     updateConfirmPassword,
     confirmPassword,
   };
+}
+
+/** Provides shared signup wizard state to SignUpScreen and step components. */
+export function OnboardingProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const value = useOnboardingState();
+  return React.createElement(
+    OnboardingContext.Provider,
+    { value },
+    children,
+  );
+}
+
+/**
+ * Access shared onboarding wizard state.
+ * Must be used under OnboardingProvider.
+ */
+export const useOnboarding = () => {
+  const context = useContext(OnboardingContext);
+  if (!context) {
+    throw new Error("useOnboarding must be used within an OnboardingProvider");
+  }
+  return context;
 };

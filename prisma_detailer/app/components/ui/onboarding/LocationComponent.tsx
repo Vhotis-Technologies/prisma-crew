@@ -1,107 +1,114 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import StyledText from "@/app/components/helpers/StyledText";
-import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useOnboarding } from "@/app/app-hooks/useOnboarding";
+import AddressSearchInput, {
+  AddressSearchResult,
+} from "@/app/components/shared/AddressSearchInput";
 
 const LocationComponent = () => {
-  const { formData, updateFormData, termsAccepted } = useOnboarding();
+  const { formData, applyPlacesAddress, clearPlacesAddress, termsAccepted, errors } =
+    useOnboarding();
 
   const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
   const borderColor = useThemeColor({}, "borders");
-  const iconColor = useThemeColor({}, "icons");
+  const errorColor = useThemeColor({}, "error");
+
+  const initialSelectedAddress = useMemo((): AddressSearchResult | null => {
+    if (
+      !formData?.address ||
+      formData.latitude == null ||
+      formData.longitude == null
+    ) {
+      return null;
+    }
+    return {
+      address: formData.address,
+      post_code: formData.postcode || "",
+      city: formData.city || "",
+      country: formData.country || "",
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+    };
+  }, [formData]);
+
+  const handleSelect = useCallback(
+    (result: AddressSearchResult) => {
+      applyPlacesAddress(result);
+    },
+    [applyPlacesAddress],
+  );
+
+  const handleChange = useCallback(() => {
+    clearPlacesAddress();
+  }, [clearPlacesAddress]);
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.scrollContent}>
-        {/* Main Content */}
         <View style={styles.content}>
-            {/* Form Section */}
-            <View style={styles.formSection}>
-              {/* Street Address Input */}
-              <View style={styles.inputContainer}>
-                <StyledTextInput
-                  label="Street Address"
-                  placeholder="Enter your street address"
-                  value={formData?.address || ""}
-                  onChangeText={(text) => updateFormData("address", text)}
-                  style={styles.textInput}
-                  placeholderTextColor={
-                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
-                  }
-                  importantForAutofill="yes"
-                  autoComplete="street-address"
-                />
-              </View>
+          <View style={styles.formSection}>
+            <StyledText
+              variant="bodyMedium"
+              style={[styles.helperText, { color: textColor }]}
+            >
+              Search and select your home base address. Coordinates are required
+              so we can assign nearby jobs accurately.
+            </StyledText>
 
-              {/* City and Postcode Row */}
-              <View style={styles.row}>
-                <View style={styles.halfWidth}>
-                  <StyledTextInput
-                    label="City"
-                    placeholder="Enter your city"
-                    value={formData?.city || ""}
-                    onChangeText={(text) => updateFormData("city", text)}
-                    style={styles.textInput}
-                    placeholderTextColor={
-                      textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
-                    }
-                    importantForAutofill="yes"
-                    autoComplete="address-line1"
-                  />
-                </View>
-                <View style={styles.halfWidth}>
-                  <StyledTextInput
-                    label="Postcode"
-                    placeholder="Enter postcode"
-                    value={formData?.postcode || ""}
-                    onChangeText={(text) => updateFormData("postcode", text)}
-                    style={styles.textInput}
-                    placeholderTextColor={
-                      textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
-                    }
-                    importantForAutofill="yes"
-                    autoComplete="postal-code"
-                  />
-                </View>
-              </View>
+            <AddressSearchInput
+              label="Home address"
+              placeholder="Search for your address..."
+              onSelect={handleSelect}
+              onClear={handleChange}
+              initialSelectedAddress={initialSelectedAddress}
+            />
 
-              {/* Country Input */}
-              <View style={styles.inputContainer}>
-                <StyledTextInput
-                  label="Country"
-                  placeholder="Enter your country"
-                  value={formData?.country || ""}
-                  onChangeText={(text) => updateFormData("country", text)}
-                  style={styles.textInput}
-                  placeholderTextColor={
-                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
-                  }
-                />
-              </View>
-            </View>
+            {errors.address ? (
+              <StyledText style={[styles.errorText, { color: errorColor }]}>
+                {errors.address}
+              </StyledText>
+            ) : null}
 
-            {/* Terms Checkbox */}
-            <View style={styles.termsContainer}>
-              <View style={styles.checkboxContainer}>
-                <View style={[styles.checkbox, { borderColor }]}>
-                  {termsAccepted && (
-                    <Ionicons name="checkmark" size={16} color={textColor} />
-                  )}
-                </View>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[styles.termsText, { color: textColor }]}
-                >
-                  Please read and agree to our terms of service to proceed
+            {initialSelectedAddress ? (
+              <View style={[styles.confirmBox, { borderColor }]}>
+                <StyledText variant="labelMedium" style={{ color: textColor }}>
+                  Selected location
+                </StyledText>
+                <StyledText variant="bodySmall" style={{ color: textColor, opacity: 0.85 }}>
+                  {[
+                    formData?.address,
+                    formData?.city,
+                    formData?.postcode,
+                    formData?.country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </StyledText>
               </View>
+            ) : null}
+          </View>
+
+          <View style={styles.termsContainer}>
+            <View style={styles.checkboxContainer}>
+              <View style={[styles.checkbox, { borderColor }]}>
+                {termsAccepted && (
+                  <Ionicons name="checkmark" size={16} color={textColor} />
+                )}
+              </View>
+              <StyledText
+                variant="bodyMedium"
+                style={[styles.termsText, { color: textColor }]}
+              >
+                Please read and agree to our terms of service to proceed
+              </StyledText>
             </View>
           </View>
         </View>
+      </View>
     </View>
   );
 };
@@ -121,20 +128,17 @@ const styles = StyleSheet.create({
   formSection: {
     flex: 1,
   },
-  inputContainer: {
-    marginBottom: 20,
-    borderRadius: 20,
+  helperText: {
+    marginBottom: 16,
+    opacity: 0.85,
+    lineHeight: 20,
   },
-  textInput: {
-    borderRadius: 20,
-    fontSize: 16,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  halfWidth: {
-    flex: 1,
+  confirmBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 4,
+    gap: 4,
   },
   termsContainer: {
     marginTop: 20,
@@ -159,6 +163,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     opacity: 0.8,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    marginBottom: 8,
   },
 });
 

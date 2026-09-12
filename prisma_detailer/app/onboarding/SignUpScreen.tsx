@@ -5,22 +5,23 @@ import {
   ScrollView,
   Platform,
   Dimensions,
-  Pressable,
 } from "react-native";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import StyledButton from "../components/helpers/StyledButton";
 import StyledText from "../components/helpers/StyledText";
 import TermsAcceptanceModal from "../components/helpers/TermsAcceptanceModal";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { useOnboarding } from "@/app/app-hooks/useOnboarding";
+import {
+  OnboardingProvider,
+  useOnboarding,
+} from "@/app/app-hooks/useOnboarding";
 import PersonalInfoComponent from "../components/ui/onboarding/PersonalInfoComponent";
 import SecurityComponent from "../components/ui/onboarding/SecurityComponent";
 import LocationComponent from "../components/ui/onboarding/LocationComponent";
 
 const { width, height } = Dimensions.get("window");
 
-const SignUpScreen = () => {
+const SignUpScreenContent = () => {
   const {
     currentStep,
     steps,
@@ -46,9 +47,9 @@ const SignUpScreen = () => {
             style={[
               styles.stepCircle,
               {
-                backgroundColor:
-                  currentStep >= step.id ? backgroundColor : backgroundColor,
-                borderColor: currentStep >= step.id ? borderColor : borderColor,
+                backgroundColor,
+                borderColor:
+                  currentStep >= step.id ? textColor : borderColor,
               },
             ]}
           >
@@ -57,12 +58,7 @@ const SignUpScreen = () => {
             ) : (
               <StyledText
                 variant="labelLarge"
-                style={[
-                  styles.stepNumber,
-                  {
-                    color: currentStep >= step.id ? textColor : textColor,
-                  },
-                ]}
+                style={[styles.stepNumber, { color: textColor }]}
               >
                 {step.id}
               </StyledText>
@@ -70,12 +66,7 @@ const SignUpScreen = () => {
           </View>
           <StyledText
             variant="labelMedium"
-            style={[
-              styles.stepTitle,
-              {
-                color: currentStep >= step.id ? textColor : textColor,
-              },
-            ]}
+            style={[styles.stepTitle, { color: textColor }]}
           >
             {step.title}
           </StyledText>
@@ -85,7 +76,7 @@ const SignUpScreen = () => {
                 styles.stepLine,
                 {
                   backgroundColor:
-                    currentStep > step.id ? textColor : backgroundColor,
+                    currentStep > step.id ? textColor : borderColor,
                 },
               ]}
             />
@@ -99,13 +90,10 @@ const SignUpScreen = () => {
     switch (currentStep) {
       case 1:
         return <PersonalInfoComponent />;
-
       case 2:
         return <SecurityComponent />;
-
       case 3:
         return <LocationComponent />;
-
       default:
         return null;
     }
@@ -118,7 +106,7 @@ const SignUpScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
       >
         {renderStepIndicator()}
         {renderStepContent()}
@@ -140,12 +128,12 @@ const SignUpScreen = () => {
               currentStep === 2
                 ? handleNextStep2
                 : currentStep === 3 && !termsAccepted
-                ? handleShowTerms
-                : handleNext
+                  ? handleShowTerms
+                  : handleNext
             }
             style={[
               styles.nextButton,
-              currentStep === 3 && !termsAccepted  && styles.disabledButton,
+              currentStep === 3 && !termsAccepted && styles.disabledButton,
             ]}
           >
             {currentStep === 3
@@ -157,7 +145,6 @@ const SignUpScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Terms and Conditions Modal */}
       <TermsAcceptanceModal
         visible={showTermsModal}
         onAccept={handleAcceptTerms}
@@ -167,34 +154,17 @@ const SignUpScreen = () => {
   );
 };
 
+const SignUpScreen = () => (
+  <OnboardingProvider>
+    <SignUpScreenContent />
+  </OnboardingProvider>
+);
+
+export default SignUpScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingTop: 12,
-    paddingBottom: 5,
-    paddingHorizontal: 12,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  backButton: {
-    position: "absolute",
-    top: 40,
-    left: 12,
-    zIndex: 1,
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginTop: 20,
-    fontWeight: "bold",
-  },
-  headerSubtitle: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginTop: 4,
-    opacity: 0.9,
   },
   content: {
     flex: 1,
@@ -252,5 +222,3 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
-
-export default SignUpScreen;

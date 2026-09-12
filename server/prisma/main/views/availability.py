@@ -145,20 +145,19 @@ class AvailabilityView(APIView):
             longitude_str = data.get('longitude')
             is_express_service = data.get('is_express_service', 'false').lower() == 'true'
 
-            # Optional lat/lng for geographic fallback
-            latitude = None
-            longitude = None
-            if latitude_str and longitude_str:
-                try:
-                    latitude = float(latitude_str)
-                    longitude = float(longitude_str)
-                except (TypeError, ValueError):
-                    pass
-
-            # Validate required parameters
-            if not all([date_str, country, city]):
+            # Validate required parameters (lat/lng now required for Spire distance check)
+            if not all([date_str, country, city, latitude_str, longitude_str]):
                 return Response({
-                    "error": "Missing required parameters: date, country, city"
+                    "error": "Missing required parameters: date, country, city, latitude, longitude"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Parse lat/lng
+            try:
+                latitude = float(latitude_str)
+                longitude = float(longitude_str)
+            except (TypeError, ValueError):
+                return Response({
+                    "error": "Invalid latitude or longitude"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Parse date
@@ -169,9 +168,9 @@ class AvailabilityView(APIView):
                     "error": "Invalid date format. Use YYYY-MM-DD"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get detailers using three-step fallback: exact -> normalized -> 30km radius
-            # Only include detailers who have is_available=True (toggled on for work)
-            detailers, _ = find_detailers_for_location(
+            # Get detailers - now returns service_area_info with Spire distance check
+            # Client must be within 35km of Spire of Dublin
+            detailers, _, service_area_info = find_detailers_for_location(
                 country=country,
                 city=city,
                 latitude=latitude,
@@ -179,9 +178,16 @@ class AvailabilityView(APIView):
                 is_available=True,
             )
 
+            # Check for out of range error
+            if service_area_info and service_area_info.get("error") == "out_of_range":
+                return Response({
+                    "error": service_area_info.get("message"),
+                    "slots": []
+                }, status=status.HTTP_200_OK)
+
             if not detailers.exists():
                 return Response({
-                    "error": f"No active detailers found in {city}, {country}. We are currently working to bring PRISMA closer to you. Please check back another time.",
+                    "error": "No active detailers found. We are currently working to bring PRISMA closer to you. Please check back another time.",
                     "slots": []
                 }, status=status.HTTP_200_OK)
 
@@ -283,9 +289,19 @@ class AvailabilityView(APIView):
             latitude_str = data.get('latitude')
             longitude_str = data.get('longitude')
 
-            if not date_str or not country or not city:
+            # Validate required parameters (lat/lng now required for Spire distance check)
+            if not date_str or not country or not city or not latitude_str or not longitude_str:
                 return Response({
-                    "error": "Missing required parameters: date, country, city"
+                    "error": "Missing required parameters: date, country, city, latitude, longitude"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Parse lat/lng
+            try:
+                latitude = float(latitude_str)
+                longitude = float(longitude_str)
+            except (TypeError, ValueError):
+                return Response({
+                    "error": "Invalid latitude or longitude"
                 }, status=status.HTTP_400_BAD_REQUEST)
             try:
                 workload_minutes = int(workload_minutes)
@@ -304,15 +320,6 @@ class AvailabilityView(APIView):
                 return Response({
                     "error": "Invalid date format. Use YYYY-MM-DD"
                 }, status=status.HTTP_400_BAD_REQUEST)
-
-            latitude = None
-            longitude = None
-            if latitude_str is not None and longitude_str is not None:
-                try:
-                    latitude = float(latitude_str)
-                    longitude = float(longitude_str)
-                except (TypeError, ValueError):
-                    pass
 
             # Bulk booking branch: reject same-day bulk if not enough minutes left until 19:00
             business_end = time(19, 0)
@@ -352,13 +359,23 @@ class AvailabilityView(APIView):
             morning_end = time(12, 0)
             afternoon_end = time(18, 0)
 
-            detailers, _ = find_detailers_for_location(
+            # Get detailers - now returns service_area_info with Spire distance check
+            detailers, _, service_area_info = find_detailers_for_location(
                 country=country,
                 city=city,
                 latitude=latitude,
                 longitude=longitude,
                 is_available=True,
             )
+
+            # Check for out of range error
+            if service_area_info and service_area_info.get("error") == "out_of_range":
+                return Response({
+                    "error": service_area_info.get("message"),
+                    "available": False,
+                    "options": [],
+                }, status=status.HTTP_200_OK)
+
             if not detailers.exists():
                 return Response({
                     "error": "Not enough capacity on this date. Try another date or fewer vehicles.",

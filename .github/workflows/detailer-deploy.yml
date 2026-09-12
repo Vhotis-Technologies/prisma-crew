@@ -7,8 +7,8 @@ on:
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-  DO_PROD_PATH: /${{ secrets.DO_USERNAME }}/prisma-prod/prisma-crew
-  DO_STAGING_PATH: /${{ secrets.DO_USERNAME }}/prisma-staging/prisma-crew
+  DO_PROD_PATH: /${{ secrets.DO_USERNAME }}/production/prisma-crew
+  DO_STAGING_PATH: /${{ secrets.DO_USERNAME }}/staging/prisma-crew
 
 jobs:
   deploy-mobile-app:

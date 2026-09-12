@@ -5,45 +5,24 @@ import StyledText from "@/app/components/helpers/StyledText";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useOnboarding } from "@/app/app-hooks/useOnboarding";
-import { useAlertContext } from "@/app/contexts/AlertContext";
 
 const SecurityComponent = () => {
   const {
     formData,
     updateFormData,
-    handleNextStep2,
     updateConfirmPassword,
     confirmPassword,
+    errors,
   } = useOnboarding();
 
-  const { setAlertConfig, setIsVisible } = useAlertContext();
   const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
-  const borderColor = useThemeColor({}, "borders");
   const errorColor = useThemeColor({}, "error");
   const iconColor = useThemeColor({}, "icons");
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
-  // Password validation function
-  const validatePassword = (password: string) => {
-    const errors = [];
-
-    if (password.length < 8) {
-      errors.push("Password must be at least 8 characters long");
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      errors.push("Password must contain at least one uppercase letter");
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push("Password must contain at least one lowercase letter");
-    }
-
-    return errors;
-  };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -78,6 +57,11 @@ const SecurityComponent = () => {
                     />
                   </TouchableOpacity>
                 </View>
+                {errors.password ? (
+                  <StyledText style={[styles.errorText, { color: errorColor }]}>
+                    {errors.password}
+                  </StyledText>
+                ) : null}
               </View>
 
               {/* Confirm Password Input */}
