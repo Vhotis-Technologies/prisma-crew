@@ -2,14 +2,14 @@
 Shared helper for finding detailers by location.
 
 Requires client location to be within 35 km of Spire of Dublin.
-Detailer matching uses city-based matching only (no detailer radius check).
+Once inside the service area, ALL active/verified detailers are eligible.
+Redis GEO handles nearest-first ranking at booking time.
 """
 from typing import Optional, Tuple
 
 from django.db.models import QuerySet
 
 from main.models import Detailer
-from main.utils.city_normalization import normalize_city_for_matching
 from main.utils.geo_utils import classify_service_area
 
 
@@ -24,21 +24,20 @@ def find_detailers_for_location(
     Find detailers for a client's location.
 
     MANDATORY: Client must be within 35 km of the Spire of Dublin.
-    Detailer matching uses city-based matching only:
-    Step 1: Exact city match (country + city)
-    Step 2: Normalized city match (e.g. Ballentree Village -> Dublin)
+    Once inside the service area, returns ALL active/verified detailers.
+    City matching is no longer used - Spire distance is the only gate.
 
     Args:
-        country: Client country
-        city: Client city (from address)
+        country: Client country (used for filtering detailers)
+        city: Client city (logged but not used for filtering)
         latitude: Client latitude (REQUIRED for service area check)
         longitude: Client longitude (REQUIRED for service area check)
         is_available: Filter by is_available (True for booking, None for availability)
 
     Returns:
         Tuple of (detailers QuerySet, method_used, service_area_info) where:
-        - method_used is 'exact', 'normalized', or None if no detailers found
-        - service_area_info is dict with zone, distance_km, surcharge_eur (or None if out of area)
+        - method_used is 'spire_zone' when detailers found, None otherwise
+        - service_area_info is dict with zone, distance_km, surcharge_eur (or error if out of area)
     """
     # Require lat/lng for service area check
     if latitude is None or longitude is None:
@@ -62,40 +61,22 @@ def find_detailers_for_location(
         "surcharge_eur": surcharge_eur
     }
 
-    if not country or not city:
-        return Detailer.objects.none(), None, service_area_info
-    
-    country = country.strip()
-    city = city.strip()
-
-    def apply_filters(qs):
-        """Apply optional ``is_available`` filter to a detailer queryset."""
-        if is_available is not None:
-            return qs.filter(is_available=is_available)
-        return qs
-
-    # Step 1: Exact city match
+    # Client is within Spire service area - return all active/verified detailers
+    # Redis GEO will rank them by proximity at booking time
     detailers = Detailer.objects.filter(
-        country__iexact=country,
-        city__iexact=city,
         is_active=True,
         is_verified=True,
     )
-    detailers = apply_filters(detailers)
+    
+    # Optionally filter by country if provided (market-level filter)
+    if country:
+        detailers = detailers.filter(country__iexact=country.strip())
+    
+    # Apply availability filter if specified
+    if is_available is not None:
+        detailers = detailers.filter(is_available=is_available)
+    
     if detailers.exists():
-        return detailers, "exact", service_area_info
-
-    # Step 2: Normalized city match
-    normalized_city = normalize_city_for_matching(city)
-    if normalized_city and normalized_city != city:
-        detailers = Detailer.objects.filter(
-            country__iexact=country,
-            city__iexact=normalized_city,
-            is_active=True,
-            is_verified=True,
-        )
-        detailers = apply_filters(detailers)
-        if detailers.exists():
-            return detailers, "normalized", service_area_info
+        return detailers, "spire_zone", service_area_info
 
     return Detailer.objects.none(), None, service_area_info
