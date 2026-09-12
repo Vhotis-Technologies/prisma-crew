@@ -187,7 +187,7 @@ class AvailabilityView(APIView):
 
             if not detailers.exists():
                 return Response({
-                    "error": "No active detailers found. We are currently working to bring PRISMA closer to you. Please check back another time.",
+                    "error": "No active detailers found. We are currently working to bring Prisma Car Care closer to you. Please check back another time.",
                     "slots": []
                 }, status=status.HTTP_200_OK)
 

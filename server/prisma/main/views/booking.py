@@ -183,7 +183,7 @@ class BookingView(APIView):
             if not available_detailers.exists():
                 return Response({
                     "success": False,
-                    "error": "No available detailers found. We are currently working to bring PRISMA closer to you. Please check back another time."
+                    "error": "No available detailers found. We are currently working to bring Prisma Car Care closer to you. Please check back another time."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Parse appointment date/time first so we can filter detailers by slot availability
