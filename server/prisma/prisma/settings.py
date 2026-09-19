@@ -187,6 +187,17 @@ DATABASES = {
 }
 
 
+def _gcs_raw_from_env(*env_names) -> str:
+    for name in env_names:
+        raw = (os.getenv(name) or '').strip()
+        if raw:
+            return raw
+    names = ', '.join(env_names)
+    raise ImproperlyConfigured(
+        f'Set one of {names} to a service-account JSON blob or a credentials file path.'
+    )
+
+
 def _load_gcs_credentials(raw: str):
     """Accept a JSON blob or a path to a service-account file (resolve relative to BASE_DIR)."""
     value = raw.strip()
@@ -219,16 +230,9 @@ if _IS_COLLECTSTATIC:
         'staticfiles': _STATICFILES_STORAGE,
     }
 elif IS_STAGING:
-    _raw_staging_creds = (
-        os.getenv('GS_CREDENTIALS_STAGING_JSON')
-        or os.getenv('GS_CREDENTIALS_PATH_STAGING')
-        or ''
-    ).strip()
-    if not _raw_staging_creds:
-        raise ImproperlyConfigured(
-            'Set GS_CREDENTIALS_STAGING_JSON (JSON blob) or GS_CREDENTIALS_PATH_STAGING (file path).'
-        )
-    GS_CREDENTIALS_STAGING = _load_gcs_credentials(_raw_staging_creds)
+    GS_CREDENTIALS_STAGING = _load_gcs_credentials(
+        _gcs_raw_from_env('GS_CREDENTIALS_STAGING_JSON', 'GS_CREDENTIALS_PATH_STAGING')
+    )
     GS_BUCKET_NAME_STAGING = os.getenv('GS_BUCKET_NAME_STAGING', 'prisma_staging_bucket')
     GS_LOCATION_STAGING = os.getenv('GS_LOCATION_STAGING', 'detailer-app')
     STORAGES = {
@@ -244,15 +248,19 @@ elif IS_STAGING:
         'staticfiles': _STATICFILES_STORAGE,
     }
 else:
-    _raw_prod_creds = (os.getenv('GS_CREDENTIALS_PATH') or '').strip()
-    if not _raw_prod_creds:
-        raise ImproperlyConfigured(
-            'Set GS_CREDENTIALS_PATH to a JSON blob or path to the service-account file.'
+    GS_CREDENTIALS = _load_gcs_credentials(
+        _gcs_raw_from_env(
+            'GS_CREDENTIALS_JSON',
+            'GS_CREDENTIALS_STAGING_JSON',
+            'GS_CREDENTIALS_PATH',
         )
-    GS_CREDENTIALS = _load_gcs_credentials(_raw_prod_creds)
-    GS_CREDENTIALS_PATH = _raw_prod_creds
-    GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'prisma-valet-bucket')
-    GS_LOCATION = os.getenv('GS_LOCATION', 'detailer-app')
+    )
+    GS_BUCKET_NAME = (
+        os.getenv('GS_BUCKET_NAME')
+        or os.getenv('GS_BUCKET_NAME_STAGING')
+        or 'prisma-valet-bucket'
+    )
+    GS_LOCATION = os.getenv('GS_LOCATION') or os.getenv('GS_LOCATION_STAGING') or 'detailer-app'
     MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_LOCATION}/'
     MEDIA_ROOT = BASE_DIR / 'media'
     STORAGES = {

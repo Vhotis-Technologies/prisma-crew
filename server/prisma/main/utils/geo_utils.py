@@ -17,7 +17,7 @@ SPIRE_LNG = -6.2603
 # Service area zones (distance from Spire)
 FREE_ZONE_RADIUS_KM = 25.0
 MAX_SERVICE_RADIUS_KM = 35.0
-TRAVEL_SURCHARGE_EUR = 10.0
+TRAVEL_SURCHARGE_EUR = 15.0
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
