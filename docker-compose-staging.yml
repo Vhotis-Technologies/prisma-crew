@@ -27,7 +27,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "8200:8000"
+      - "8700:8000"
     volumes:
       - ./server/prisma:/app
     env_file:
