@@ -8,7 +8,7 @@ Detailer availability and client-facing slot APIs.
 
 **Authenticated GET/POST:** load/save unavailability, busy hours for a date.
 
-**Slot generation:** business hours 07:00–19:00, 30 min travel between slots; first bookable 08:30.
+**Slot generation:** business hours 08:00–20:00, 30 min travel between slots; first bookable 08:00.
 Same-day requests never offer slots earlier than "now + travel interval"; past dates return no slots.
 """
 from rest_framework.views import APIView
@@ -57,14 +57,14 @@ def _merge_times_to_ranges(time_strings):
 
 def _range_to_hour_slots(start_min, end_min):
     """
-    Return set of 'HH:00' for business hours 7-19 that overlap [start_min, end_min).
-    UI only has whole-hour slots (07:00, 08:00, ...), so a job at 07:30 must block 07:00.
+    Return set of 'HH:00' for business hours 8-20 that overlap [start_min, end_min).
+    UI only has whole-hour slots (08:00, 09:00, ...), so a job at 08:30 must block 08:00.
     If end_min <= start_min (e.g. duration 0), still block the hour containing start_min.
     """
     out = set()
     if end_min <= start_min:
         end_min = start_min + 1
-    for h in range(7, 20):
+    for h in range(8, 21):
         slot_start = h * 60
         slot_end = (h + 1) * 60
         if start_min < slot_end and end_min > slot_start:
@@ -191,10 +191,10 @@ class AvailabilityView(APIView):
                     "slots": []
                 }, status=status.HTTP_200_OK)
 
-            # Slot generation: business hours 7–19; first slot 8:30 (30 min drive to first appointment)
-            business_start = time(7, 0)
-            first_slot_start = time(8, 30)  # 30 min drive considered for first booking
-            business_end = time(19, 0)
+            # Slot generation: business hours 8–20; first slot 8:00
+            business_start = time(8, 0)
+            first_slot_start = time(8, 0)
+            business_end = time(20, 0)
             travel_interval = 30
 
             # Same-day requests: don't offer slots that have already passed (or that a detailer
@@ -321,8 +321,8 @@ class AvailabilityView(APIView):
                     "error": "Invalid date format. Use YYYY-MM-DD"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Bulk booking branch: reject same-day bulk if not enough minutes left until 19:00
-            business_end = time(19, 0)
+            # Bulk booking branch: reject same-day bulk if not enough minutes left until 20:00
+            business_end = time(20, 0)
             today = timezone.now().date()
             if target_date == today:
                 now_param = data.get('now')
@@ -338,13 +338,13 @@ class AvailabilityView(APIView):
                 else:
                     now_dt = timezone.now()
                     now_minutes = now_dt.hour * 60 + now_dt.minute
-                business_end_min = 19 * 60
+                business_end_min = 20 * 60
                 minutes_left = business_end_min - now_minutes
                 # Same-location bulk: one 30 min drive + workload
                 required_minutes = 30 + workload_minutes
                 if minutes_left < required_minutes:
                     return Response({
-                        "error": "Too late for this volume today. Business closes at 9pm. Try fewer vehicles or another day.",
+                        "error": "Too late for this volume today. Business closes at 8pm. Try fewer vehicles or another day.",
                         "available": False,
                         "options": [],
                     }, status=status.HTTP_200_OK)
@@ -354,8 +354,8 @@ class AvailabilityView(APIView):
             slot_length = service_duration
 
             # Window boundaries (minutes from midnight for comparison)
-            business_start = time(7, 0)
-            business_end = time(19, 0)
+            business_start = time(8, 0)
+            business_end = time(20, 0)
             morning_end = time(12, 0)
             afternoon_end = time(18, 0)
 

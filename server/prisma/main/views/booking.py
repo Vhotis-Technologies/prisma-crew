@@ -476,8 +476,8 @@ class BookingView(APIView):
                 target_date = datetime.strptime(data.get('date', ''), '%Y-%m-%d').date()
             except (ValueError, TypeError):
                 return Response({"error": "Invalid date. Use YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
-            start_time_str = data.get('start_time', '07:00')
-            end_time_str = data.get('end_time', '19:00')
+            start_time_str = data.get('start_time', '08:00')
+            end_time_str = data.get('end_time', '20:00')
             for fmt in ('%H:%M:%S', '%H:%M'):
                 try:
                     start_time = datetime.strptime(start_time_str.split('.')[0], fmt).time()
@@ -485,7 +485,7 @@ class BookingView(APIView):
                 except ValueError:
                     continue
             else:
-                start_time = time(7, 0)
+                start_time = time(8, 0)
             for fmt in ('%H:%M:%S', '%H:%M'):
                 try:
                     end_time = datetime.strptime(end_time_str.split('.')[0], fmt).time()
@@ -493,7 +493,7 @@ class BookingView(APIView):
                 except ValueError:
                     continue
             else:
-                end_time = time(19, 0)
+                end_time = time(20, 0)
             from zoneinfo import ZoneInfo
             travel_interval = 30  # drive before/after appointments (same-location bulk: no travel between jobs)
 
@@ -922,8 +922,8 @@ class BookingView(APIView):
                 target_date = datetime.strptime(data.get('date', ''), '%Y-%m-%d').date()
             except (ValueError, TypeError):
                 return Response({"error": "Invalid date. Use YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
-            start_time_str = data.get('start_time', '07:00')
-            end_time_str = data.get('end_time', '19:00')
+            start_time_str = data.get('start_time', '08:00')
+            end_time_str = data.get('end_time', '20:00')
             for fmt in ('%H:%M:%S', '%H:%M'):
                 try:
                     start_time = datetime.strptime(start_time_str.split('.')[0], fmt).time()
@@ -931,7 +931,7 @@ class BookingView(APIView):
                 except ValueError:
                     continue
             else:
-                start_time = time(7, 0)
+                start_time = time(8, 0)
             for fmt in ('%H:%M:%S', '%H:%M'):
                 try:
                     end_time = datetime.strptime(end_time_str.split('.')[0], fmt).time()
@@ -939,7 +939,7 @@ class BookingView(APIView):
                 except ValueError:
                     continue
             else:
-                end_time = time(19, 0)
+                end_time = time(20, 0)
             try:
                 suggested_team_size = max(1, int(data.get('suggested_team_size', 1)))
             except (TypeError, ValueError):
