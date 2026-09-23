@@ -12,12 +12,22 @@ import { GiftedChat, IMessage, Send, Bubble, InputToolbar } from "react-native-g
 import Constants from "expo-constants";
 import { useThemeTokens } from "@/hooks/useThemeTokens";
 import { Screen, CrewText } from "@/app/components/ui/system";
-import { useAppSelector } from "@/app/store/my_store";
+import { useAppDispatch, useAppSelector } from "@/app/store/my_store";
+import {
+  ensureCrewAccessToken,
+  isAccessTokenFresh,
+} from "@/app/utils/accessToken";
 
 export default function SupportChatScreen() {
   const { colors, spacing, radius } = useThemeTokens();
+  const dispatch = useAppDispatch();
   const accessToken = useAppSelector((s: any) => s.auth.access);
+  const refreshToken = useAppSelector((s: any) => s.auth.refresh);
   const userProfile = useAppSelector((s: any) => s.auth.user);
+  const accessRef = useRef(accessToken);
+  const refreshRef = useRef(refreshToken);
+  accessRef.current = accessToken;
+  refreshRef.current = refreshToken;
   
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,46 +62,37 @@ export default function SupportChatScreen() {
     }
   }, []);
   
-  // Decode JWT to check if token is valid (not expired)
-  const isTokenValid = useCallback((token: string): boolean => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiryTime = payload.exp * 1000; // Convert to milliseconds
-      const now = Date.now();
-      // Check if token expires in more than 30 seconds
-      return expiryTime > (now + 30000);
-    } catch (error) {
-      console.error("Failed to decode token:", error);
-      return false;
-    }
-  }, []);
-  
+  const ensureAccess = useCallback(async (): Promise<string | null> => {
+    return ensureCrewAccessToken({
+      apiUrl,
+      access: accessRef.current,
+      refresh: refreshRef.current,
+      dispatch,
+    });
+  }, [apiUrl, dispatch]);
+
   // Only connect when screen is focused
   useFocusEffect(
     useCallback(() => {
-      // Reset mounted state
       mountedRef.current = true;
-      
-      if (!accessToken || !wsUrl || !apiUrl) {
+
+      if (!wsUrl || !apiUrl) {
         setIsLoading(false);
         return;
       }
-      
-      // Check if token is valid before connecting
-      if (!isTokenValid(accessToken)) {
-        console.warn("Token is expired or invalid. Please log in again.");
-        setIsLoading(false);
-        return;
-      }
-      
-      // Load message history via REST first
-      loadMessageHistory();
-      
-      // Connect websocket only when screen is focused
-      connectWebSocket();
-      
+
+      const start = async () => {
+        const token = await ensureAccess();
+        if (!token || !mountedRef.current) {
+          setIsLoading(false);
+          return;
+        }
+        await loadMessageHistory(token);
+        connectWebSocket(token);
+      };
+      void start();
+
       return () => {
-        // Cleanup: close WebSocket when leaving screen
         mountedRef.current = false;
         clearReconnectTimer();
         if (wsRef.current) {
@@ -101,13 +102,13 @@ export default function SupportChatScreen() {
         }
         setIsConnected(false);
       };
-    }, [accessToken, wsUrl, apiUrl, isTokenValid, clearReconnectTimer])
+    }, [wsUrl, apiUrl, ensureAccess, clearReconnectTimer])
   );
   
-  const loadMessageHistory = async () => {
+  const loadMessageHistory = async (token: string) => {
     try {
       const response = await fetch(`${apiUrl}/api/v1/support-chat/get_my_thread/`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
       
@@ -140,7 +141,7 @@ export default function SupportChatScreen() {
     }
   };
   
-  const connectWebSocket = () => {
+  const connectWebSocket = (token: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       return;
     }
@@ -149,15 +150,14 @@ export default function SupportChatScreen() {
     }
     clearReconnectTimer();
 
-    // Double-check token is still valid before connecting
-    if (!isTokenValid(accessToken)) {
+    if (!isAccessTokenFresh(token)) {
       console.warn("Cannot connect: token is expired");
       setIsLoading(false);
       return;
     }
     
     console.log("Connecting to support chat WebSocket...");
-    const ws = new WebSocket(`${wsUrl}?token=${accessToken}`);
+    const ws = new WebSocket(`${wsUrl}?token=${token}`);
     wsRef.current = ws;
     
     ws.onopen = () => {
@@ -228,12 +228,16 @@ export default function SupportChatScreen() {
       // 1. Component is still mounted (user is still on the screen)
       // 2. Token is still valid
       // 3. Disconnect wasn't intentional (code 1000 = normal closure)
-      if (mountedRef.current && isTokenValid(accessToken) && event.code !== 1000) {
+      if (mountedRef.current && event.code !== 1000) {
         console.log("Attempting to reconnect in 3 seconds...");
         reconnectTimerRef.current = setTimeout(() => {
-          if (mountedRef.current && wsUrl && isTokenValid(accessToken)) {
-            connectWebSocket();
-          }
+          void (async () => {
+            if (!mountedRef.current || !wsUrl) return;
+            const next = await ensureAccess();
+            if (next && mountedRef.current) {
+              connectWebSocket(next);
+            }
+          })();
         }, 3000);
       }
     };
@@ -261,13 +265,15 @@ export default function SupportChatScreen() {
   }, [isConnected, threadStatus]);
   
   const handleCloseChat = async () => {
-    if (!apiUrl || !accessToken) return;
+    if (!apiUrl) return;
+    const token = await ensureAccess();
+    if (!token) return;
     
     try {
       await fetch(`${apiUrl}/api/v1/support-chat/close_thread/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
