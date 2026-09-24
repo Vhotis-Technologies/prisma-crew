@@ -173,7 +173,7 @@ def _candidates_for_single_job(job: Job) -> List[dict]:
     excluded = {d.id for d in job.detailers.all()}
     if job.primary_detailer_id:
         excluded.add(job.primary_detailer_id)
-    available, _ = find_detailers_for_location(
+    available, _, _ = find_detailers_for_location(
         country=job.country or '',
         city=job.city or '',
         latitude=job.latitude,
@@ -219,7 +219,7 @@ def _candidates_for_bulk(jobs: List[Job]) -> List[dict]:
             excluded.add(j.primary_detailer_id)
         for d in j.detailers.all():
             excluded.add(d.id)
-    available, _ = find_detailers_for_location(
+    available, _, _ = find_detailers_for_location(
         country=head.country or '',
         city=head.city or '',
         latitude=head.latitude,

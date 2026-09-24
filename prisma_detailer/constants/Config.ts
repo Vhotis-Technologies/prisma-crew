@@ -20,6 +20,7 @@ export const API_CONFIG = {
 };
 
 // Navigation uses Linking.openURL to the Google Maps app — no embedded map or Places SDK.
+// Address search is proxied through the detailer server (GOOGLE_PLACES_API_KEY env).
 /** @deprecated No longer used — detailer app does not call Google APIs directly. */
 export const KEY_CONFIGS = {
   googleApiKeys: undefined as string | undefined,

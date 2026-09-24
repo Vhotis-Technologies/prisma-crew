@@ -2,7 +2,7 @@
 URL routing for the detailer API (v1).
 
 Maps authentication, bookings, appointments, banking, earnings, notifications,
-password reset, and internal support endpoints. Serves media files in DEBUG.
+password reset, Google Places proxy, and internal support endpoints. Serves media files in DEBUG.
 """
 from django.urls import path
 from django.conf import settings
@@ -24,10 +24,13 @@ from main.views.support.support_jobs import SupportJobsView
 from main.views.support.support_payouts import SupportPayoutsView
 from main.views.support.support_crew_chat_notify import SupportCrewChatNotifyView
 from main.views.support_chat import CrewSupportChatView
+from main.views.places import PlacesView
 
 app_name = 'main'
 urlpatterns = [
     path('onboard/<str:action>/', AuthenticationView.as_view(), name='onboard'),
+    # Google Places proxy (public, rate-limited; key stays server-side)
+    path('places/<str:action>/', PlacesView.as_view(), name='places'),
     path('authentication/login/', CustomTokenObtainPairView.as_view(), name='login'),
     path('authentication/refresh/', TokenRefreshView.as_view(), name='refresh'),
     path('availability/<str:action>/', AvailabilityView.as_view(), name='availability'),

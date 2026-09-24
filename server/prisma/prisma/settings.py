@@ -458,6 +458,8 @@ SUPPORT_API_URL = (os.getenv('SUPPORT_API_URL') or '').strip()
 # Shared secret from the client server (header X-Client-Internal-Key).
 CLIENT_SERVER_SECRET = (os.getenv('CLIENT_SERVER_SECRET') or '').strip()
 FIELD_ENCRYPTION_KEY = (os.getenv('FIELD_ENCRYPTION_KEY') or '').strip()
+# Google Places proxy for address autocomplete/details (detailer app).
+GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
 
 LOGGING = {
     'version': 1,

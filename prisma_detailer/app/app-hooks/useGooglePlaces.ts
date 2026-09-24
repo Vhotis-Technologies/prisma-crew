@@ -1,5 +1,5 @@
 /**
- * Google Places autocomplete and place details via the Prisma server proxy.
+ * Google Places autocomplete and place details via the detailer server proxy.
  * The API key stays server-side; clients never call Google directly.
  */
 // @expo-router-ignore - This is a utility file, not a route
@@ -50,7 +50,7 @@ type PlacesStatusResponse = {
 let configuredCache: boolean | null = null;
 
 function apiBase(): string {
-  return String(API_CONFIG.customerAppUrl || "").replace(/\/$/, "");
+  return String(API_CONFIG.detailerAppUrl || "").replace(/\/$/, "");
 }
 
 /** Whether the server has Google Places configured. */
