@@ -918,6 +918,7 @@ class Notification(models.Model):
         ('cleaning_completed', 'Cleaning Completed'),
         ('appointment_started', 'Appointment Started'),
         ('review_received', 'Review Received'),
+        ('tip_received', 'Tip Received'),
         ('pending', 'Pending'),
         ('car_ready', 'Car Ready'),
         ('payment_received', 'Payment Received'),

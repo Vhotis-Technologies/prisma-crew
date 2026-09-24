@@ -19,6 +19,8 @@ export enum NotificationType {
   PENDING = "pending",
   CAR_READY = "car_ready",
   PAYMENT_RECEIVED = "payment_received",
+  REVIEW_RECEIVED = "review_received",
+  TIP_RECEIVED = "tip_received",
   REMINDER = "reminder",
   SYSTEM = "system",
   CREW_CHAT = "crew_chat",

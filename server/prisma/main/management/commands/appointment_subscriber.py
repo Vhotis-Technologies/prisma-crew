@@ -2,7 +2,7 @@
 Long-running Redis consumer for client-originated job lifecycle events.
 
 Subscribes to the shared ``job_events`` stream as ``detailer_group`` and updates
-local ``Job`` records for cancellations, reschedules, and client reviews. Runs in
+local ``Job`` records for cancellations, reschedules, client reviews, and tips. Runs in
 Docker as ``python manage.py appointment_subscriber``.
 """
 from django.core.management.base import BaseCommand
@@ -38,11 +38,11 @@ class Command(BaseCommand):
     """
     Consume ``job_events`` Redis stream messages aimed at the detailer service.
 
-    Handles ``booking_cancelled``, ``booking_rescheduled``, and ``review_received``
-    published by the client platform; other event types are acked and ignored.
+    Handles ``booking_cancelled``, ``booking_rescheduled``, ``review_received``, and
+    ``tip_received`` published by the client platform; other event types are acked and ignored.
     """
 
-    help = "Read from Redis stream job_events (booking_cancelled, booking_rescheduled, review_received) and process messages."
+    help = "Read from Redis stream job_events (booking_cancelled, booking_rescheduled, review_received, tip_received) and process messages."
 
     def connect_with_retry(self, max_retries=30, delay=10):
         """
@@ -171,7 +171,7 @@ class Command(BaseCommand):
     def _dispatch_job_event(self, msg_id, fields, event, raw):
         """Apply one detailer-facing job_events payload. Returns True to ACK."""
         # Redis: only handle detailer-facing events; ack and drop the rest
-        if event not in ("booking_cancelled", "booking_rescheduled", "review_received"):
+        if event not in ("booking_cancelled", "booking_rescheduled", "review_received", "tip_received"):
             return True
         try:
             data = json.loads(raw)
@@ -189,20 +189,30 @@ class Command(BaseCommand):
                     review_comment = None
                 else:
                     review_comment = str(cr).strip()[:MAX_REVIEW_COMMENT_LEN]
+                try:
+                    tip_amount = float(data.get("amount", 0) or 0)
+                except (TypeError, ValueError):
+                    tip_amount = 0.0
+                tip_currency = str(data.get("currency") or "eur").lower()
             else:
                 booking_reference = str(data).strip().strip('"').strip("'")
                 new_appointment_date = new_appointment_time = ""
                 total_amount = rating = 0
                 review_comment = None
+                tip_amount = 0.0
+                tip_currency = "eur"
         except Exception:
             booking_reference = str(raw).strip().strip('"').strip("'")
             new_appointment_date = new_appointment_time = ""
             total_amount = rating = 0
             review_comment = None
+            tip_amount = 0.0
+            tip_currency = "eur"
 
         self.stdout.write(
             f"Received {event}: {booking_reference}"
             + (f" (rating={rating})" if event == "review_received" else "")
+            + (f" (tip={tip_amount} {tip_currency})" if event == "tip_received" else "")
         )
 
         try:
@@ -332,9 +342,35 @@ class Command(BaseCommand):
                 primary.check_for_deactivation()
                 self.stdout.write(self.style.SUCCESS(f"Detailer {primary.id} updated; notification sent."))
 
+            elif event == "tip_received":
+                if not primary:
+                    self.stdout.write(self.style.WARNING(f"Job {booking_reference} has no primary_detailer, skipping tip notify"))
+                    return True
+                if tip_amount <= 0:
+                    self.stdout.write(self.style.WARNING(f"Tip for {booking_reference} has non-positive amount, skipping"))
+                    return True
+                symbol = "£" if tip_currency == "gbp" else "€"
+                tip_label = f"{symbol}{tip_amount:.2f}"
+                notification_message = f"You received a {tip_label} tip for job {booking_reference}"
+                self.create_notification(
+                    primary.user,
+                    "Tip Received",
+                    "tip_received",
+                    "success",
+                    notification_message,
+                )
+                if primary.user.allow_push_notifications and primary.user.notification_token:
+                    send_push_notification(
+                        primary.user.id,
+                        "Tip Received",
+                        notification_message,
+                        "tip_received",
+                    )
+                self.stdout.write(self.style.SUCCESS(f"Tip notification sent to detailer {primary.id} ({tip_label})."))
+
             return True
         except Job.DoesNotExist:
-            self.stdout.write(self.style.ERROR(f"Job not found: {booking_reference} (review will not appear on detailer)"))
+            self.stdout.write(self.style.ERROR(f"Job not found: {booking_reference} (review/tip will not appear on detailer)"))
             return True
         except Exception as e:
             import traceback

@@ -33,6 +33,11 @@ function iconFor(type: NotificationType): keyof typeof Ionicons.glyphMap {
       return "sparkles";
     case NotificationType.CREW_CHAT:
       return "chatbubble-ellipses";
+    case NotificationType.REVIEW_RECEIVED:
+      return "star";
+    case NotificationType.TIP_RECEIVED:
+    case NotificationType.PAYMENT_RECEIVED:
+      return "cash";
     default:
       return "notifications";
   }
