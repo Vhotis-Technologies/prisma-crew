@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from .models import User, Detailer, ServiceType, Job, JobImage, JobFleetMaintenance, Earning, BankAccount, Review, Availability, JobActivityLog
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from main.util.media_helper import get_full_media_url
+from main.util.media_helper import stable_media_url_for_file
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -47,7 +47,7 @@ class JobImageSerializer(serializers.ModelSerializer):
             str | None: Absolute media URL or None when no file attached.
         """
         if obj.image:
-            return get_full_media_url(obj.image.url)
+            return stable_media_url_for_file(obj.image)
         return None
 
 class JobFleetMaintenanceSerializer(serializers.ModelSerializer):

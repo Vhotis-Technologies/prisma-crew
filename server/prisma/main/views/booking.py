@@ -26,7 +26,6 @@ import time as time_mod
 from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.db import transaction
-from main.util.media_helper import get_full_media_url
 from main.tasks import send_booking_confirmation_email, send_push_notification, create_notification, publish_job_acceptance
 from main.utils.observability import log_timed
 

@@ -243,7 +243,7 @@ def publish_job_started(booking_reference, skip_client_notification=False):
     """
     try:
         from main.models import Job
-        from main.util.media_helper import get_full_media_url
+        from main.util.media_helper import stable_media_url_for_file
         
         try:
             job = Job.objects.get(booking_reference=booking_reference)
@@ -252,7 +252,7 @@ def publish_job_started(booking_reference, skip_client_notification=False):
             for img in job.images.filter(image_type='before'):
                 if not img.image:
                     continue
-                image_url = get_full_media_url(img.image.url)
+                image_url = stable_media_url_for_file(img.image)
                 if not image_url or not str(image_url).strip():
                     continue
                 before_images.append({
@@ -297,7 +297,7 @@ def publish_job_completed(booking_reference, skip_client_notification=False):
     """
     try:
         from main.models import Job
-        from main.util.media_helper import get_full_media_url
+        from main.util.media_helper import stable_media_url_for_file
         
         try:
             job = Job.objects.get(booking_reference=booking_reference)
@@ -306,7 +306,7 @@ def publish_job_completed(booking_reference, skip_client_notification=False):
             for img in job.images.filter(image_type='after'):
                 if not img.image:
                     continue
-                image_url = get_full_media_url(img.image.url)
+                image_url = stable_media_url_for_file(img.image)
                 if not image_url or not str(image_url).strip():
                     continue
                 after_images.append({

@@ -18,7 +18,7 @@ from django.db.models import Q
 from main.models import Job, JobImage, JobFleetMaintenance, Detailer
 from main.serializer import JobImageSerializer, JobFleetMaintenanceSerializer, JobSerializer
 from datetime import datetime
-from main.util.media_helper import get_full_media_url
+from main.util.media_helper import stable_media_url_for_file
 from main.tasks import publish_job_started, publish_job_completed
 # from channels.layers import get_channel_layer
 # from asgiref.sync import async_to_sync
@@ -237,7 +237,7 @@ class AppointmentView(APIView):
                     'before_images_interior': [
                         {
                             'id': img.id,
-                            'image_url': get_full_media_url(img.image.url),
+                            'image_url': stable_media_url_for_file(img.image),
                             'uploaded_at': img.uploaded_at.isoformat(),
                             'segment': img.segment
                         } for img in appointment.images.filter(image_type='before', segment='interior')
@@ -245,7 +245,7 @@ class AppointmentView(APIView):
                     'before_images_exterior': [
                         {
                             'id': img.id,
-                            'image_url': get_full_media_url(img.image.url),
+                            'image_url': stable_media_url_for_file(img.image),
                             'uploaded_at': img.uploaded_at.isoformat(),
                             'segment': img.segment
                         } for img in appointment.images.filter(image_type='before', segment='exterior')
@@ -253,7 +253,7 @@ class AppointmentView(APIView):
                     'after_images_interior': [
                         {
                             'id': img.id,
-                            'image_url': get_full_media_url(img.image.url),
+                            'image_url': stable_media_url_for_file(img.image),
                             'uploaded_at': img.uploaded_at.isoformat(),
                             'segment': img.segment
                         } for img in appointment.images.filter(image_type='after', segment='interior')
@@ -261,7 +261,7 @@ class AppointmentView(APIView):
                     'after_images_exterior': [
                         {
                             'id': img.id,
-                            'image_url': get_full_media_url(img.image.url),
+                            'image_url': stable_media_url_for_file(img.image),
                             'uploaded_at': img.uploaded_at.isoformat(),
                             'segment': img.segment
                         } for img in appointment.images.filter(image_type='after', segment='exterior')
@@ -508,7 +508,7 @@ class AppointmentView(APIView):
                 uploaded_images.append(
                     {
                         "id": job_image.id,
-                        "image_url": get_full_media_url(job_image.image.url),
+                        "image_url": stable_media_url_for_file(job_image.image),
                         "uploaded_at": job_image.uploaded_at.isoformat(),
                         "segment": job_image.segment,
                     }
@@ -603,7 +603,7 @@ class AppointmentView(APIView):
                 uploaded_images.append(
                     {
                         "id": job_image.id,
-                        "image_url": get_full_media_url(job_image.image.url),
+                        "image_url": stable_media_url_for_file(job_image.image),
                         "uploaded_at": job_image.uploaded_at.isoformat(),
                         "segment": job_image.segment,
                     }

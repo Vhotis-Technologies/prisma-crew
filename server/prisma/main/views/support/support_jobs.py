@@ -30,7 +30,7 @@ from main.tasks import (
     send_booking_confirmation_email,
     send_push_notification,
 )
-from main.util.media_helper import get_full_media_url
+from main.util.media_helper import stable_media_url_for_file
 from main.utils.detailer_matcher import find_detailers_for_location
 from main.views.support.support_permission_access import SupportPermissionAccess
 
@@ -45,7 +45,7 @@ def _detailer_image_url(detailer: Detailer):
     user = detailer.user
     if user and user.image:
         try:
-            return get_full_media_url(user.image.url)
+            return stable_media_url_for_file(user.image)
         except Exception:
             return None
     return None
